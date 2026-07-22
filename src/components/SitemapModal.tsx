@@ -156,6 +156,7 @@ export default function SitemapModal({
               </div>
             </div>
 
+<<<<<<< HEAD
             {/* Admin Node */}
             <div className="border border-outline-variant/50 rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors bg-surface-container-low/20">
               <span className="flex items-center gap-2 text-sm font-bold text-indigo-700">
@@ -177,6 +178,8 @@ export default function SitemapModal({
               </div>
             </div>
 
+=======
+>>>>>>> c5e28472392112146a18ed14ec60153e811fbaa9
           </div>
         </div>
 

@@ -201,13 +201,12 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
 
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-800">
-      
+
       {/* =====================================================
           SIDEBAR NAVIGATION (Matching Admin Dashboard style)
       ===================================================== */}
-      <aside className={`bg-[#004349] text-white transition-all duration-300 flex flex-col justify-between select-none ${
-        sidebarCollapsed ? 'w-20' : 'w-72'
-      }`}>
+      <aside className={`bg-[#004349] text-white transition-all duration-300 flex flex-col justify-between select-none ${sidebarCollapsed ? 'w-20' : 'w-72'
+        }`}>
         <div>
           {/* Sidebar Brand Header */}
           <div className="p-5 flex items-center justify-between border-b border-white/10">
@@ -232,11 +231,10 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center justify-between rounded-xl p-3 text-sm font-semibold transition-all cursor-pointer ${
-                    isActive
+                  className={`w-full flex items-center justify-between rounded-xl p-3 text-sm font-semibold transition-all cursor-pointer ${isActive
                       ? 'bg-white/10 text-white shadow-sm border-l-4 border-secondary-container'
                       : 'text-white/60 hover:text-white hover:bg-white/5'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center">
                     <IconComp className={`w-5 h-5 shrink-0 ${sidebarCollapsed ? 'mx-auto' : 'mr-3.5'}`} />
@@ -269,7 +267,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
           MAIN WORKSPACE & STICKY HEADER
       ===================================================== */}
       <main className="flex-1 flex flex-col min-w-0 bg-[#f9f9ff]">
-        
+
         {/* Sticky Header Bar */}
         <header className="bg-white border-b border-outline-variant/30 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
           <div className="flex items-center space-x-4">
@@ -303,7 +301,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
           ===================================================== */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
-              
+
               {/* Welcome Banner */}
               <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary-container to-primary p-6 sm:p-8 lg:p-10 text-white shadow-sm">
                 <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-white/5 pointer-events-none" />
@@ -381,7 +379,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
 
               {/* Two Column Grid: Active Campaigns Preview & Today's Agenda Preview */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                
+
                 {/* Active Campaigns Panel */}
                 <div className="lg:col-span-7 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs">
                   <div className="flex items-center justify-between mb-4">
@@ -448,7 +446,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
           ===================================================== */}
           {activeTab === 'campaigns' && (
             <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
-              
+
               {/* Notice Banner */}
               <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 p-4 rounded-2xl text-xs flex items-start gap-3 leading-relaxed">
                 <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 mt-0.5" />
@@ -495,11 +493,10 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
                           <CountdownDisplay targetDate={camp.targetDate} />
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={`px-3 py-1.5 rounded-xl text-xs font-bold border ${
-                            camp.attendanceStatus === 'Confirmed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                            camp.attendanceStatus === 'Checked In' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                            'bg-amber-50 text-amber-700 border-amber-200'
-                          }`}>
+                          <span className={`px-3 py-1.5 rounded-xl text-xs font-bold border ${camp.attendanceStatus === 'Confirmed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                              camp.attendanceStatus === 'Checked In' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                'bg-amber-50 text-amber-700 border-amber-200'
+                            }`}>
                             {camp.attendanceStatus}
                           </span>
                         </div>
@@ -522,20 +519,18 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
                 <div className="space-y-2">
                   {TODAYS_SCHEDULE.map((item) => (
                     <div key={item.id} className="relative flex items-start gap-4 py-3">
-                      <div className={`relative z-10 w-[38px] h-[38px] rounded-full flex items-center justify-center shrink-0 border-2 ${
-                        item.status === 'completed' ? 'bg-emerald-50 border-emerald-400 text-emerald-600' :
-                        item.status === 'current' ? 'bg-primary border-primary text-white animate-pulse' :
-                        'bg-slate-100 border-slate-300 text-slate-400'
-                      }`}>
+                      <div className={`relative z-10 w-[38px] h-[38px] rounded-full flex items-center justify-center shrink-0 border-2 ${item.status === 'completed' ? 'bg-emerald-50 border-emerald-400 text-emerald-600' :
+                          item.status === 'current' ? 'bg-primary border-primary text-white animate-pulse' :
+                            'bg-slate-100 border-slate-300 text-slate-400'
+                        }`}>
                         {item.status === 'completed' ? <CircleCheck className="w-5 h-5" /> :
-                         item.status === 'current' ? <Circle className="w-5 h-5 fill-current" /> :
-                         <Circle className="w-5 h-5" />}
+                          item.status === 'current' ? <Circle className="w-5 h-5 fill-current" /> :
+                            <Circle className="w-5 h-5" />}
                       </div>
-                      <div className={`flex-1 rounded-xl p-4 transition-colors border ${
-                        item.status === 'current' ? 'bg-primary/5 border-primary/20' :
-                        item.status === 'completed' ? 'bg-slate-50 border-slate-200/60 opacity-70' :
-                        'bg-white border-slate-200/80'
-                      }`}>
+                      <div className={`flex-1 rounded-xl p-4 transition-colors border ${item.status === 'current' ? 'bg-primary/5 border-primary/20' :
+                          item.status === 'completed' ? 'bg-slate-50 border-slate-200/60 opacity-70' :
+                            'bg-white border-slate-200/80'
+                        }`}>
                         <div className="flex items-center justify-between">
                           <h4 className={`text-sm font-bold ${item.status === 'current' ? 'text-primary' : 'text-slate-900'}`}>
                             {item.title}
@@ -613,7 +608,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
           ===================================================== */}
           {activeTab === 'achievements' && (
             <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
-              
+
               {/* Level XP Bar */}
               <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 rounded-2xl border border-primary/20 p-6 shadow-xs">
                 <div className="flex items-center justify-between mb-2">
@@ -634,11 +629,10 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
                 {ACHIEVEMENTS.map((badge) => (
                   <div
                     key={badge.id}
-                    className={`rounded-2xl border p-5 text-center transition-all ${
-                      badge.unlocked
+                    className={`rounded-2xl border p-5 text-center transition-all ${badge.unlocked
                         ? 'bg-white border-outline-variant/30 shadow-xs hover:shadow-md'
                         : 'bg-slate-50 border-slate-200 opacity-60'
-                    }`}
+                      }`}
                   >
                     <div className="text-4xl mb-3">{badge.icon}</div>
                     <h4 className="text-xs font-bold text-slate-900">{badge.name}</h4>
@@ -713,9 +707,8 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
                   <div key={res.id} className="bg-white rounded-2xl border border-outline-variant/30 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
                     <div>
                       <div className="flex items-start gap-3 mb-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                          res.progress === 100 ? 'bg-emerald-50 text-emerald-600' : 'bg-primary/10 text-primary'
-                        }`}>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${res.progress === 100 ? 'bg-emerald-50 text-emerald-600' : 'bg-primary/10 text-primary'
+                          }`}>
                           {resourceIcon(res.type)}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -731,9 +724,8 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
                       </div>
                       <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all duration-1000 ${
-                            res.progress === 100 ? 'bg-emerald-500' : 'bg-primary'
-                          }`}
+                          className={`h-full rounded-full transition-all duration-1000 ${res.progress === 100 ? 'bg-emerald-500' : 'bg-primary'
+                            }`}
                           style={{ width: `${res.progress}%` }}
                         />
                       </div>
@@ -840,11 +832,10 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
                         <button
                           key={r.value}
                           onClick={() => setFeedbackRating(r.value)}
-                          className={`flex flex-col items-center p-3 rounded-xl border transition-all cursor-pointer ${
-                            feedbackRating === r.value
+                          className={`flex flex-col items-center p-3 rounded-xl border transition-all cursor-pointer ${feedbackRating === r.value
                               ? 'bg-primary/10 border-primary scale-105 shadow-xs'
                               : 'border-slate-200 hover:bg-slate-50'
-                          }`}
+                            }`}
                         >
                           <span className="text-2xl">{r.emoji}</span>
                           <span className="text-[9px] font-semibold text-slate-600 mt-1">{r.label}</span>

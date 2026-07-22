@@ -6,10 +6,13 @@ import AboutTab from './components/AboutTab';
 import HospitalsTab from './components/HospitalsTab';
 import EventsTab from './components/EventsTab';
 import BlogsTab from './components/BlogsTab';
+<<<<<<< HEAD
 import VolunteerAuthPage from './components/VolunteerAuthPage';
 import VolunteerDashboard from './components/VolunteerDashboard';
 import AdminAuthPage from './components/AdminAuthPage';
 import AdminDashboard from './components/AdminDashboard';
+=======
+>>>>>>> c5e28472392112146a18ed14ec60153e811fbaa9
 
 // Modals
 import VolunteerModal from './components/VolunteerModal';
@@ -51,6 +54,7 @@ export default function App() {
       />
 
       {/* Core Tab Routing Screen */}
+<<<<<<< HEAD
       {activePage === 'volunteer-auth' ? (
         <main className="flex-grow w-full mx-auto">
           <VolunteerAuthPage onPageChange={setActivePage} />
@@ -113,6 +117,36 @@ export default function App() {
           )}
         </main>
       )}
+=======
+      <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
+        {activePage === 'home' && (
+          <HomeTab 
+            onPageChange={setActivePage}
+            onOpenVolunteer={() => setVolunteerOpen(true)}
+            onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
+          />
+        )}
+        {activePage === 'about' && (
+          <AboutTab 
+            onPageChange={setActivePage}
+            onOpenVolunteer={() => setVolunteerOpen(true)}
+          />
+        )}
+        {activePage === 'hospitals' && (
+          <HospitalsTab 
+            onOpenEnquiry={handleOpenEnquiryForHospital}
+          />
+        )}
+        {activePage === 'events' && (
+          <EventsTab 
+            onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
+          />
+        )}
+        {activePage === 'blogs' && (
+          <BlogsTab />
+        )}
+      </main>
+>>>>>>> c5e28472392112146a18ed14ec60153e811fbaa9
 
       {/* Consistent Footer */}
       <Footer 
