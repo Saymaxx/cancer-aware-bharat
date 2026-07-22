@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 import React, { useState, useMemo } from 'react';
-import { Menu, X, Heart, Search, LogIn, LayoutDashboard, LogOut } from 'lucide-react';
-=======
-import React, { useState } from 'react';
-import { Menu, X, Heart, Search } from 'lucide-react';
->>>>>>> c5e28472392112146a18ed14ec60153e811fbaa9
+import { Menu, X, Heart, Search, LogIn, LayoutDashboard, LogOut, Building2 } from 'lucide-react';
 
 interface NavbarProps {
   activePage: string;
@@ -21,7 +16,6 @@ export default function Navbar({
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-<<<<<<< HEAD
   // Check if staff is logged in
   const loggedInStaff = useMemo(() => {
     const stored = localStorage.getItem('aware_bharat_logged_in_staff');
@@ -32,28 +26,30 @@ export default function Navbar({
   const loggedInVolunteer = useMemo(() => {
     const stored = localStorage.getItem('aware_bharat_logged_in_volunteer');
     return stored ? JSON.parse(stored) : null;
-  }, [activePage]); // re-check on page change
+  }, [activePage]);
+
+  // Check if hospital is logged in
+  const loggedInHospital = useMemo(() => {
+    const stored = localStorage.getItem('aware_bharat_logged_in_hospital');
+    return stored ? JSON.parse(stored) : null;
+  }, [activePage]);
 
   const volunteerInitials = loggedInVolunteer
     ? loggedInVolunteer.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : '';
 
-=======
->>>>>>> c5e28472392112146a18ed14ec60153e811fbaa9
   const handleNavClick = (page: string) => {
     onPageChange(page);
     setMobileMenuOpen(false);
   };
 
-<<<<<<< HEAD
   const handleLogout = () => {
     localStorage.removeItem('aware_bharat_logged_in_volunteer');
     localStorage.removeItem('aware_bharat_logged_in_staff');
+    localStorage.removeItem('aware_bharat_logged_in_hospital');
     onPageChange('home');
   };
 
-=======
->>>>>>> c5e28472392112146a18ed14ec60153e811fbaa9
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-xs border-b border-outline-variant/15 w-full transition-all duration-200">
       <div className="flex justify-between items-center w-full px-4 sm:px-6 md:px-12 py-3.5 max-w-[1200px] mx-auto">
@@ -115,7 +111,6 @@ export default function Navbar({
         </div>
 
         {/* Actions & Search */}
-<<<<<<< HEAD
         <div className="hidden md:flex items-center space-x-3">
           {loggedInVolunteer ? (
             <>
@@ -140,11 +135,29 @@ export default function Navbar({
           ) : loggedInStaff ? (
             <>
               <button
-                onClick={() => onPageChange('admin-dashboard')}
+                onClick={() => onPageChange(loggedInStaff.role === 'superadmin' ? 'super-admin-dashboard' : 'admin-dashboard')}
                 className="px-3.5 py-2 rounded-lg bg-primary/10 text-primary font-label-sm text-sm font-semibold hover:bg-primary/15 transition-colors cursor-pointer inline-flex items-center space-x-1.5"
               >
                 <LayoutDashboard className="w-3.5 h-3.5" />
-                <span>Admin Portal</span>
+                <span>{loggedInStaff.role === 'superadmin' ? 'Super Admin' : 'Admin Portal'}</span>
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-3.5 py-2 rounded-lg bg-red-50 text-red-600 border border-red-200 font-label-sm text-sm font-semibold hover:bg-red-100 transition-colors cursor-pointer inline-flex items-center space-x-1.5"
+                title="Logout"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Logout</span>
+              </button>
+            </>
+          ) : loggedInHospital ? (
+            <>
+              <button
+                onClick={() => onPageChange('hospital-dashboard')}
+                className="px-3.5 py-2 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-label-sm text-sm font-semibold hover:bg-emerald-100 transition-colors cursor-pointer inline-flex items-center space-x-1.5"
+              >
+                <Building2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Hospital Portal</span>
               </button>
               <button
                 onClick={handleLogout}
@@ -156,23 +169,24 @@ export default function Navbar({
               </button>
             </>
           ) : (
-            <button
-              onClick={() => onPageChange('volunteer-auth')}
-              className="px-4 py-2 rounded-lg bg-surface-variant text-primary font-label-sm text-sm font-semibold hover:bg-surface-container transition-colors cursor-pointer inline-flex items-center space-x-1.5"
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>Volunteer Login</span>
-            </button>
+            <>
+              <button
+                onClick={() => onPageChange('hospital-auth')}
+                className="px-3 py-2 rounded-lg bg-surface-variant text-primary font-label-sm text-xs font-semibold hover:bg-surface-container transition-colors cursor-pointer inline-flex items-center space-x-1"
+                title="Hospital Partner Login / Apply"
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Hospital Login</span>
+              </button>
+              <button
+                onClick={() => onPageChange('volunteer-auth')}
+                className="px-3 py-2 rounded-lg bg-surface-variant text-primary font-label-sm text-xs font-semibold hover:bg-surface-container transition-colors cursor-pointer inline-flex items-center space-x-1"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Volunteer Login</span>
+              </button>
+            </>
           )}
-=======
-        <div className="hidden md:flex items-center space-x-4">
-          <button
-            onClick={() => onOpenVolunteer()}
-            className="px-4 py-2 rounded-lg bg-surface-variant text-primary font-label-sm text-sm font-semibold hover:bg-surface-container transition-colors cursor-pointer"
-          >
-            Volunteer
-          </button>
->>>>>>> c5e28472392112146a18ed14ec60153e811fbaa9
           <button
             onClick={() => onOpenEnquiry()}
             className="px-4 py-2 rounded-lg bg-primary text-white font-label-sm text-sm font-semibold hover:opacity-95 transition-opacity shadow-[0px_4px_20px_rgba(13,92,99,0.1)] cursor-pointer"
@@ -235,7 +249,6 @@ export default function Navbar({
             Educational Blogs
           </button>
           <div className="pt-3 border-t border-outline-variant/10 flex flex-col space-y-2">
-<<<<<<< HEAD
             {loggedInVolunteer ? (
               <>
                 <button
@@ -272,17 +285,6 @@ export default function Navbar({
                 <span>Volunteer Login</span>
               </button>
             )}
-=======
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenVolunteer();
-              }}
-              className="w-full py-2 px-4 rounded-lg bg-surface-variant text-primary text-center font-semibold text-sm active:scale-[0.98] transition-all"
-            >
-              Join as Volunteer
-            </button>
->>>>>>> c5e28472392112146a18ed14ec60153e811fbaa9
           </div>
         </div>
       )}

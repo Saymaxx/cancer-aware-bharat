@@ -49,11 +49,12 @@ export interface PartnerHospital {
   id: string;
   name: string;
   city: string;
-  status: 'Active Partner' | 'Pending Tie-up' | 'Recommended to Super Admin';
+  status: 'Active Partner' | 'Pending Tie-up' | 'Recommended to Super Admin' | 'Declined by Admin';
   appliedDate: string;
   documentVerified: boolean;
   contactEmail: string;
   contactPhone: string;
+  declineReason?: string;
 }
 
 export interface AdminDonation {

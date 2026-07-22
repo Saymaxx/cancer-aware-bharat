@@ -4,7 +4,7 @@ import {
   BarChart3, Settings, LogOut, Bell, Search, Filter, Plus, Edit2, Trash2,
   Check, X, ThumbsUp, Send, Download, FileCheck, ChevronLeft, ChevronRight,
   TrendingUp, DollarSign, BookOpen, MessageSquare, AlertCircle, AlertTriangle,
-  Award, RefreshCw, Terminal, CheckCircle2, User, Key
+  Award, RefreshCw, Terminal, CheckCircle2, User, Key, Menu
 } from 'lucide-react';
 
 import {
@@ -17,12 +17,52 @@ import {
 export default function AdminDashboard({ onPageChange, onLogout }: { onPageChange: (page: string) => void; onLogout: () => void }) {
   // Sidebar collapsed state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
   // React state for mock DB tables
-  const [patients, setPatients] = useState<Patient[]>(INITIAL_PATIENTS);
-  const [volunteers, setVolunteers] = useState<AdminVolunteer[]>(INITIAL_ADMIN_VOLUNTEERS);
-  const [hospitalRequests, setHospitalRequests] = useState<PartnerHospital[]>(INITIAL_HOSPITAL_REQUESTS);
+  const [patients, setPatients] = useState<Patient[]>(() => {
+    const stored = localStorage.getItem('aware_bharat_patients');
+    if (stored) {
+      try { return JSON.parse(stored); } catch (e) { console.error(e); }
+    }
+    return INITIAL_PATIENTS;
+  });
+  const [volunteers, setVolunteers] = useState<AdminVolunteer[]>(() => {
+    const stored = localStorage.getItem('aware_bharat_volunteers');
+    if (stored) {
+      try { return JSON.parse(stored); } catch (e) { console.error(e); }
+    }
+    return INITIAL_ADMIN_VOLUNTEERS;
+  });
+  const [hospitalRequests, setHospitalRequests] = useState<PartnerHospital[]>(() => {
+    const stored = localStorage.getItem('aware_bharat_hospital_requests');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        const mapped: PartnerHospital[] = parsed.map((h: any) => ({
+          id: h.id,
+          name: h.name || h.hospitalName,
+          city: h.city,
+          status: h.status === 'Approved' ? 'Active Partner' : h.status === 'Recommended by Admin' || h.status === 'Recommended to Super Admin' ? 'Recommended to Super Admin' : 'Pending Tie-up',
+          appliedDate: h.appliedDate || new Date().toLocaleDateString(),
+          documentVerified: h.documentVerified ?? (h.documents ? h.documents.every((d: any) => d.verified) : true),
+          contactEmail: h.contactEmail || h.email || 'info@hospital.org',
+          contactPhone: h.contactPhone || h.phone || '+91 11 0000 0000',
+        }));
+        // Merge with initial requests
+        INITIAL_HOSPITAL_REQUESTS.forEach(init => {
+          if (!mapped.some(m => m.id === init.id)) {
+            mapped.push(init);
+          }
+        });
+        return mapped;
+      } catch (e) {
+        console.error('Failed to parse hospital requests', e);
+      }
+    }
+    return INITIAL_HOSPITAL_REQUESTS;
+  });
   const [campaignRequests, setCampaignRequests] = useState<CampaignRequest[]>(INITIAL_CAMPAIGN_REQUESTS);
   const [donations, setDonations] = useState<AdminDonation[]>(INITIAL_ADMIN_DONATIONS);
   const [feedbacks, setFeedbacks] = useState<AdminFeedback[]>(INITIAL_ADMIN_FEEDBACKS);
@@ -184,15 +224,68 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     setTimeout(() => setCampaignSuccessToast(false), 3000);
   };
 
+  // Decline hospital modal state
+  const [showAdminDeclineModal, setShowAdminDeclineModal] = useState<string | null>(null);
+  const [adminDeclineReason, setAdminDeclineReason] = useState('');
+
   // ==========================================
   // HOSPITAL UTILITIES
   // ==========================================
   const handleRecommendHospital = (id: string) => {
-    setHospitalRequests(prev => prev.map(h => h.id === id ? { ...h, status: 'Recommended to Super Admin' } : h));
+    setHospitalRequests(prev => {
+      const updated = prev.map(h => h.id === id ? { ...h, status: 'Recommended to Super Admin' as const } : h);
+      const stored = localStorage.getItem('aware_bharat_hospital_requests');
+      if (stored) {
+        try {
+          const list = JSON.parse(stored);
+          const updatedList = list.map((item: any) => item.id === id ? {
+            ...item,
+            status: 'Recommended by Admin',
+            recommendedBy: 'Dr. Ramesh Sharma (ADM-001)',
+            recommendationNotes: 'Primary accreditation documents verified by Regional Admin. Recommended for Super Admin board clearance.'
+          } : item);
+          localStorage.setItem('aware_bharat_hospital_requests', JSON.stringify(updatedList));
+        } catch (e) { console.error(e); }
+      }
+      return updated;
+    });
+  };
+
+  const handleDeclineHospitalByAdmin = (id: string) => {
+    if (!adminDeclineReason.trim()) return;
+    setHospitalRequests(prev => {
+      const updated = prev.map(h => h.id === id ? { ...h, status: 'Declined by Admin' as const, declineReason: adminDeclineReason } : h);
+      const stored = localStorage.getItem('aware_bharat_hospital_requests');
+      if (stored) {
+        try {
+          const list = JSON.parse(stored);
+          const updatedList = list.map((item: any) => item.id === id ? {
+            ...item,
+            status: 'Declined by Admin',
+            rejectionReason: `Declined by Regional Coordinator: ${adminDeclineReason}`
+          } : item);
+          localStorage.setItem('aware_bharat_hospital_requests', JSON.stringify(updatedList));
+        } catch (e) { console.error(e); }
+      }
+      return updated;
+    });
+    setShowAdminDeclineModal(null);
+    setAdminDeclineReason('');
   };
 
   const handleVerifyDocument = (id: string) => {
-    setHospitalRequests(prev => prev.map(h => h.id === id ? { ...h, documentVerified: true } : h));
+    setHospitalRequests(prev => {
+      const updated = prev.map(h => h.id === id ? { ...h, documentVerified: true } : h);
+      const stored = localStorage.getItem('aware_bharat_hospital_requests');
+      if (stored) {
+        try {
+          const list = JSON.parse(stored);
+          const updatedList = list.map((item: any) => item.id === id ? { ...item, documentVerified: true } : item);
+          localStorage.setItem('aware_bharat_hospital_requests', JSON.stringify(updatedList));
+        } catch (e) { console.error(e); }
+      }
+      return updated;
+    });
   };
 
   // ==========================================
@@ -265,12 +358,20 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-800">
       
+      {/* Mobile Backdrop Overlay */}
+      {mobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
       {/* =====================================================
           SIDEBAR NAVIGATION
       ===================================================== */}
-      <aside className={`bg-[#004349] text-white transition-all duration-300 flex flex-col justify-between select-none ${
-        sidebarCollapsed ? 'w-20' : 'w-72'
-      }`}>
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 bg-[#004349] text-white transition-all duration-300 flex flex-col justify-between select-none ${
+        mobileSidebarOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full lg:translate-x-0'
+      } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'}`}>
         <div>
           {/* Sidebar Brand Logo */}
           <div className="p-5 flex items-center justify-between border-b border-white/10">
@@ -278,16 +379,22 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
               <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/20">
                 <Shield className="w-5 h-5 text-secondary-container" />
               </div>
-              {!sidebarCollapsed && (
+              {(!sidebarCollapsed || mobileSidebarOpen) && (
                 <span className="font-headline-lg text-lg font-black text-white tracking-tight truncate">
                   CAB Admin Portal
                 </span>
               )}
             </div>
+            <button 
+              onClick={() => setMobileSidebarOpen(false)}
+              className="lg:hidden text-white/70 hover:text-white p-1 rounded-lg"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Navigation Links */}
-          <nav className="p-3 space-y-1.5">
+          <nav className="p-3 space-y-1.5 max-h-[calc(100vh-160px)] overflow-y-auto">
             {sidebarItems.map((item) => {
               const IconComp = item.icon;
               const isActive = activeTab === item.id;
@@ -297,6 +404,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                   onClick={() => {
                     setActiveTab(item.id);
                     setSearchTerm('');
+                    setMobileSidebarOpen(false);
                   }}
                   className={`w-full flex items-center rounded-xl p-3 text-sm font-semibold transition-all cursor-pointer ${
                     isActive
@@ -304,8 +412,8 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <IconComp className={`w-5 h-5 shrink-0 ${sidebarCollapsed ? 'mx-auto' : 'mr-3.5'}`} />
-                  {!sidebarCollapsed && <span>{item.label}</span>}
+                  <IconComp className={`w-5 h-5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3.5'}`} />
+                  {(!sidebarCollapsed || mobileSidebarOpen) && <span>{item.label}</span>}
                 </button>
               );
             })}
@@ -318,8 +426,8 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
             onClick={onLogout}
             className="w-full flex items-center rounded-xl p-3 text-sm font-semibold text-red-300 hover:text-red-100 hover:bg-red-950/20 cursor-pointer"
           >
-            <LogOut className={`w-5 h-5 shrink-0 ${sidebarCollapsed ? 'mx-auto' : 'mr-3.5'}`} />
-            {!sidebarCollapsed && <span>Secure Logout</span>}
+            <LogOut className={`w-5 h-5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3.5'}`} />
+            {(!sidebarCollapsed || mobileSidebarOpen) && <span>Secure Logout</span>}
           </button>
         </div>
       </aside>
@@ -329,15 +437,23 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
       ===================================================== */}
       <main className="flex-1 flex flex-col min-w-0 bg-[#f9f9ff]">
         {/* Workspace Top Header bar */}
-        <header className="bg-white border-b border-outline-variant/30 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
-          <div className="flex items-center space-x-4">
+        <header className="bg-white border-b border-outline-variant/30 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+          <div className="flex items-center space-x-3 sm:space-x-4">
             <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              onClick={() => {
+                if (window.innerWidth < 1024) {
+                  setMobileSidebarOpen(!mobileSidebarOpen);
+                } else {
+                  setSidebarCollapsed(!sidebarCollapsed);
+                }
+              }}
               className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer focus:outline-none"
+              title="Toggle Menu"
             >
-              <Terminal className="w-5 h-5" />
+              <Menu className="w-5 h-5 lg:hidden" />
+              <Terminal className="w-5 h-5 hidden lg:block" />
             </button>
-            <h2 className="font-headline-lg text-lg font-bold text-slate-900 capitalize">
+            <h2 className="font-headline-lg text-base sm:text-lg font-bold text-slate-900 capitalize">
               {activeTab.replace('-', ' ')}
             </h2>
           </div>
@@ -354,7 +470,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
         </header>
 
         {/* Dynamic Panel Workspace container */}
-        <div className="p-6 overflow-y-auto max-w-[1400px] w-full mx-auto space-y-6">
+        <div className="p-4 sm:p-6 overflow-y-auto max-w-[1400px] w-full mx-auto space-y-6">
 
           {/* =====================================================
               TAB: DASHBOARD OVERVIEW
@@ -793,6 +909,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                               hosp.status === 'Active Partner' ? 'bg-green-50 text-green-700 border-green-200' :
                               hosp.status === 'Recommended to Super Admin' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                              hosp.status === 'Declined by Admin' ? 'bg-red-50 text-red-600 border-red-200' :
                               'bg-amber-50 text-amber-700 border-amber-200'
                             }`}>
                               {hosp.status}
@@ -800,20 +917,33 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                           </td>
                           <td className="px-6 py-4 text-right">
                             {hosp.status === 'Pending Tie-up' ? (
-                              <button
-                                onClick={() => handleRecommendHospital(hosp.id)}
-                                disabled={!hosp.documentVerified}
-                                className="px-3 py-1.5 bg-primary text-white font-bold rounded-lg text-[10px] hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                              >
-                                Recommend to Super Admin
-                              </button>
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  onClick={() => handleRecommendHospital(hosp.id)}
+                                  disabled={!hosp.documentVerified}
+                                  className="px-3 py-1.5 bg-primary text-white font-bold rounded-lg text-[10px] hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs"
+                                  title={!hosp.documentVerified ? 'Verify documents before recommending' : 'Recommend application to Super Admin'}
+                                >
+                                  Recommend to Super Admin
+                                </button>
+                                <button
+                                  onClick={() => setShowAdminDeclineModal(hosp.id)}
+                                  className="px-2.5 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-[10px] font-bold hover:bg-red-100 cursor-pointer"
+                                >
+                                  Deny / Decline
+                                </button>
+                              </div>
                             ) : hosp.status === 'Recommended to Super Admin' ? (
-                              <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">
-                                Recommended
+                              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
+                                Recommended to Board
+                              </span>
+                            ) : hosp.status === 'Declined by Admin' ? (
+                              <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200">
+                                Declined by Admin
                               </span>
                             ) : (
-                              <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
-                                Connected
+                              <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-lg border border-green-200">
+                                Connected Partner
                               </span>
                             )}
                           </td>
@@ -823,6 +953,45 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                   </table>
                 </div>
               </div>
+
+              {/* DECLINE APPLICATION MODAL */}
+              {showAdminDeclineModal && (
+                <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+                  <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4 text-xs">
+                    <h3 className="font-bold text-slate-900 text-sm">Decline Hospital Tie-up Application</h3>
+                    <p className="text-slate-600">Provide feedback notes explaining why this hospital partnership application is being declined by the Regional Coordinator desk.</p>
+                    
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Decline Justification Reason *</label>
+                      <textarea
+                        rows={3}
+                        required
+                        value={adminDeclineReason}
+                        onChange={e => setAdminDeclineReason(e.target.value)}
+                        className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none text-xs"
+                        placeholder="e.g. Hospital accreditation documentation incomplete or non-compliant with CAB guidelines..."
+                      />
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => { setShowAdminDeclineModal(null); setAdminDeclineReason(''); }}
+                        className="flex-1 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeclineHospitalByAdmin(showAdminDeclineModal)}
+                        className="flex-1 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 cursor-pointer"
+                      >
+                        Decline Application
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

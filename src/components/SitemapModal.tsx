@@ -156,13 +156,18 @@ export default function SitemapModal({
               </div>
             </div>
 
-<<<<<<< HEAD
             {/* Admin Node */}
             <div className="border border-outline-variant/50 rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors bg-surface-container-low/20">
               <span className="flex items-center gap-2 text-sm font-bold text-indigo-700">
-                <Network className="w-4 h-4" /> Management Nodes
+                <Network className="w-4 h-4" /> Management & Partner Nodes
               </span>
               <div className="flex flex-col gap-2 pt-1.5">
+                <button
+                  onClick={() => handleLinkClick('hospital-auth')}
+                  className="w-full py-1.5 bg-primary/10 text-primary rounded text-xs font-bold hover:bg-primary/20 transition-colors text-left pl-3"
+                >
+                  Hospital Partner Portal
+                </button>
                 <button
                   onClick={() => handleLinkClick('admin-auth')}
                   className="w-full py-1.5 bg-surface-variant text-primary rounded text-xs font-bold hover:bg-surface-container transition-colors text-left pl-3"
@@ -178,8 +183,6 @@ export default function SitemapModal({
               </div>
             </div>
 
-=======
->>>>>>> c5e28472392112146a18ed14ec60153e811fbaa9
           </div>
         </div>
 

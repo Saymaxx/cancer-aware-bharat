@@ -73,15 +73,12 @@ export default function Footer({
               Volunteer Sign-Up
             </button>
             <button
-<<<<<<< HEAD
               onClick={() => onPageChange('volunteer-auth')}
               className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"
             >
               Volunteer Login / Register
             </button>
             <button
-=======
->>>>>>> c5e28472392112146a18ed14ec60153e811fbaa9
               onClick={() => onOpenEnquiry()}
               className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"
             >
@@ -93,7 +90,12 @@ export default function Footer({
             >
               Interactive Sitemap
             </button>
-<<<<<<< HEAD
+            <button
+              onClick={() => onPageChange('hospital-auth')}
+              className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2 font-semibold text-primary"
+            >
+              Hospital Partner Portal
+            </button>
             <button
               onClick={() => onPageChange('admin-auth')}
               className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"
@@ -106,8 +108,6 @@ export default function Footer({
             >
               Super Admin Portal
             </button>
-=======
->>>>>>> c5e28472392112146a18ed14ec60153e811fbaa9
             <a
               href="mailto:support@awarebharat.org"
               className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"

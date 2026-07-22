@@ -43,8 +43,31 @@ export default function AdminAuthPage({ onPageChange, initialRole = 'admin' }: A
       return;
     }
 
-    // Validation mock
-    if (adminEmail === 'dwarka@awarebharat.org' && adminPassword === 'adminpassword' && adminPasscode === '12345') {
+    // Check default credentials or created staff accounts in localStorage
+    let isValid = (adminEmail.toLowerCase() === 'dwarka@awarebharat.org' && adminPassword === 'adminpassword' && adminPasscode === '12345');
+    let authenticatedAdminName = 'Regional Admin';
+
+    if (!isValid) {
+      const storedAdmins = localStorage.getItem('aware_bharat_staff_accounts');
+      if (storedAdmins) {
+        try {
+          const list = JSON.parse(storedAdmins);
+          const found = list.find((a: any) => a.email.toLowerCase() === adminEmail.trim().toLowerCase() && a.status === 'Active');
+          if (found) {
+            const expectedPassword = found.password || 'adminpassword';
+            const expectedPasscode = found.passcode || '12345';
+            if (adminPassword === expectedPassword && adminPasscode === expectedPasscode) {
+              isValid = true;
+              authenticatedAdminName = found.name;
+            }
+          }
+        } catch (err) {
+          console.error('Failed to parse staff accounts', err);
+        }
+      }
+    }
+
+    if (isValid) {
       setIsSubmitting(true);
       setTimeout(() => {
         setIsSubmitting(false);
@@ -57,7 +80,7 @@ export default function AdminAuthPage({ onPageChange, initialRole = 'admin' }: A
         }));
       }, 1500);
     } else {
-      setErrorMessage('Access Denied. Invalid admin email, password, or security passcode.');
+      setErrorMessage('Access Denied. Invalid admin email, password, or security passcode (Default Passcode: 12345).');
     }
   };
 
@@ -144,12 +167,12 @@ export default function AdminAuthPage({ onPageChange, initialRole = 'admin' }: A
               Exit Console
             </button>
             <button
-              onClick={() => onPageChange('admin-dashboard')}
+              onClick={() => onPageChange(role === 'superadmin' ? 'super-admin-dashboard' : 'admin-dashboard')}
               className={`px-6 py-3 rounded-xl text-white font-semibold text-sm shadow-lg flex items-center gap-2 cursor-pointer ${
                 role === 'superadmin' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-primary hover:bg-primary/95'
               }`}
             >
-              <span>Go to Admin Dashboard</span>
+              <span>{role === 'superadmin' ? 'Go to Super Admin Console' : 'Go to Admin Dashboard'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

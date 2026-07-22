@@ -6,9 +6,10 @@ import MapContainer from './MapContainer';
 
 interface HospitalsTabProps {
   onOpenEnquiry: (hospitalId?: string) => void;
+  onPageChange?: (page: string) => void;
 }
 
-export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
+export default function HospitalsTab({ onOpenEnquiry, onPageChange }: HospitalsTabProps) {
   const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [regionFilter, setRegionFilter] = useState<'all' | 'north' | 'south' | 'east' | 'west'>('all');
@@ -45,18 +46,32 @@ export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
       return;
     }
 
-    const newRequest: HospitalPartnerRequest = {
-      id: Math.random().toString(36).substr(2, 9),
+    const newRequest = {
+      id: 'HOSP-APP-' + Math.floor(1000 + Math.random() * 9000),
+      name: hospName,
       hospitalName: hospName,
       contactName: repName,
       designation,
+      contactEmail: email,
       email,
+      contactPhone: phone,
       phone,
       city,
-      specialties,
+      state: 'Delhi',
+      address: `${city}, India`,
+      specialties: specialties ? specialties.split(',').map(s => s.trim()) : ['General Oncology'],
       motivation,
-      date: new Date().toLocaleDateString(),
-      status: 'Pending'
+      appliedDate: new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
+      nabhAccredited: true,
+      bedCount: 150,
+      documents: [
+        { name: 'NABH Accreditation Certificate', verified: true },
+        { name: 'Hospital Registration License', verified: true },
+        { name: 'Fire Safety Clearance', verified: true },
+      ],
+      recommendedBy: null,
+      recommendationNotes: null,
+      status: 'Pending Review'
     };
 
     // Save request to LocalStorage
@@ -95,6 +110,19 @@ export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
         <p className="font-body-lg text-on-surface-variant">
           We integrate only with recognized clinical centers and supportive community hospitals across India to maintain standard diagnostic oncology paths.
         </p>
+
+        {/* Hospital Portal Access Button */}
+        {onPageChange && (
+          <div className="pt-2 flex items-center justify-center gap-3">
+            <button
+              onClick={() => onPageChange('hospital-auth')}
+              className="px-5 py-2.5 bg-[#063b42] text-white rounded-xl text-xs font-bold hover:bg-[#084c55] shadow-md transition-all cursor-pointer inline-flex items-center gap-2"
+            >
+              <Building2 className="w-4 h-4 text-emerald-400" />
+              <span>Hospital Partner Login / Apply Portal</span>
+            </button>
+          </div>
+        )}
       </section>
 
       {/* Network Map Section */}
@@ -107,7 +135,7 @@ export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
             <p className="font-body-md text-xs text-on-surface-variant">Explore clinical locations and partners across the country.</p>
           </div>
           <button
-            onClick={() => setShowRequestForm(true)}
+            onClick={() => onPageChange ? onPageChange('hospital-auth') : setShowRequestForm(true)}
             className="px-4 py-2 bg-secondary text-white rounded-xl text-xs font-bold hover:opacity-95 shadow-sm transition-opacity cursor-pointer flex items-center gap-1"
           >
             Join Network <ArrowUpRight className="w-3.5 h-3.5" />
