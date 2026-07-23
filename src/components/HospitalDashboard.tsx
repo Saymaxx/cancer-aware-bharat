@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Building2, Users, UserCheck, Calendar, Heart, Shield, ShieldCheck,
   FileText, Stethoscope, Clock, Check, X, Search, Filter, Plus, Edit2,
@@ -8,6 +9,9 @@ import {
   Eye, EyeOff, FileCheck, Share2, HelpCircle, UserPlus, RefreshCw,
   Sparkles, CheckSquare, Layers, Lock, ShieldAlert, Globe, Menu
 } from 'lucide-react';
+import { enquiryStore, useEnquiries, useNotifications } from '../enquiryStore';
+import EnquiryTimelineModal from './EnquiryTimelineModal';
+import { PatientEnquiry } from '../types';
 
 import {
   INITIAL_HOSPITAL_KPI, INITIAL_ASSIGNED_PATIENTS, INITIAL_NGO_REFERRALS,
@@ -169,7 +173,8 @@ const getInitialHospitalData = (profileEmail: string) => {
   };
 };
 
-export default function HospitalDashboard({ onPageChange, onLogout }: { onPageChange: (page: string) => void; onLogout: () => void }) {
+export default function HospitalDashboard({ onPageChange, onLogout }: { onPageChange?: (page: string) => void; onLogout: () => void }) {
+  const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -298,6 +303,44 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
     return stored ? JSON.parse(stored) : { name: profile.name, email: profile.email, city: profile.city };
   }, [profile]);
 
+  // Real-time Patient Enquiries from Enquiry Store
+  const enquiries = useEnquiries();
+  const hospitalNotifications = useNotifications('hospital', hospitalSession?.id);
+
+  const assignedEnquiriesForThisHospital = useMemo(() => {
+    return enquiries.filter(e => {
+      // Check if explicitly assigned to this hospital or in pipeline for hospital acceptance
+      const matchHospital =
+        (e.hospitalId && (e.hospitalId === hospitalSession?.id || profile.name.toLowerCase().includes(e.hospitalId.toLowerCase()))) ||
+        (e.assignedHospitalName && e.assignedHospitalName.toLowerCase().includes(profile.name.toLowerCase())) ||
+        (e.preferredHospitalName && e.preferredHospitalName.toLowerCase().includes(profile.name.toLowerCase()));
+
+      const isHospitalStage =
+        e.status === 'Assigned to Hospital' ||
+        e.status === 'Accepted by Hospital' ||
+        e.status === 'Declined by Hospital' ||
+        e.status === 'Appointment Confirmed';
+
+      return matchHospital && isHospitalStage;
+    });
+  }, [enquiries, profile.name, hospitalSession]);
+
+  const pendingAssignedEnquiriesCount = useMemo(() => {
+    return assignedEnquiriesForThisHospital.filter(e => e.status === 'Assigned to Hospital').length;
+  }, [assignedEnquiriesForThisHospital]);
+
+  // Hospital Accept / Decline modal states
+  const [acceptingEnquiry, setAcceptingEnquiry] = useState<PatientEnquiry | null>(null);
+  const [acceptDate, setAcceptDate] = useState('');
+  const [acceptTime, setAcceptTime] = useState('10:30 AM');
+  const [acceptDoctor, setAcceptDoctor] = useState('Dr. Siddharth Roy (Surgical Oncology)');
+  const [acceptRemarks, setAcceptRemarks] = useState('');
+
+  const [decliningEnquiry, setDecliningEnquiry] = useState<PatientEnquiry | null>(null);
+  const [hospitalDeclineReasonText, setHospitalDeclineReasonText] = useState('');
+  const [timelineEnquiry, setTimelineEnquiry] = useState<PatientEnquiry | null>(null);
+  const [hospitalEnquiryTabFilter, setHospitalEnquiryTabFilter] = useState('All');
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3000);
@@ -416,6 +459,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   // ---- Sidebar Item Taxonomy ----
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Activity },
+    { id: 'assigned-enquiries', label: 'Assigned Patients (CAB)', icon: UserCheck, badge: pendingAssignedEnquiriesCount },
     { id: 'patients', label: 'Patient Management', icon: Users, badge: patients.filter(p => p.treatmentStatus === 'Under Treatment').length },
     { id: 'referrals', label: 'Referrals', icon: UserCheck, badge: referrals.filter(r => r.status === 'Pending Action').length },
     { id: 'campaigns', label: 'Awareness Campaigns', icon: Calendar, badge: campaigns.filter(c => c.status === 'Upcoming').length },
@@ -510,7 +554,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
         {/* Footer Navigation & Logout */}
         <div className="p-3 border-t border-white/10 space-y-1">
           <button
-            onClick={() => onPageChange('home')}
+            onClick={() => navigate('/')}
             className="w-full flex items-center rounded-xl p-2.5 text-xs font-semibold text-white/70 hover:text-white hover:bg-white/10 cursor-pointer transition-colors"
           >
             <Globe className={`w-4.5 h-4.5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3'}`} />
@@ -727,6 +771,214 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                 </div>
               </div>
 
+            </div>
+          )}
+
+          {/* =====================================================
+              TAB: ASSIGNED PATIENTS (STEPS 5 & 6: HOSPITAL ACCEPT / DECLINE)
+          ===================================================== */}
+          {activeTab === 'assigned-enquiries' && (
+            <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
+              {/* KPI Summary Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
+                  <div className="w-12 h-12 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700">
+                    <UserCheck className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-black text-slate-900 block">{pendingAssignedEnquiriesCount}</span>
+                    <span className="text-xs text-slate-500 font-medium">Pending Hospital Action</span>
+                  </div>
+                </div>
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-black text-slate-900 block">
+                      {assignedEnquiriesForThisHospital.filter(e => e.status === 'Appointment Confirmed' || e.status === 'Accepted by Hospital').length}
+                    </span>
+                    <span className="text-xs text-slate-500 font-medium">Appointments Confirmed</span>
+                  </div>
+                </div>
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
+                  <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+                    <Stethoscope className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-black text-slate-900 block">{assignedEnquiriesForThisHospital.length}</span>
+                    <span className="text-xs text-slate-500 font-medium">Total Patient Referrals</span>
+                  </div>
+                </div>
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
+                  <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
+                    <AlertCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-black text-slate-900 block">
+                      {assignedEnquiriesForThisHospital.filter(e => e.status === 'Declined by Hospital').length}
+                    </span>
+                    <span className="text-xs text-slate-500 font-medium">Declined Cases</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filter Row */}
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap justify-between items-center gap-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  {['All', 'Pending Action', 'Appointment Confirmed', 'Declined by Hospital'].map(st => (
+                    <button
+                      key={st}
+                      onClick={() => setHospitalEnquiryTabFilter(st)}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        hospitalEnquiryTabFilter === st
+                          ? 'bg-[#063b42] text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {st} {st === 'Pending Action' && pendingAssignedEnquiriesCount > 0 ? `(${pendingAssignedEnquiriesCount})` : ''}
+                    </button>
+                  ))}
+                </div>
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search ID, patient, city..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-teal-600"
+                  />
+                </div>
+              </div>
+
+              {/* Assigned Patients Table */}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-slate-200">
+                        <th className="px-6 py-3.5">Enquiry ID & Ref</th>
+                        <th className="px-6 py-3.5">Patient Details</th>
+                        <th className="px-6 py-3.5">Contact & Location</th>
+                        <th className="px-6 py-3.5">Stream & Symptoms</th>
+                        <th className="px-6 py-3.5">Super Admin Notes / Appointment</th>
+                        <th className="px-6 py-3.5">Status</th>
+                        <th className="px-6 py-3.5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-xs">
+                      {assignedEnquiriesForThisHospital.filter(e => {
+                        const matchSearch =
+                          e.enquiryId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          e.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          e.city.toLowerCase().includes(searchTerm.toLowerCase());
+                        const matchFilter =
+                          hospitalEnquiryTabFilter === 'All' ||
+                          (hospitalEnquiryTabFilter === 'Pending Action' && e.status === 'Assigned to Hospital') ||
+                          (hospitalEnquiryTabFilter === 'Appointment Confirmed' && (e.status === 'Appointment Confirmed' || e.status === 'Accepted by Hospital')) ||
+                          e.status === hospitalEnquiryTabFilter;
+                        return matchSearch && matchFilter;
+                      }).length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="px-6 py-8 text-center text-slate-500 font-medium">
+                            No assigned patient enquiries match the active filter criteria.
+                          </td>
+                        </tr>
+                      ) : (
+                        assignedEnquiriesForThisHospital.filter(e => {
+                          const matchSearch =
+                            e.enquiryId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            e.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            e.city.toLowerCase().includes(searchTerm.toLowerCase());
+                          const matchFilter =
+                            hospitalEnquiryTabFilter === 'All' ||
+                            (hospitalEnquiryTabFilter === 'Pending Action' && e.status === 'Assigned to Hospital') ||
+                            (hospitalEnquiryTabFilter === 'Appointment Confirmed' && (e.status === 'Appointment Confirmed' || e.status === 'Accepted by Hospital')) ||
+                            e.status === hospitalEnquiryTabFilter;
+                          return matchSearch && matchFilter;
+                        }).map((enq) => (
+                          <tr key={enq.id} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="px-6 py-4">
+                              <span className="font-mono font-bold text-teal-800 block">{enq.enquiryId}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">Ref: {enq.referenceNumber}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <p className="font-bold text-slate-900">{enq.patientName}</p>
+                              <p className="text-[10px] text-slate-500">{enq.age} yrs • {enq.gender}</p>
+                            </td>
+                            <td className="px-6 py-4">
+                              <p className="font-medium text-slate-800">{enq.city}</p>
+                              <p className="text-[10px] text-slate-500">{enq.phone}</p>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="font-bold text-slate-800 block">{enq.cancerType || enq.reason}</span>
+                              <span className="text-[10px] text-slate-500 truncate block max-w-xs">{enq.symptoms || 'N/A'}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              {enq.superAdminAssignment?.remarks && (
+                                <p className="text-[11px] text-indigo-700 font-medium">
+                                  <strong>Super Admin:</strong> {enq.superAdminAssignment.remarks}
+                                </p>
+                              )}
+                              {enq.appointment && (
+                                <div className="mt-1 text-[10px] text-emerald-800 bg-emerald-50 p-1.5 rounded border border-emerald-200">
+                                  <p className="font-bold">📅 {enq.appointment.date} at {enq.appointment.time}</p>
+                                  <p>👨‍⚕️ {enq.appointment.doctor}</p>
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                                enq.status === 'Assigned to Hospital' ? 'bg-[#063b42]/10 text-[#063b42] border-[#063b42]/30 animate-pulse' :
+                                enq.status === 'Appointment Confirmed' || enq.status === 'Accepted by Hospital' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                enq.status === 'Declined by Hospital' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                'bg-slate-50 text-slate-700 border-slate-200'
+                              }`}>
+                                {enq.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
+                              {enq.status === 'Assigned to Hospital' && (
+                                <>
+                                  <button
+                                    onClick={() => {
+                                      setAcceptingEnquiry(enq);
+                                      setAcceptDate(enq.preferredDate || new Date(Date.now() + 86400000).toISOString().split('T')[0]);
+                                      setAcceptTime('10:30 AM');
+                                      setAcceptDoctor('Dr. Siddharth Roy (Surgical Oncology)');
+                                      setAcceptRemarks('');
+                                    }}
+                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all cursor-pointer inline-flex items-center gap-1"
+                                  >
+                                    <Check className="w-3.5 h-3.5" /> Accept Patient
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setDecliningEnquiry(enq);
+                                      setHospitalDeclineReasonText('');
+                                    }}
+                                    className="px-2.5 py-1 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg text-[11px] font-bold transition-colors cursor-pointer inline-flex items-center gap-1"
+                                  >
+                                    <X className="w-3.5 h-3.5" /> Decline
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                onClick={() => setTimelineEnquiry(enq)}
+                                className="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg text-[11px] font-bold transition-colors cursor-pointer inline-flex items-center gap-1"
+                              >
+                                <Clock className="w-3.5 h-3.5 text-teal-700" />
+                                <span>Timeline</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1564,6 +1816,184 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
           </div>
         </div>
       )}
+
+      {/* Accept Patient Modal (Step 5 & 6: Auto Appointment Creation) */}
+      {acceptingEnquiry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" /> Accept Patient & Schedule Appointment
+              </h3>
+              <button onClick={() => setAcceptingEnquiry(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="text-xs space-y-1 text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <p><strong className="text-slate-900">Enquiry ID:</strong> {acceptingEnquiry.enquiryId} (Ref: {acceptingEnquiry.referenceNumber})</p>
+              <p><strong className="text-slate-900">Patient:</strong> {acceptingEnquiry.patientName} ({acceptingEnquiry.age} yrs / {acceptingEnquiry.gender})</p>
+              <p><strong className="text-slate-900">Location:</strong> {acceptingEnquiry.city} | <strong>Phone:</strong> {acceptingEnquiry.phone}</p>
+              <p><strong className="text-slate-900">Stream:</strong> {acceptingEnquiry.reason} ({acceptingEnquiry.cancerType || 'General'})</p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    Appointment Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={acceptDate}
+                    onChange={e => setAcceptDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-emerald-600 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    Appointment Slot / Time <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={acceptTime}
+                    onChange={e => setAcceptTime(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-emerald-600 outline-none"
+                  >
+                    <option value="09:30 AM">09:30 AM</option>
+                    <option value="10:30 AM">10:30 AM</option>
+                    <option value="11:30 AM">11:30 AM</option>
+                    <option value="02:00 PM">02:00 PM</option>
+                    <option value="03:30 PM">03:30 PM</option>
+                    <option value="04:30 PM">04:30 PM</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                  Assigned Oncologist / Specialist Doctor <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={acceptDoctor}
+                  onChange={e => setAcceptDoctor(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-emerald-600 outline-none"
+                >
+                  <option value="Dr. Siddharth Roy (Surgical Oncology)">Dr. Siddharth Roy (Surgical Oncology)</option>
+                  <option value="Dr. Ananya Sen (Radiation Oncology)">Dr. Ananya Sen (Radiation Oncology)</option>
+                  <option value="Dr. Vikram Seth (Medical Oncology)">Dr. Vikram Seth (Medical Oncology)</option>
+                  <option value="Dr. Priya Nair (Gynecologic Oncology)">Dr. Priya Nair (Gynecologic Oncology)</option>
+                  <option value="Oncology OPD Resident Doctor">Oncology OPD Resident Doctor</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                  Clinical Remarks / Instructions for Patient (Optional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={acceptRemarks}
+                  onChange={e => setAcceptRemarks(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:border-emerald-600 outline-none"
+                  placeholder="e.g. Please bring all past biopsy reports and arrive 15 minutes before slot..."
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                onClick={() => setAcceptingEnquiry(null)}
+                className="px-4 py-2 border border-slate-300 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  enquiryStore.hospitalAcceptEnquiry(
+                    acceptingEnquiry.id,
+                    acceptDate,
+                    acceptTime,
+                    acceptDoctor,
+                    acceptRemarks,
+                    profile.name
+                  );
+                  setAcceptingEnquiry(null);
+                  showToast(`Patient ${acceptingEnquiry.patientName} accepted & appointment created!`);
+                }}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm cursor-pointer flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Accept & Create Appointment</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Decline Patient Modal */}
+      {decliningEnquiry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-600" /> Decline Patient Referral
+              </h3>
+              <button onClick={() => setDecliningEnquiry(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="text-xs space-y-1 text-slate-600 bg-slate-50 p-3 rounded-xl">
+              <p><strong className="text-slate-800">Enquiry ID:</strong> {decliningEnquiry.enquiryId}</p>
+              <p><strong className="text-slate-800">Patient:</strong> {decliningEnquiry.patientName}</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Decline Reason <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                rows={3}
+                required
+                value={hospitalDeclineReasonText}
+                onChange={e => setHospitalDeclineReasonText(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-red-500 outline-none"
+                placeholder="State reason for declining referral..."
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setDecliningEnquiry(null)}
+                className="px-4 py-2 border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={!hospitalDeclineReasonText.trim()}
+                onClick={() => {
+                  if (hospitalDeclineReasonText.trim()) {
+                    enquiryStore.hospitalDeclineEnquiry(decliningEnquiry.id, hospitalDeclineReasonText, profile.name);
+                    setDecliningEnquiry(null);
+                    showToast(`Patient ${decliningEnquiry.patientName} declined and returned to Super Admin.`);
+                  }
+                }}
+                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                Decline & Return to Super Admin
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enquiry Timeline Modal */}
+      <EnquiryTimelineModal
+        enquiry={timelineEnquiry}
+        isOpen={!!timelineEnquiry}
+        onClose={() => setTimelineEnquiry(null)}
+      />
 
     </div>
   );

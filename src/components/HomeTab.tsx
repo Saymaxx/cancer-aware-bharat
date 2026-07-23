@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, Heart, ShieldAlert, Award, ChevronRight, ChevronLeft, Activity, HelpCircle, CheckCircle2, Microscope, HeartHandshake, BookOpen } from 'lucide-react';
 import { INITIAL_EVENTS } from '../data';
 import { Event } from '../types';
@@ -67,12 +68,12 @@ function AnimatedCounter({ value }: { value: string }) {
 }
 
 interface HomeTabProps {
-  onPageChange: (page: string) => void;
   onOpenVolunteer: () => void;
   onOpenEnquiry: () => void;
 }
 
-export default function HomeTab({ onPageChange, onOpenVolunteer, onOpenEnquiry }: HomeTabProps) {
+export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps) {
+  const navigate = useNavigate();
   // Risk assessment state
   const [quizStep, setQuizStep] = useState(0);
   const [gender, setGender] = useState('');
@@ -161,7 +162,7 @@ export default function HomeTab({ onPageChange, onOpenVolunteer, onOpenEnquiry }
             
             <div className="flex flex-wrap gap-4 pt-2">
               <button
-                onClick={() => onPageChange('events')}
+                onClick={() => navigate('/events')}
                 className="px-6 py-3 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 hover:scale-[1.02] shadow-lg shadow-black/35 flex items-center gap-2 cursor-pointer transition-all duration-300"
               >
                 Find Free Screening Camps <ChevronRight className="w-4 h-4" />
@@ -534,7 +535,7 @@ export default function HomeTab({ onPageChange, onOpenVolunteer, onOpenEnquiry }
             <p className="font-body-md text-sm text-on-surface-variant">Don\'t postpone your check-ups. Register in 30 seconds.</p>
           </div>
           <button
-            onClick={() => onPageChange('events')}
+            onClick={() => navigate('/events')}
             className="text-sm font-bold text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
           >
             All Events & Camps <ChevronRight className="w-4 h-4" />

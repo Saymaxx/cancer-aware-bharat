@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Heart, Calendar, Clock, MapPin, Users, Award, Bell, BookOpen,
   FileText, Image, MessageSquare, LogOut, ChevronRight, ChevronDown,
@@ -111,11 +112,12 @@ function SectionHeader({ icon: Icon, title, subtitle, action }: {
 // Main Volunteer Dashboard
 // ===========================
 interface VolunteerDashboardProps {
-  onPageChange: (page: string) => void;
+  onPageChange?: (page: string) => void;
   onLogout: () => void;
 }
 
 export default function VolunteerDashboard({ onPageChange, onLogout }: VolunteerDashboardProps) {
+  const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -400,7 +402,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
         {/* Sidebar Footer */}
         <div className="p-3 border-t border-white/10 space-y-1">
           <button
-            onClick={() => onPageChange('home')}
+            onClick={() => navigate('/')}
             className="w-full flex items-center rounded-xl p-2.5 text-xs font-semibold text-white/70 hover:text-white hover:bg-white/10 cursor-pointer transition-colors"
           >
             <Globe className={`w-4.5 h-4.5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3'}`} />

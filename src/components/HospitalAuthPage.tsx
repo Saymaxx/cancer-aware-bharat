@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Building2, Eye, EyeOff, CheckCircle2, Shield, FileCheck, ArrowRight, ArrowLeft,
   Mail, Phone, Lock, MapPin, Award, Check, Clock, Upload, Stethoscope,
@@ -8,7 +9,7 @@ import {
 } from 'lucide-react';
 
 interface HospitalAuthPageProps {
-  onPageChange: (page: string) => void;
+  onPageChange?: (page: string) => void;
 }
 
 type AuthMode = 'login' | 'register';
@@ -23,6 +24,7 @@ const PRE_APPROVED_HOSPITALS = [
 ];
 
 export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps) {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>('login');
   const [currentStep, setCurrentStep] = useState<FormStep>(1);
   const [showPassword, setShowPassword] = useState(false);
@@ -254,19 +256,14 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
     }
 
     if (matched) {
-      setIsSubmitting(true);
-      setTimeout(() => {
-        setIsSubmitting(false);
-        setLoggedInHospital({ name: matched!.name, email: matched!.email, city: matched!.city });
-        setSubmitSuccess(true);
-        localStorage.setItem('aware_bharat_logged_in_hospital', JSON.stringify({
-          name: matched!.name,
-          email: matched!.email,
-          city: matched!.city,
-          sessionKey: 'HOSP-' + Math.random().toString(36).substring(2, 9).toUpperCase(),
-          loginTime: new Date().toLocaleString()
-        }));
-      }, 1200);
+      localStorage.setItem('aware_bharat_logged_in_hospital', JSON.stringify({
+        name: matched!.name,
+        email: matched!.email,
+        city: matched!.city,
+        sessionKey: 'HOSP-' + Math.random().toString(36).substring(2, 9).toUpperCase(),
+        loginTime: new Date().toLocaleString()
+      }));
+      navigate('/hospital/dashboard', { replace: true });
     } else {
       setErrorMessage('Invalid hospital credentials. Ensure password is correct and your application is approved.');
     }
@@ -386,7 +383,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
           {/* Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button
-              onClick={() => onPageChange('home')}
+              onClick={() => navigate('/')}
               className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-slate-50 cursor-pointer"
             >
               Exit Portal
@@ -398,7 +395,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
               <Download className="w-4 h-4 text-slate-600" /> Receipt PDF
             </button>
             <button
-              onClick={() => onPageChange(mode === 'login' ? 'hospital-dashboard' : 'hospitals')}
+              onClick={() => navigate(mode === 'login' ? '/hospital/dashboard' : '/hospitals')}
               className="flex-1 py-3 rounded-xl bg-[#063b42] text-white font-bold text-xs hover:bg-[#084c55] shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span>{mode === 'login' ? 'Go to Hospital Dashboard' : 'View Partner Directory'}</span>

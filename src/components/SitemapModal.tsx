@@ -1,10 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Home, Info, Book, Heart, Network, Building2, Calendar } from 'lucide-react';
 
 interface SitemapModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onNavigate: (page: string) => void;
   onOpenVolunteer: () => void;
   onOpenEnquiry: () => void;
 }
@@ -12,14 +12,15 @@ interface SitemapModalProps {
 export default function SitemapModal({
   isOpen,
   onClose,
-  onNavigate,
   onOpenVolunteer,
   onOpenEnquiry
 }: SitemapModalProps) {
+  const navigate = useNavigate();
+
   if (!isOpen) return null;
 
-  const handleLinkClick = (page: string) => {
-    onNavigate(page);
+  const handleLinkClick = (path: string) => {
+    navigate(path);
     onClose();
   };
 
@@ -52,7 +53,7 @@ export default function SitemapModal({
             {/* Home Node */}
             <div className="border border-outline-variant/50 rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors bg-surface-container-low/20">
               <button 
-                onClick={() => handleLinkClick('home')}
+                onClick={() => handleLinkClick('/')}
                 className="flex items-center gap-2 text-left text-sm font-bold text-primary hover:underline"
               >
                 <Home className="w-4 h-4" /> Home Dashboard
@@ -68,7 +69,7 @@ export default function SitemapModal({
             {/* About Node */}
             <div className="border border-outline-variant/50 rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors bg-surface-container-low/20">
               <button 
-                onClick={() => handleLinkClick('about')}
+                onClick={() => handleLinkClick('/about')}
                 className="flex items-center gap-2 text-left text-sm font-bold text-primary hover:underline"
               >
                 <Info className="w-4 h-4" /> About & Mission
@@ -84,7 +85,7 @@ export default function SitemapModal({
             {/* Hospitals Node */}
             <div className="border border-outline-variant/50 rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors bg-surface-container-low/20">
               <button 
-                onClick={() => handleLinkClick('hospitals')}
+                onClick={() => handleLinkClick('/hospitals')}
                 className="flex items-center gap-2 text-left text-sm font-bold text-primary hover:underline"
               >
                 <Building2 className="w-4 h-4 text-primary" /> Clinical Network
@@ -100,7 +101,7 @@ export default function SitemapModal({
             {/* Events Node */}
             <div className="border border-outline-variant/50 rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors bg-surface-container-low/20">
               <button 
-                onClick={() => handleLinkClick('events')}
+                onClick={() => handleLinkClick('/events')}
                 className="flex items-center gap-2 text-left text-sm font-bold text-primary hover:underline"
               >
                 <Calendar className="w-4 h-4 text-primary" /> Campaigns & Camps
@@ -116,7 +117,7 @@ export default function SitemapModal({
             {/* Blogs Node */}
             <div className="border border-outline-variant/50 rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors bg-surface-container-low/20">
               <button 
-                onClick={() => handleLinkClick('blogs')}
+                onClick={() => handleLinkClick('/blogs')}
                 className="flex items-center gap-2 text-left text-sm font-bold text-primary hover:underline"
               >
                 <Book className="w-4 h-4" /> Educational Hub
@@ -156,29 +157,17 @@ export default function SitemapModal({
               </div>
             </div>
 
-            {/* Admin Node */}
+            {/* Partner Node — Admin/Super Admin links removed */}
             <div className="border border-outline-variant/50 rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors bg-surface-container-low/20">
               <span className="flex items-center gap-2 text-sm font-bold text-indigo-700">
-                <Network className="w-4 h-4" /> Management & Partner Nodes
+                <Network className="w-4 h-4" /> Partner Nodes
               </span>
               <div className="flex flex-col gap-2 pt-1.5">
                 <button
-                  onClick={() => handleLinkClick('hospital-auth')}
+                  onClick={() => handleLinkClick('/hospital/login')}
                   className="w-full py-1.5 bg-primary/10 text-primary rounded text-xs font-bold hover:bg-primary/20 transition-colors text-left pl-3"
                 >
                   Hospital Partner Portal
-                </button>
-                <button
-                  onClick={() => handleLinkClick('admin-auth')}
-                  className="w-full py-1.5 bg-surface-variant text-primary rounded text-xs font-bold hover:bg-surface-container transition-colors text-left pl-3"
-                >
-                  Admin Portal
-                </button>
-                <button
-                  onClick={() => handleLinkClick('super-admin-auth')}
-                  className="w-full py-1.5 bg-indigo-950 text-white rounded text-xs font-bold hover:opacity-90 transition-opacity text-left pl-3"
-                >
-                  Trust Super Admin Console
                 </button>
               </div>
             </div>

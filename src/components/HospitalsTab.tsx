@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Phone, Mail, Globe, ShieldCheck, Heart, Info, ArrowUpRight, CheckCircle, Map, Building2 } from 'lucide-react';
 import { INITIAL_HOSPITALS } from '../data';
 import { Hospital, HospitalPartnerRequest } from '../types';
@@ -6,10 +7,10 @@ import MapContainer from './MapContainer';
 
 interface HospitalsTabProps {
   onOpenEnquiry: (hospitalId?: string) => void;
-  onPageChange?: (page: string) => void;
 }
 
-export default function HospitalsTab({ onOpenEnquiry, onPageChange }: HospitalsTabProps) {
+export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
+  const navigate = useNavigate();
   const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [regionFilter, setRegionFilter] = useState<'all' | 'north' | 'south' | 'east' | 'west'>('all');
@@ -112,17 +113,15 @@ export default function HospitalsTab({ onOpenEnquiry, onPageChange }: HospitalsT
         </p>
 
         {/* Hospital Portal Access Button */}
-        {onPageChange && (
           <div className="pt-2 flex items-center justify-center gap-3">
             <button
-              onClick={() => onPageChange('hospital-auth')}
+              onClick={() => navigate('/hospital/login')}
               className="px-5 py-2.5 bg-[#063b42] text-white rounded-xl text-xs font-bold hover:bg-[#084c55] shadow-md transition-all cursor-pointer inline-flex items-center gap-2"
             >
               <Building2 className="w-4 h-4 text-emerald-400" />
               <span>Hospital Partner Login / Apply Portal</span>
             </button>
           </div>
-        )}
       </section>
 
       {/* Network Map Section */}
@@ -135,7 +134,7 @@ export default function HospitalsTab({ onOpenEnquiry, onPageChange }: HospitalsT
             <p className="font-body-md text-xs text-on-surface-variant">Explore clinical locations and partners across the country.</p>
           </div>
           <button
-            onClick={() => onPageChange ? onPageChange('hospital-auth') : setShowRequestForm(true)}
+            onClick={() => navigate('/hospital/login')}
             className="px-4 py-2 bg-secondary text-white rounded-xl text-xs font-bold hover:opacity-95 shadow-sm transition-opacity cursor-pointer flex items-center gap-1"
           >
             Join Network <ArrowUpRight className="w-3.5 h-3.5" />

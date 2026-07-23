@@ -4,8 +4,11 @@ import {
   BarChart3, Settings, LogOut, Bell, Search, Filter, Plus, Edit2, Trash2,
   Check, X, ThumbsUp, Send, Download, FileCheck, ChevronLeft, ChevronRight,
   TrendingUp, DollarSign, BookOpen, MessageSquare, AlertCircle, AlertTriangle,
-  Award, RefreshCw, Terminal, CheckCircle2, User, Key, Menu
+  Award, RefreshCw, Terminal, CheckCircle2, User, Key, Menu, Stethoscope, Clock
 } from 'lucide-react';
+import { enquiryStore, useEnquiries, useNotifications } from '../enquiryStore';
+import EnquiryTimelineModal from './EnquiryTimelineModal';
+import { PatientEnquiry } from '../types';
 
 import {
   INITIAL_KPI_METRICS, INITIAL_PATIENTS, INITIAL_ADMIN_VOLUNTEERS,
@@ -14,11 +17,24 @@ import {
   type CampaignRequest, type AdminDonation, type AdminFeedback
 } from '../adminDashboardData';
 
-export default function AdminDashboard({ onPageChange, onLogout }: { onPageChange: (page: string) => void; onLogout: () => void }) {
+export default function AdminDashboard({ onPageChange, onLogout }: { onPageChange?: (page: string) => void; onLogout: () => void }) {
   // Sidebar collapsed state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
+
+  // Real-time Patient Enquiries & Notifications from Enquiry Store
+  const enquiries = useEnquiries();
+  const adminNotifications = useNotifications('admin');
+  const pendingAdminCount = useMemo(() => enquiries.filter(e => e.status === 'Pending Admin Review').length, [enquiries]);
+
+  // Admin Enquiry Modals state
+  const [showApproveEnquiryModal, setShowApproveEnquiryModal] = useState<PatientEnquiry | null>(null);
+  const [approveRemarks, setApproveRemarks] = useState('');
+  const [showRejectEnquiryModal, setShowRejectEnquiryModal] = useState<PatientEnquiry | null>(null);
+  const [rejectReasonText, setRejectReasonText] = useState('');
+  const [timelineEnquiry, setTimelineEnquiry] = useState<PatientEnquiry | null>(null);
+  const [enquiryFilter, setEnquiryFilter] = useState('All');
 
   // React state for mock DB tables
   const [patients, setPatients] = useState<Patient[]>(() => {
@@ -340,9 +356,25 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     });
   }, [volunteers, searchTerm, volunteerFilter]);
 
+  const filteredEnquiries = useMemo(() => {
+    return enquiries.filter(e => {
+      const matchSearch =
+        e.enquiryId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.reason.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchFilter =
+        enquiryFilter === 'All' ||
+        (enquiryFilter === 'Approved by Admin' && (e.status === 'Approved by Admin' || e.status === 'Pending Hospital Assignment')) ||
+        e.status === enquiryFilter;
+      return matchSearch && matchFilter;
+    });
+  }, [enquiries, searchTerm, enquiryFilter]);
+
   // Sidebar navigation options
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard Overview', icon: BarChart3 },
+    { id: 'enquiries', label: 'Patient Enquiries', icon: Stethoscope, badge: pendingAdminCount },
     { id: 'patients', label: 'Patients Manager', icon: Heart },
     { id: 'volunteers', label: 'Volunteers Manager', icon: Users },
     { id: 'campaigns', label: 'Campaigns Scheduler', icon: Calendar },
@@ -406,14 +438,21 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                     setSearchTerm('');
                     setMobileSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center rounded-xl p-3 text-sm font-semibold transition-all cursor-pointer ${
+                  className={`w-full flex items-center justify-between rounded-xl p-3 text-sm font-semibold transition-all cursor-pointer ${
                     isActive
                       ? 'bg-white/10 text-white shadow-sm border-l-4 border-secondary-container'
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <IconComp className={`w-5 h-5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3.5'}`} />
-                  {(!sidebarCollapsed || mobileSidebarOpen) && <span>{item.label}</span>}
+                  <div className="flex items-center">
+                    <IconComp className={`w-5 h-5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3.5'}`} />
+                    {(!sidebarCollapsed || mobileSidebarOpen) && <span>{item.label}</span>}
+                  </div>
+                  {(!sidebarCollapsed || mobileSidebarOpen) && (item as any).badge !== undefined && (item as any).badge > 0 && (
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-secondary-container text-[#004349]">
+                      {(item as any).badge}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -557,6 +596,189 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                   </button>
                 </div>
 
+              </div>
+            </div>
+          )}
+
+          {/* =====================================================
+              TAB: PATIENT ENQUIRIES (STEP 2: ADMIN REVIEW)
+          ===================================================== */}
+          {activeTab === 'enquiries' && (
+            <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
+              {/* KPI Summary Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
+                  <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
+                    <Stethoscope className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-black text-slate-900 block">{pendingAdminCount}</span>
+                    <span className="text-xs text-slate-500 font-medium">Pending Admin Review</span>
+                  </div>
+                </div>
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
+                  <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-black text-slate-900 block">
+                      {enquiries.filter(e => e.status === 'Approved by Admin' || e.status === 'Assigned to Hospital').length}
+                    </span>
+                    <span className="text-xs text-slate-500 font-medium">Approved by Admin</span>
+                  </div>
+                </div>
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+                    <Calendar className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-black text-slate-900 block">
+                      {enquiries.filter(e => e.status === 'Appointment Confirmed').length}
+                    </span>
+                    <span className="text-xs text-slate-500 font-medium">Confirmed Appointments</span>
+                  </div>
+                </div>
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
+                  <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+                    <AlertCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-2xl font-black text-slate-900 block">
+                      {enquiries.filter(e => e.status === 'Rejected by Admin' || e.status === 'Declined by Hospital').length}
+                    </span>
+                    <span className="text-xs text-slate-500 font-medium">Rejected / Declined</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filter & Search Controls */}
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap justify-between items-center gap-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  {['All', 'Pending Admin Review', 'Approved by Admin', 'Rejected by Admin', 'Appointment Confirmed'].map(st => (
+                    <button
+                      key={st}
+                      onClick={() => setEnquiryFilter(st)}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        enquiryFilter === st
+                          ? 'bg-[#004349] text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {st} {st === 'Pending Admin Review' && pendingAdminCount > 0 ? `(${pendingAdminCount})` : ''}
+                    </button>
+                  ))}
+                </div>
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search ID, patient, city..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Patient Enquiries Table */}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-slate-200">
+                        <th className="px-6 py-3.5">Enquiry ID & Ref</th>
+                        <th className="px-6 py-3.5">Patient Details</th>
+                        <th className="px-6 py-3.5">Contact & Location</th>
+                        <th className="px-6 py-3.5">Stream & Symptoms</th>
+                        <th className="px-6 py-3.5">Uploaded Reports</th>
+                        <th className="px-6 py-3.5">Date</th>
+                        <th className="px-6 py-3.5">Status</th>
+                        <th className="px-6 py-3.5 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-xs">
+                      {filteredEnquiries.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="px-6 py-8 text-center text-slate-500 font-medium">
+                            No patient enquiries found matching criteria.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredEnquiries.map((enq) => (
+                          <tr key={enq.id} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="px-6 py-4">
+                              <span className="font-mono font-bold text-primary block">{enq.enquiryId}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">Ref: {enq.referenceNumber}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <p className="font-bold text-slate-900">{enq.patientName}</p>
+                              <p className="text-[10px] text-slate-500">{enq.age} yrs • {enq.gender}</p>
+                            </td>
+                            <td className="px-6 py-4">
+                              <p className="font-medium text-slate-800">{enq.city}</p>
+                              <p className="text-[10px] text-slate-500">{enq.phone}</p>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="font-bold text-slate-800 block">{enq.cancerType || enq.reason}</span>
+                              <span className="text-[10px] text-slate-500 truncate block max-w-xs">{enq.symptoms || enq.notes || 'N/A'}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              {enq.uploadedReports && enq.uploadedReports.length > 0 ? (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                                  <FileText className="w-3 h-3" /> {enq.uploadedReports.length} Report(s)
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-slate-400 italic">No reports</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 text-slate-600 font-mono text-[11px]">
+                              {enq.date}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                                enq.status === 'Pending Admin Review' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                enq.status === 'Approved by Admin' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                enq.status === 'Appointment Confirmed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                enq.status === 'Rejected by Admin' ? 'bg-red-50 text-red-700 border-red-200' :
+                                'bg-indigo-50 text-indigo-700 border-indigo-200'
+                              }`}>
+                                {enq.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
+                              {enq.status === 'Pending Admin Review' && (
+                                <>
+                                  <button
+                                    onClick={() => { setShowApproveEnquiryModal(enq); setApproveRemarks(''); }}
+                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all cursor-pointer inline-flex items-center gap-1"
+                                    title="Approve Enquiry"
+                                  >
+                                    <Check className="w-3 h-3" /> Approve
+                                  </button>
+                                  <button
+                                    onClick={() => { setShowRejectEnquiryModal(enq); setRejectReasonText(''); }}
+                                    className="px-2.5 py-1 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg text-[11px] font-bold transition-colors cursor-pointer inline-flex items-center gap-1"
+                                    title="Reject Enquiry"
+                                  >
+                                    <X className="w-3 h-3" /> Reject
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                onClick={() => setTimelineEnquiry(enq)}
+                                className="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg text-[11px] font-bold transition-colors cursor-pointer inline-flex items-center gap-1"
+                                title="View Timeline & Details"
+                              >
+                                <Clock className="w-3.5 h-3.5 text-primary" />
+                                <span>Timeline</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -1549,6 +1771,122 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
           </div>
         </div>
       )}
+
+      {/* Admin Approve Enquiry Modal */}
+      {showApproveEnquiryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" /> Approve Patient Enquiry
+              </h3>
+              <button onClick={() => setShowApproveEnquiryModal(null)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="text-xs space-y-1 text-slate-600 bg-slate-50 p-3 rounded-xl">
+              <p><strong className="text-slate-800">Enquiry ID:</strong> {showApproveEnquiryModal.enquiryId}</p>
+              <p><strong className="text-slate-800">Patient:</strong> {showApproveEnquiryModal.patientName} ({showApproveEnquiryModal.age} / {showApproveEnquiryModal.gender})</p>
+              <p><strong className="text-slate-800">Stream:</strong> {showApproveEnquiryModal.reason}</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Admin Approval Remarks / Case Notes (Optional)
+              </label>
+              <textarea
+                rows={3}
+                value={approveRemarks}
+                onChange={e => setApproveRemarks(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-primary outline-none"
+                placeholder="e.g. Primary reports verified. Approved for Super Admin hospital assignment."
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowApproveEnquiryModal(null)}
+                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  enquiryStore.adminApproveEnquiry(showApproveEnquiryModal.id, approveRemarks, 'Dr. Ramesh Sharma');
+                  setShowApproveEnquiryModal(null);
+                }}
+                className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-sm cursor-pointer"
+              >
+                Approve & Forward to Super Admin
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Reject Enquiry Modal */}
+      {showRejectEnquiryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-600" /> Reject Patient Enquiry
+              </h3>
+              <button onClick={() => setShowRejectEnquiryModal(null)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="text-xs space-y-1 text-slate-600 bg-slate-50 p-3 rounded-xl">
+              <p><strong className="text-slate-800">Enquiry ID:</strong> {showRejectEnquiryModal.enquiryId}</p>
+              <p><strong className="text-slate-800">Patient:</strong> {showRejectEnquiryModal.patientName}</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Rejection Reason <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                rows={3}
+                required
+                value={rejectReasonText}
+                onChange={e => setRejectReasonText(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-red-500 outline-none"
+                placeholder="State reason for rejection..."
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowRejectEnquiryModal(null)}
+                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={!rejectReasonText.trim()}
+                onClick={() => {
+                  if (rejectReasonText.trim()) {
+                    enquiryStore.adminRejectEnquiry(showRejectEnquiryModal.id, rejectReasonText, 'Dr. Ramesh Sharma');
+                    setShowRejectEnquiryModal(null);
+                  }
+                }}
+                className="px-5 py-2 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                Reject Enquiry
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enquiry Timeline Modal */}
+      <EnquiryTimelineModal
+        enquiry={timelineEnquiry}
+        isOpen={!!timelineEnquiry}
+        onClose={() => setTimelineEnquiry(null)}
+      />
 
     </div>
   );

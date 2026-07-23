@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Target, Eye, Users, ShieldCheck, Heart, Award, Milestone, Calendar, ArrowRight, Quote } from 'lucide-react';
 
 interface AboutTabProps {
   onOpenVolunteer: () => void;
-  onPageChange: (page: string) => void;
 }
 
-export default function AboutTab({ onOpenVolunteer, onPageChange }: AboutTabProps) {
+export default function AboutTab({ onOpenVolunteer }: AboutTabProps) {
+  const navigate = useNavigate();
   const [activeYear, setActiveYear] = useState('2026');
 
   const timelineData: Record<string, { title: string; desc: string; stat: string }> = {
@@ -208,7 +209,7 @@ export default function AboutTab({ onOpenVolunteer, onPageChange }: AboutTabProp
             Become a Volunteer <ArrowRight className="w-4 h-4" />
           </button>
           <button
-            onClick={() => onPageChange('hospitals')}
+            onClick={() => navigate('/hospitals')}
             className="px-6 py-3 border border-white/40 text-white rounded-xl font-bold text-sm hover:bg-white/10 transition-colors cursor-pointer"
           >
             Explore Hospital Partners

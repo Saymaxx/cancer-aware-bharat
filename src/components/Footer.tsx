@@ -1,18 +1,19 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface FooterProps {
-  onPageChange: (page: string) => void;
   onOpenVolunteer: () => void;
   onOpenEnquiry: () => void;
   onOpenSitemap: () => void;
 }
 
 export default function Footer({
-  onPageChange,
   onOpenVolunteer,
   onOpenEnquiry,
   onOpenSitemap
 }: FooterProps) {
+  const navigate = useNavigate();
+
   return (
     <footer className="bg-surface-container-highest dark:bg-inverse-surface border-t border-outline-variant mt-16 w-full">
       <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-12">
@@ -36,25 +37,25 @@ export default function Footer({
               Our Initiatives
             </span>
             <button
-              onClick={() => onPageChange('about')}
+              onClick={() => navigate('/about')}
               className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"
             >
               Our Mission
             </button>
             <button
-              onClick={() => onPageChange('events')}
+              onClick={() => navigate('/events')}
               className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"
             >
               Screening Camps
             </button>
             <button
-              onClick={() => onPageChange('hospitals')}
+              onClick={() => navigate('/hospitals')}
               className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"
             >
               Hospital Network
             </button>
             <button
-              onClick={() => onPageChange('blogs')}
+              onClick={() => navigate('/blogs')}
               className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"
             >
               Educational Blogs
@@ -73,7 +74,7 @@ export default function Footer({
               Volunteer Sign-Up
             </button>
             <button
-              onClick={() => onPageChange('volunteer-auth')}
+              onClick={() => navigate('/volunteer/login')}
               className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"
             >
               Volunteer Login / Register
@@ -91,22 +92,10 @@ export default function Footer({
               Interactive Sitemap
             </button>
             <button
-              onClick={() => onPageChange('hospital-auth')}
+              onClick={() => navigate('/hospital/login')}
               className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2 font-semibold text-primary"
             >
               Hospital Partner Portal
-            </button>
-            <button
-              onClick={() => onPageChange('admin-auth')}
-              className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"
-            >
-              Admin Portal
-            </button>
-            <button
-              onClick={() => onPageChange('super-admin-auth')}
-              className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"
-            >
-              Super Admin Portal
             </button>
             <a
               href="mailto:support@awarebharat.org"

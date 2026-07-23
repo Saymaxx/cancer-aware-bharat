@@ -55,19 +55,98 @@ export interface VolunteerRegistration {
   volunteerId: string;
 }
 
+export type EnquiryStatus =
+  | 'Pending Admin Review'
+  | 'Rejected by Admin'
+  | 'Approved by Admin'
+  | 'Pending Hospital Assignment'
+  | 'Assigned to Hospital'
+  | 'Declined by Hospital'
+  | 'Accepted by Hospital'
+  | 'Appointment Confirmed'
+  | 'Completed';
+
+export interface TimelineEvent {
+  id: string;
+  stage: string;
+  description: string;
+  timestamp: string;
+  actor?: string;
+  remarks?: string;
+}
+
+export interface AppointmentDetails {
+  appointmentId: string;
+  hospitalId: string;
+  hospitalName: string;
+  patientName: string;
+  date: string;
+  time: string;
+  doctor: string;
+  status: 'Appointment Confirmed' | 'Completed' | 'Cancelled';
+  createdAt: string;
+}
+
+export interface UploadedReport {
+  id: string;
+  name: string;
+  size: string;
+  type: string;
+  uploadedAt: string;
+  url?: string;
+}
+
 export interface PatientEnquiry {
   id: string;
+  enquiryId: string;
+  referenceNumber: string;
   patientName: string;
   age: number;
   gender: string;
-  city: string;
   phone: string;
-  reason: string;
-  hospitalId: string;
-  preferredDate: string;
-  status: 'Pending' | 'Confirmed' | 'Completed';
-  referenceNumber: string;
+  email?: string;
+  address?: string;
+  city: string;
+  state?: string;
+  preferredLocation?: string;
+  reason: string; // Inquiry stream/reason
+  cancerType?: string;
+  symptoms?: string;
+  notes?: string;
+  uploadedReports?: UploadedReport[];
+  hospitalId?: string; // Target or Assigned hospital ID
+  preferredHospitalName?: string;
+  assignedHospitalName?: string;
+  preferredDate?: string;
+  status: EnquiryStatus;
+  priority: 'Normal' | 'Urgent' | 'Critical';
+
+  // Workflow Decision Tracking
+  adminDecision?: {
+    decidedBy: string;
+    decidedAt: string;
+    action: 'Approve' | 'Reject';
+    remarks?: string;
+  };
+  superAdminAssignment?: {
+    assignedBy: string;
+    assignedAt: string;
+    hospitalId: string;
+    hospitalName: string;
+    remarks?: string;
+  };
+  hospitalDecision?: {
+    decidedBy: string;
+    decidedAt: string;
+    action: 'Accept' | 'Decline';
+    remarks?: string;
+  };
+  appointment?: AppointmentDetails;
+
+  timeline: TimelineEvent[];
   date: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface HospitalPartnerRequest {
@@ -82,4 +161,15 @@ export interface HospitalPartnerRequest {
   motivation: string;
   date: string;
   status: 'Pending' | 'Approved';
+}
+
+export interface AppNotification {
+  id: string;
+  targetRole: 'admin' | 'superadmin' | 'hospital' | 'patient';
+  targetHospitalId?: string;
+  title: string;
+  message: string;
+  enquiryId?: string;
+  timestamp: string;
+  read: boolean;
 }

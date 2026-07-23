@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Heart, Eye, EyeOff, CheckCircle, Shield, Users, Calendar, ArrowRight, User, Mail, Phone, Lock, MapPin, Briefcase, Sparkles } from 'lucide-react';
 
-interface VolunteerAuthPageProps {
-  onPageChange: (page: string) => void;
-}
+interface VolunteerAuthPageProps {}
 
 type AuthMode = 'login' | 'register';
 
@@ -24,7 +23,8 @@ interface RegisterForm {
   agreeToTerms: boolean;
 }
 
-export default function VolunteerAuthPage({ onPageChange }: VolunteerAuthPageProps) {
+export default function VolunteerAuthPage({}: VolunteerAuthPageProps) {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -184,11 +184,11 @@ export default function VolunteerAuthPage({ onPageChange }: VolunteerAuthPagePro
   useEffect(() => {
     if (submitSuccess) {
       const timer = setTimeout(() => {
-        onPageChange('volunteer-dashboard');
+        navigate('/volunteer/dashboard');
       }, 1200);
       return () => clearTimeout(timer);
     }
-  }, [submitSuccess, onPageChange]);
+  }, [submitSuccess, navigate]);
 
   if (submitSuccess) {
     return (
