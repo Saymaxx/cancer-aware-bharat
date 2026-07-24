@@ -15,7 +15,7 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
   // Simulated live slots counter that persists in react state
   const [liveEvents, setLiveEvents] = useState<Event[]>(INITIAL_EVENTS);
 
-  // Past events data
+  // Past events data with local camp photos
   const pastEvents = [
     {
       id: 'past-1',
@@ -24,7 +24,7 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
       location: 'Gaya Panchayat Bhavan, Bihar',
       impact: '350+ Villagers Checked',
       summary: 'Operated 2 mobile diagnostic units in collaboration with Patna Oncology partners. Identified 12 early-stage pre-malignant oral lesions, successfully mapping patients to tertiary oncology wards within 10 days.',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD67aBEzQ4mH7MDO2L157RQifaSnmDCt3cgR1mBA8TH9TrWOEVtfrO-LXwPvszbWFRhSqm0iXQWTAIIR9OboD39r61QZ-YZCeSRPwF1OR5sTAR1C41FQ_vE_bR33rhXQiCFAzEIlwPlVTKJ6O7A3QiRFi1YXJOgUb-9v9v0-kIPjAR44d5XSt4nKwVOsMj6FbMMzo3uXulQG9eN-sMU5SFguVUub1iTlqnnpe1xgdE_2zA6nvpvZSMfIw'
+      image: '/events/event-7.jpeg'
     },
     {
       id: 'past-2',
@@ -33,7 +33,7 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
       location: 'Government College Grounds, Nagpur',
       impact: '420+ Women Guided',
       summary: 'Conducted a comprehensive tutorial on Breast Self-Examination BSE protocols. Deployed a portable low-cost thermal scanner to flag suspicious thermal anomalies in 8 asymptomatic women, now under observation.',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC4FXV2Dd6jmMTFi2iPnEYwnPBnlna3noopCsiVkX8csJqIRzvs_8sM9KXJFNvLLTFXIupQaBHhKKejejKGV3TdbCbIdGl2qvvFBX7JBhylg5jOL_48iNOY691vu4z79TCldatGuGOO22TJEWAMmwMSbdf2XBARbtJ-nW1ValYq3fbh1tYvwsyrZdSJCcL5V36MLpED3n83SZK-pvi-1bMJ65sV8d9s5Ln1DMJ6SyGFjzfh3-ZktqCxYw'
+      image: '/events/event-8.jpeg'
     },
     {
       id: 'past-3',
@@ -42,7 +42,16 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
       location: '12 Municipal Schools, Bandra East',
       impact: '1,800+ Students Pledged',
       summary: 'Delivered an interactive audio-visual presentation outlining the carcinogenic impacts of tobacco and vape cartridges. Established student-led anti-tobacco cells in 8 schools to sustain awareness peer-to-peer.',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB1880QY6OfofO_mmX-rcXHaAug2vtajUZh8wdyvyqOs-NaTEQrISBKKhz9xeQgcTlC5jGjaEbX6dXF-hpCOnnp3qkIBX9FtSLLJSYipUBmqlfLRKOe1YyNGL9eU7xm3UJGGfwfa0hzgZtRm0RApDf0USsey-4LTvHj50vopmZyMZ9I2a3YBFRnEtIlpunCn73x9iJUPbEU_ZqtR-eWf4p9Huxa_-3qA6JOYgrtyM5h8eOk8CROTwZOjg'
+      image: '/events/event-9.jpeg'
+    },
+    {
+      id: 'past-4',
+      title: 'Varanasi Grassroots Health & Mammography Drive',
+      date: 'Sep 28, 2024',
+      location: 'Chandauli Block Center, UP',
+      impact: '510+ Screenings',
+      summary: 'Mobilized rural families for free breast and oral screening under expert surgical oncology guidance.',
+      image: '/events/event-10.jpeg'
     }
   ];
 
@@ -50,9 +59,9 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
 
   const filteredEvents = liveEvents.filter(e => {
     const matchesSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          e.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          e.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
+      e.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.description.toLowerCase().includes(searchQuery.toLowerCase());
+
     const matchesCategory = categoryFilter === 'all' || e.type === categoryFilter;
 
     return matchesSearch && matchesCategory;
@@ -75,10 +84,10 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
 
       {/* Main Events list and filters */}
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
+
         {/* Active Events Directory Column */}
         <div className="lg:col-span-8 space-y-6">
-          
+
           {/* Controls Box */}
           <div className="bg-white p-5 border border-outline-variant/40 rounded-2xl shadow-xs flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
             {/* Search */}
@@ -104,11 +113,10 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
                 <button
                   key={cat.val}
                   onClick={() => setCategoryFilter(cat.val as any)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer ${
-                    categoryFilter === cat.val 
-                      ? 'bg-primary text-white' 
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer ${categoryFilter === cat.val
+                      ? 'bg-primary text-white'
                       : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant'
-                  }`}
+                    }`}
                 >
                   {cat.label}
                 </button>
@@ -127,7 +135,7 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
               filteredEvents.map(camp => {
                 const isExpanded = expandedEventId === camp.id;
                 const remainingSlots = camp.capacity - camp.registeredCount;
-                
+
                 return (
                   <div key={camp.id} className="bg-white border border-outline-variant/40 rounded-2xl overflow-hidden shadow-xs">
                     <div className="p-5 flex flex-col md:flex-row gap-5 items-start">
@@ -146,9 +154,9 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
                             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> Active Booking
                           </span>
                         </div>
-                        
+
                         <h3 className="font-title-md text-base font-bold text-primary">{camp.title}</h3>
-                        
+
                         <div className="flex flex-wrap gap-4 text-xs font-medium text-on-surface-variant">
                           <p className="flex items-center gap-1">
                             <Calendar className="w-4 h-4 text-primary" /> {camp.date} • {camp.time}
@@ -186,7 +194,7 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
                               {remainingSlots > 0 ? `${remainingSlots} Free Slots Left` : 'Fully Booked'} <span className="text-xs text-on-surface-variant font-normal">out of {camp.capacity} target capacity</span>
                             </p>
                           </div>
-                          
+
                           <button
                             onClick={onOpenEnquiry}
                             disabled={remainingSlots <= 0}
@@ -216,7 +224,7 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
           <div className="space-y-4">
             {pastEvents.map(past => {
               const isPastExpanded = expandedPastId === past.id;
-              
+
               return (
                 <div key={past.id} className="bg-white border border-outline-variant/30 rounded-xl overflow-hidden shadow-xs">
                   <div className="h-32 relative bg-surface-container">
@@ -229,7 +237,7 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
                   <div className="p-4 space-y-2 text-left">
                     <span className="text-[9px] text-on-surface-variant font-medium">{past.date} • {past.location}</span>
                     <h4 className="font-title-md text-xs font-bold text-primary leading-tight line-clamp-1">{past.title}</h4>
-                    
+
                     {isPastExpanded ? (
                       <div className="space-y-2 pt-1 transition-all">
                         <p className="text-[11px] text-on-surface-variant leading-relaxed">

@@ -193,9 +193,9 @@ export default function BlogsTab() {
                     className="bg-white border border-outline-variant/45 rounded-2xl overflow-hidden shadow-xs hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer flex flex-col justify-between"
                   >
                     <div>
-                      <div className="h-44 bg-surface-container-high relative overflow-hidden">
-                        <img src={art.image} alt={art.title} className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />
-                        <span className="absolute top-3 left-3 bg-white/95 text-primary text-[10px] font-bold px-2.5 py-1 rounded-full shadow-xs">
+                      <div className="h-56 sm:h-60 bg-surface-container-high relative overflow-hidden">
+                        <img src={art.image} alt={art.title} className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500" />
+                        <span className="absolute top-3 left-3 bg-white/95 text-primary text-[10px] font-bold px-3 py-1 rounded-full shadow-xs border border-outline-variant/30">
                           {art.category}
                         </span>
                       </div>

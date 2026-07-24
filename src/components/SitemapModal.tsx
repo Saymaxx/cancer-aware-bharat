@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Home, Info, Book, Heart, Network, Building2, Calendar } from 'lucide-react';
+import { X, Home, Info, Book, Heart, Network, Building2, Calendar, Image } from 'lucide-react';
 
 interface SitemapModalProps {
   isOpen: boolean;
@@ -127,6 +127,22 @@ export default function SitemapModal({
                 <li>Chemo-friendly Nutrition guides</li>
                 <li>Full-view responsive Reader</li>
                 <li>Survivor Stories submission form</li>
+              </ul>
+            </div>
+
+            {/* Gallery Node */}
+            <div className="border border-outline-variant/50 rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors bg-surface-container-low/20">
+              <button 
+                onClick={() => handleLinkClick('/gallery')}
+                className="flex items-center gap-2 text-left text-sm font-bold text-primary hover:underline"
+              >
+                <Image className="w-4 h-4" /> Media & Platform Gallery
+              </button>
+              <ul className="text-xs text-on-surface-variant space-y-1.5 list-disc pl-4">
+                <li>Screening Camps photo gallery</li>
+                <li>Interactive Lightbox Preview</li>
+                <li>Filter by Camp & Drive categories</li>
+                <li>Website Info & Platform Architecture</li>
               </ul>
             </div>
 

@@ -342,7 +342,9 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   // ==========================================
   const filteredPatients = useMemo(() => {
     return patients.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.diagnosis.toLowerCase().includes(searchTerm.toLowerCase());
+      if (!p) return false;
+      const sTerm = (searchTerm || '').toLowerCase();
+      const matchesSearch = (p.name || '').toLowerCase().includes(sTerm) || (p.diagnosis || '').toLowerCase().includes(sTerm);
       const matchesFilter = patientFilter === 'All' || p.financialAidStatus === patientFilter || p.status === patientFilter;
       return matchesSearch && matchesFilter;
     });
@@ -350,7 +352,9 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
 
   const filteredVolunteers = useMemo(() => {
     return volunteers.filter(v => {
-      const matchesSearch = v.name.toLowerCase().includes(searchTerm.toLowerCase()) || v.domain.toLowerCase().includes(searchTerm.toLowerCase());
+      if (!v) return false;
+      const sTerm = (searchTerm || '').toLowerCase();
+      const matchesSearch = (v.name || '').toLowerCase().includes(sTerm) || (v.domain || '').toLowerCase().includes(sTerm);
       const matchesFilter = volunteerFilter === 'All' || v.status === volunteerFilter;
       return matchesSearch && matchesFilter;
     });
@@ -358,11 +362,13 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
 
   const filteredEnquiries = useMemo(() => {
     return enquiries.filter(e => {
+      if (!e) return false;
+      const sTerm = (searchTerm || '').toLowerCase();
       const matchSearch =
-        e.enquiryId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.reason.toLowerCase().includes(searchTerm.toLowerCase());
+        (e.enquiryId || '').toLowerCase().includes(sTerm) ||
+        (e.patientName || '').toLowerCase().includes(sTerm) ||
+        (e.city || '').toLowerCase().includes(sTerm) ||
+        (e.reason || '').toLowerCase().includes(sTerm);
       const matchFilter =
         enquiryFilter === 'All' ||
         (enquiryFilter === 'Approved by Admin' && (e.status === 'Approved by Admin' || e.status === 'Pending Hospital Assignment')) ||

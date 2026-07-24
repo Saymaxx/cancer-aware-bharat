@@ -20,9 +20,16 @@ export default function Footer({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand & Description */}
           <div className="col-span-1 md:col-span-2 flex flex-col space-y-4">
-            <span className="font-headline-lg text-2xl font-bold text-on-surface dark:text-inverse-on-surface">
-              Aware Bharat
-            </span>
+            <div className="flex items-center gap-3">
+              <img
+                src="/brand-logo.jpeg"
+                alt="Cancer Aware Bharat Logo"
+                className="w-10 h-10 rounded-full object-cover border border-primary/20 shadow-xs"
+              />
+              <span className="font-headline-lg text-2xl font-black text-on-surface dark:text-inverse-on-surface">
+                Cancer Aware Bharat
+              </span>
+            </div>
             <p className="font-body-md text-sm text-on-surface-variant dark:text-outline-variant max-w-md">
               Bridging the gap between clinical authority and human empathy to support patients and caregivers across India. Dedicated to early detection, screening campaigns, and patient navigation.
             </p>
@@ -60,6 +67,12 @@ export default function Footer({
             >
               Educational Blogs
             </button>
+            <button
+              onClick={() => navigate('/gallery')}
+              className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"
+            >
+              Impact & Platform Gallery
+            </button>
           </div>
 
           {/* Connect Column */}
@@ -67,18 +80,6 @@ export default function Footer({
             <span className="font-title-md text-base font-semibold text-on-surface dark:text-inverse-on-surface mb-2">
               Connect & Support
             </span>
-            <button
-              onClick={() => onOpenVolunteer()}
-              className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"
-            >
-              Volunteer Sign-Up
-            </button>
-            <button
-              onClick={() => navigate('/volunteer/login')}
-              className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"
-            >
-              Volunteer Login / Register
-            </button>
             <button
               onClick={() => onOpenEnquiry()}
               className="text-left font-body-md text-sm text-on-surface-variant dark:text-outline-variant hover:text-primary transition-all cursor-pointer focus:underline focus:decoration-2"

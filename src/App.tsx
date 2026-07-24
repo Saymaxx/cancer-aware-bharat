@@ -7,6 +7,10 @@ import AboutTab from './components/AboutTab';
 import HospitalsTab from './components/HospitalsTab';
 import EventsTab from './components/EventsTab';
 import BlogsTab from './components/BlogsTab';
+import GalleryTab from './components/GalleryTab';
+import MissionTab from './components/MissionTab';
+import JoinUsTab from './components/JoinUsTab';
+import DoctorsTab from './components/DoctorsTab';
 import VolunteerAuthPage from './components/VolunteerAuthPage';
 import VolunteerDashboard from './components/VolunteerDashboard';
 import AdminAuthPage from './components/AdminAuthPage';
@@ -163,6 +167,43 @@ export default function App() {
           <PublicLayout {...publicLayoutProps}>
             <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
               <BlogsTab />
+            </main>
+          </PublicLayout>
+        } />
+        <Route path="/gallery" element={
+          <PublicLayout {...publicLayoutProps}>
+            <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
+              <GalleryTab
+                onOpenVolunteer={() => setVolunteerOpen(true)}
+                onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
+              />
+            </main>
+          </PublicLayout>
+        } />
+        <Route path="/mission" element={
+          <PublicLayout {...publicLayoutProps}>
+            <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
+              <MissionTab
+                onOpenVolunteer={() => setVolunteerOpen(true)}
+                onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
+              />
+            </main>
+          </PublicLayout>
+        } />
+        <Route path="/join-us" element={
+          <PublicLayout {...publicLayoutProps}>
+            <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
+              <JoinUsTab />
+            </main>
+          </PublicLayout>
+        } />
+        <Route path="/doctors" element={
+          <PublicLayout {...publicLayoutProps}>
+            <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
+              <DoctorsTab
+                onOpenEnquiry={(hName) => handleOpenEnquiryForHospital(hName)}
+                onOpenVolunteer={() => setVolunteerOpen(true)}
+              />
             </main>
           </PublicLayout>
         } />

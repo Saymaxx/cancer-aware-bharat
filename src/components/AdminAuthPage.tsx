@@ -27,29 +27,6 @@ export default function AdminAuthPage({ initialRole = 'admin', lockedRole }: Adm
   const [superPassword, setSuperPassword] = useState('superpassword');
   const [superMfaToken, setSuperMfaToken] = useState('999999');
 
-  // Auto-redirect if already logged in for requested role
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('aware_bharat_logged_in_staff');
-      if (stored) {
-        const session = JSON.parse(stored);
-        if (session && session.role === role) {
-          navigate(role === 'superadmin' ? '/superadmin/dashboard' : '/admin/dashboard', { replace: true });
-        }
-      }
-    } catch (e) {}
-  }, [role, navigate]);
-
-  // Auto-redirect on login success
-  useEffect(() => {
-    if (submitSuccess) {
-      const timer = setTimeout(() => {
-        navigate(role === 'superadmin' ? '/superadmin/dashboard' : '/admin/dashboard', { replace: true });
-      }, 1200);
-      return () => clearTimeout(timer);
-    }
-  }, [submitSuccess, role, navigate]);
-
   const switchRole = (newRole: AuthRole) => {
     setAnimateIn(false);
     setErrorMessage('');
@@ -91,13 +68,17 @@ export default function AdminAuthPage({ initialRole = 'admin', lockedRole }: Adm
     }
 
     if (isValid) {
-      localStorage.setItem('aware_bharat_logged_in_staff', JSON.stringify({
-        role: 'admin',
-        email: adminEmail,
-        lastAccess: new Date().toLocaleString(),
-        sessionKey: 'STAFF-' + Math.random().toString(36).substr(2, 9).toUpperCase()
-      }));
-      navigate('/admin/dashboard', { replace: true });
+      setIsSubmitting(true);
+      setTimeout(() => {
+        localStorage.setItem('aware_bharat_logged_in_staff', JSON.stringify({
+          role: 'admin',
+          email: adminEmail,
+          lastAccess: new Date().toLocaleString(),
+          sessionKey: 'STAFF-' + Math.random().toString(36).substr(2, 9).toUpperCase()
+        }));
+        setIsSubmitting(false);
+        setSubmitSuccess(true);
+      }, 800);
     } else {
       setErrorMessage('Access Denied. Invalid admin email, password, or security passcode (Default Passcode: 12345).');
     }
@@ -117,13 +98,17 @@ export default function AdminAuthPage({ initialRole = 'admin', lockedRole }: Adm
       (superPassword === 'superpassword' || superPassword.length > 0) &&
       (superMfaToken === '999999' || superMfaToken.length > 0)
     ) {
-      localStorage.setItem('aware_bharat_logged_in_staff', JSON.stringify({
-        role: 'superadmin',
-        email: superEmail,
-        lastAccess: new Date().toLocaleString(),
-        sessionKey: 'SUPER-' + Math.random().toString(36).substr(2, 9).toUpperCase()
-      }));
-      navigate('/superadmin/dashboard', { replace: true });
+      setIsSubmitting(true);
+      setTimeout(() => {
+        localStorage.setItem('aware_bharat_logged_in_staff', JSON.stringify({
+          role: 'superadmin',
+          email: superEmail,
+          lastAccess: new Date().toLocaleString(),
+          sessionKey: 'SUPER-' + Math.random().toString(36).substr(2, 9).toUpperCase()
+        }));
+        setIsSubmitting(false);
+        setSubmitSuccess(true);
+      }, 800);
     } else {
       setErrorMessage('Critical Security Failure: Unauthorized Trust access or invalid MFA token.');
     }
@@ -184,11 +169,11 @@ export default function AdminAuthPage({ initialRole = 'admin', lockedRole }: Adm
               Exit Console
             </button>
             <button
-              onClick={() => navigate(role === 'superadmin' ? '/superadmin/dashboard' : '/admin/dashboard')}
-              className={`px-6 py-3 rounded-xl text-white font-semibold text-sm shadow-lg flex items-center gap-2 cursor-pointer ${role === 'superadmin' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-primary hover:bg-primary/95'
+              onClick={() => navigate((sessionDetails?.role || role) === 'superadmin' ? '/superadmin/dashboard' : '/admin/dashboard')}
+              className={`px-6 py-3 rounded-xl text-white font-semibold text-sm shadow-lg flex items-center gap-2 cursor-pointer ${ (sessionDetails?.role || role) === 'superadmin' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-primary hover:bg-primary/95'
                 }`}
             >
-              <span>{role === 'superadmin' ? 'Go to Super Admin Console' : 'Go to Admin Dashboard'}</span>
+              <span>{(sessionDetails?.role || role) === 'superadmin' ? 'Go to Super Admin Console' : 'Go to Admin Dashboard'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

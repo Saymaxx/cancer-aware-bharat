@@ -91,11 +91,13 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
   const filteredHospitalsForAssignment = useMemo(() => {
     return allRegisteredHospitals.filter(h => {
-      const matchSearch = h.name.toLowerCase().includes(hospSearchTerm.toLowerCase()) || h.city.toLowerCase().includes(hospSearchTerm.toLowerCase());
+      if (!h) return false;
+      const sTerm = (hospSearchTerm || '').toLowerCase();
+      const matchSearch = (h.name || '').toLowerCase().includes(sTerm) || (h.city || '').toLowerCase().includes(sTerm);
       const matchCity = hospCityFilter === 'All' || h.city === hospCityFilter;
       const matchState = hospStateFilter === 'All' || h.state === hospStateFilter;
       const matchType = hospTypeFilter === 'All' || h.type === hospTypeFilter;
-      const matchSpec = hospSpecialtyFilter === 'All' || h.specialties.some(s => s.toLowerCase().includes(hospSpecialtyFilter.toLowerCase()));
+      const matchSpec = hospSpecialtyFilter === 'All' || (h.specialties || []).some(s => (s || '').toLowerCase().includes((hospSpecialtyFilter || '').toLowerCase()));
       return matchSearch && matchCity && matchState && matchType && matchSpec;
     });
   }, [allRegisteredHospitals, hospSearchTerm, hospCityFilter, hospStateFilter, hospTypeFilter, hospSpecialtyFilter]);
@@ -148,6 +150,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
   const superAdminFilteredEnquiries = useMemo(() => {
     return enquiries.filter(e => {
+      if (!e) return false;
       const isApprovedOrInPipeline =
         e.status === 'Approved by Admin' ||
         e.status === 'Pending Hospital Assignment' ||
@@ -157,10 +160,11 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
       if (!isApprovedOrInPipeline) return false;
 
+      const sTerm = (searchTerm || '').toLowerCase();
       const matchSearch =
-        e.enquiryId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.city.toLowerCase().includes(searchTerm.toLowerCase());
+        (e.enquiryId || '').toLowerCase().includes(sTerm) ||
+        (e.patientName || '').toLowerCase().includes(sTerm) ||
+        (e.city || '').toLowerCase().includes(sTerm);
 
       const matchFilter =
         superAdminEnquiryFilter === 'All' ||

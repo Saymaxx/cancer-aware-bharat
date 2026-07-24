@@ -70,42 +70,81 @@ export const INITIAL_HOSPITALS: Hospital[] = [
 export const INITIAL_EVENTS: Event[] = [
   {
     id: 'event-1',
-    title: 'Mega Blood Donation Drive',
-    type: 'Blood Donation',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB1880QY6OfofO_mmX-rcXHaAug2vtajUZh8wdyvyqOs-NaTEQrISBKKhz9xeQgcTlC5jGjaEbX6dXF-hpCOnnp3qkIBX9FtSLLJSYipUBmqlfLRKOe1YyNGL9eU7xm3UJGGfwfa0hzgZtRm0RApDf0USsey-4LTvHj50vopmZyMZ9I2a3YBFRnEtIlpunCn73x9iJUPbEU_ZqtR-eWf4p9Huxa_-3qA6JOYgrtyM5h8eOk8CROTwZOjg',
+    title: 'Mega Rural Cancer Screening & Blood Drive',
+    type: 'Screening Camp',
+    image: '/events/event-1.jpeg',
     date: 'Sat, 15 Oct 2024',
     time: '9:00 AM',
     location: 'City Hospital Community Hall, New Delhi',
-    description: 'Be a hero in someone\'s fight. Our quarterly donation drive helps maintain critical blood and platelet supplies for chemotherapy patients across North India. Free medical screening, hydration support, and donor certificates are provided for all participants.',
-    category: 'Blood Donation',
-    registeredCount: 84,
-    capacity: 150
+    description: 'Free mammography screening, oral examination, and blood donation drive supported by specialized oncologists and certified caseworkers.',
+    category: 'Screening Camps',
+    registeredCount: 184,
+    capacity: 250
   },
   {
     id: 'event-2',
-    title: 'Free Early Detection Camp',
+    title: 'Free Early Detection & Pap Screening Camp',
     type: 'Screening Camp',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD67aBEzQ4mH7MDO2L157RQifaSnmDCt3cgR1mBA8TH9TrWOEVtfrO-LXwPvszbWFRhSqm0iXQWTAIIR9OboD39r61QZ-YZCeSRPwF1OR5sTAR1C41FQ_vE_bR33rhXQiCFAzEIlwPlVTKJ6O7A3QiRFi1YXJOgUb-9v9v0-kIPjAR44d5XSt4nKwVOsMj6FbMMzo3uXulQG9eN-sMU5SFguVUub1iTlqnnpe1xgdE_2zA6nvpvZSMfIw',
+    image: '/events/event-2.jpeg',
     date: 'Sun, 22 Oct 2024',
     time: '10:00 AM',
     location: 'Lions Club Grounds, Mumbai',
-    description: 'Get checked by leading oncologists for oral, breast, and cervical cancers entirely free of charge. This screening includes clinical breast exams, PAP smears, oral examinations, and immediate consultations. Supported by local mobile diagnostic units.',
+    description: 'Comprehensive screening for oral, breast, and cervical cancers entirely free of charge with on-spot specialist consultations.',
     category: 'Screening Camps',
     registeredCount: 145,
     capacity: 200
   },
   {
     id: 'event-3',
-    title: 'Nutrition Post-Treatment',
+    title: 'Nutrition Post-Treatment & Holistic Recovery Workshop',
     type: 'Workshop',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDFFddb5pzA21ANryP1YyFAiRmDv3cYKLcxSom4PCWLLeWaQ8A9CbdNUwr3WkjBBYOn3LnlsIkQeMOH0pdfIrZhvJPAvTw17EErc46zNEX8ktzX2GaIp4MBMvS_10RSOBY7NyFOgnXVvwb9nDgasMYo7nvtJOitIe-_wl00F8YY3Oq7ScymOSyvjIIKe7LNrvezd0HA_o2odBXvMSfPkLqst0_XXIqta3AqnH3LrGtn46PXutTIuwRPYg',
+    image: '/events/event-3.jpeg',
     date: 'Wed, 25 Oct 2024',
     time: '4:00 PM',
-    location: 'Online Webinar (Zoom link provided upon registration)',
-    description: 'An interactive session focusing on dietary guidance and meal planning for recovery post-chemo and radiation treatment. Learn how to manage dry mouth, metallic taste, nausea, and weight loss with highly nutritious local Indian foods and recipes.',
+    location: 'District Health Center Auditorium, Varanasi',
+    description: 'Interactive workshop focusing on post-chemotherapy dietary guidance, yoga, and holistic patient recovery.',
     category: 'Workshops',
-    registeredCount: 32,
-    capacity: 500
+    registeredCount: 68,
+    capacity: 100
+  },
+  {
+    id: 'event-4',
+    title: 'Mobile Mammography & Oral Health Rally',
+    type: 'Screening Camp',
+    image: '/events/event-4.jpeg',
+    date: 'Sun, 05 Nov 2024',
+    time: '8:30 AM',
+    location: 'Panchayat Bhavan, Pune Rural',
+    description: 'Mobile diagnostic van screening over 300 village residents for early warning signs with direct referral slips.',
+    category: 'Screening Camps',
+    registeredCount: 210,
+    capacity: 300
+  },
+  {
+    id: 'event-5',
+    title: 'Volunteer First-Aid & Patient Navigation Seminar',
+    type: 'Workshop',
+    image: '/events/event-5.jpeg',
+    date: 'Sat, 18 Nov 2024',
+    time: '11:00 AM',
+    location: 'Community Hall, Lucknow',
+    description: 'Orientation and safety protocol training for grassroot volunteer advocates on guiding rural patients.',
+    category: 'Workshops',
+    registeredCount: 95,
+    capacity: 150
+  },
+  {
+    id: 'event-6',
+    title: 'District Blood & Platelet Donor Drive',
+    type: 'Blood Donation',
+    image: '/events/event-6.jpeg',
+    date: 'Sun, 26 Nov 2024',
+    time: '9:00 AM',
+    location: 'Civil Hospital Grounds, Jaipur',
+    description: 'Blood and platelet collection drive for chemotherapy units. Health checkup certificates provided for all donors.',
+    category: 'Blood Donation',
+    registeredCount: 130,
+    capacity: 200
   }
 ];
 
@@ -136,7 +175,7 @@ If you find a lump or notice any change, **do not panic**. Eight out of ten lump
     date: 'July 12, 2026',
     readTime: '5 min read',
     category: 'Prevention',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC4FXV2Dd6jmMTFi2iPnEYwnPBnlna3noopCsiVkX8csJqIRzvs_8sM9KXJFNvLLTFXIupQaBHhKKejejKGV3TdbCbIdGl2qvvFBX7JBhylg5jOL_48iNOY691vu4z79TCldatGuGOO22TJEWAMmwMSbdf2XBARbtJ-nW1ValYq3fbh1tYvwsyrZdSJCcL5V36MLpED3n83SZK-pvi-1bMJ65sV8d9s5Ln1DMJ6SyGFjzfh3-ZktqCxYw',
+    image: '/events/event-2.jpeg',
     tags: ['Breast Cancer', 'Self-Exam', 'Women\'s Health', 'Prevention']
   },
   {
@@ -174,7 +213,7 @@ Remember, every patient\'s digestive tract responds differently. Consult your on
     date: 'July 15, 2026',
     readTime: '8 min read',
     category: 'Nutrition',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDFFddb5pzA21ANryP1YyFAiRmDv3cYKLcxSom4PCWLLeWaQ8A9CbdNUwr3WkjBBYOn3LnlsIkQeMOH0pdfIrZhvJPAvTw17EErc46zNEX8ktzX2GaIp4MBMvS_10RSOBY7NyFOgnXVvwb9nDgasMYo7nvtJOitIe-_wl00F8YY3Oq7ScymOSyvjIIKe7LNrvezd0HA_o2odBXvMSfPkLqst0_XXIqta3AqnH3LrGtn46PXutTIuwRPYg',
+    image: '/events/event-3.jpeg',
     tags: ['Nutrition', 'Chemotherapy', 'Dietary Care', 'Wellness']
   },
   {
@@ -209,7 +248,7 @@ Today, Rajeshwar is completely cancer-free and serves as a volunteer coordinator
     date: 'July 18, 2026',
     readTime: '12 min read',
     category: 'Survivors',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAGIjteBD0CWXW7KgteodS7d-DgD-XuVwGItAT-l6I7lGspLnQe-OTq-H8TXiUcjOWdbptTp4-nZIN7FAu9-zdREXhoNTAzOkPjMHZ8RnnYKIM7kYGlLYiE5KpSV4BkFXynSzHEJjwp7VVvMNDw1bDqE-ScPuLJY5TvnYNhOVGZI2eb7vDckiItLiy5vlfchPcRQaoc5WkD9Com-SwmLGUqW1QCP0PViJLWaPZEVivtluQAiRrMYOvypg',
+    image: '/events/event-8.jpeg',
     tags: ['Lymphoma', 'Survivor Story', 'Patient Navigator', 'Remission']
   }
 ];

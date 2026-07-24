@@ -10,26 +10,30 @@ export default function AboutTab({ onOpenVolunteer }: AboutTabProps) {
   const navigate = useNavigate();
   const [activeYear, setActiveYear] = useState('2026');
 
-  const timelineData: Record<string, { title: string; desc: string; stat: string }> = {
+  const timelineData: Record<string, { title: string; desc: string; stat: string; image: string }> = {
     '2021': {
       title: 'Inception in New Delhi',
       desc: 'Founded by Dr. Ramesh Sharma after witnessing the severe lack of accessible diagnostic oncology channels for low-income families. Started with 1 mobile screening van.',
-      stat: '500+ Patients Screened'
+      stat: '500+ Patients Screened',
+      image: '/events/event-1.jpeg'
     },
     '2023': {
       title: 'First Hospital Partnerships',
       desc: 'Formally integrated with Apex Oncology Institute. Launched our Patient Navigation pilot, assigning caseworkers to oversee therapy pipelines from biopsy to remission.',
-      stat: '4,000+ Screenings • 2 Partner Clinics'
+      stat: '4,000+ Screenings • 2 Partner Clinics',
+      image: '/events/event-2.jpeg'
     },
     '2025': {
       title: 'Expansion to Central & West India',
       desc: 'Welcomed CareWell Cancer Hospital and Narayana Health City. Formed a dedicated volunteer auxiliary corps to run rural tobacco awareness workshops.',
-      stat: '10,000+ Screenings • 120 campaigns'
+      stat: '10,000+ Screenings • 120 campaigns',
+      image: '/events/event-4.jpeg'
     },
     '2026': {
       title: 'National Digital Portal launch',
       desc: 'Deploying our integrated digital directory, automated screening guidance tool, and live scheduling assistance to streamline volunteer allocation and patient requests.',
-      stat: '14,250+ Lives Touched Nationwide'
+      stat: '14,250+ Lives Touched Nationwide',
+      image: '/events/event-5.jpeg'
     }
   };
 
@@ -46,6 +50,28 @@ export default function AboutTab({ onOpenVolunteer }: AboutTabProps) {
         <p className="font-body-lg text-on-surface-variant">
           Aware Bharat is a nationwide civil society network bridging the gap between cutting-edge clinical authority and localized human empathy.
         </p>
+      </section>
+
+      {/* Impact Photography Showcase Banner */}
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="h-56 sm:h-64 rounded-3xl overflow-hidden shadow-sm relative group">
+          <img src="/events/event-1.jpeg" alt="Screening Assembly" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent flex items-end p-4 text-white">
+            <p className="text-xs font-bold">Community Screening Assemblies</p>
+          </div>
+        </div>
+        <div className="h-56 sm:h-64 rounded-3xl overflow-hidden shadow-sm relative group">
+          <img src="/events/event-4.jpeg" alt="Mobile Diagnostic Units" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent flex items-end p-4 text-white">
+            <p className="text-xs font-bold">Mobile Diagnostic Mammography Fleet</p>
+          </div>
+        </div>
+        <div className="h-56 sm:h-64 rounded-3xl overflow-hidden shadow-sm relative group">
+          <img src="/events/event-5.jpeg" alt="Volunteer Training" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent flex items-end p-4 text-white">
+            <p className="text-xs font-bold">Grassroots Volunteer Advocate Corps</p>
+          </div>
+        </div>
       </section>
 
       {/* Vision & Mission bento */}
@@ -179,7 +205,10 @@ export default function AboutTab({ onOpenVolunteer }: AboutTabProps) {
         </div>
 
         {/* Selected Year Display Card */}
-        <div className="bg-white border border-outline-variant/40 rounded-2xl p-6 shadow-sm max-w-xl mx-auto flex flex-col items-center text-center space-y-4 transition-all duration-300">
+        <div className="bg-white border border-outline-variant/40 rounded-3xl p-6 shadow-sm max-w-xl mx-auto flex flex-col items-center text-center space-y-4 transition-all duration-300 overflow-hidden">
+          <div className="w-full h-48 rounded-2xl overflow-hidden bg-slate-100 mb-1">
+            <img src={timelineData[activeYear].image} alt={timelineData[activeYear].title} className="w-full h-full object-cover" />
+          </div>
           <span className="text-xs font-bold uppercase tracking-wider text-secondary bg-secondary-fixed/50 px-3 py-1 rounded-full">
             {timelineData[activeYear].stat}
           </span>

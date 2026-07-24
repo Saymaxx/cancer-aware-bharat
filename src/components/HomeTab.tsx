@@ -8,21 +8,37 @@ const CAROUSEL_SLIDES = [
   {
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD67aBEzQ4mH7MDO2L157RQifaSnmDCt3cgR1mBA8TH9TrWOEVtfrO-LXwPvszbWFRhSqm0iXQWTAIIR9OboD39r61QZ-YZCeSRPwF1OR5sTAR1C41FQ_vE_bR33rhXQiCFAzEIlwPlVTKJ6O7A3QiRFi1YXJOgUb-9v9v0-kIPjAR44d5XSt4nKwVOsMj6FbMMzo3uXulQG9eN-sMU5SFguVUub1iTlqnnpe1xgdE_2zA6nvpvZSMfIw',
     tag: 'Live Campaign Highlight',
+    badge: 'Bridging Medical Expertise & Empathy | चिकित्सा और संवेदना',
+    titleHi: 'कैंसर की पहचान देर से नहीं,',
+    highlight: 'समय रहते हो।',
+    descHi: 'गाँव-गाँव स्वास्थ्य जागरूकता, प्राथमिक सहायता और समय पर सही विशेषज्ञ तक रेफरल पहुँचाने का एक जनस्वास्थ्य अभियान। हमारा प्रयास है कि जानकारी के अभाव में कोई मरीज देर से अस्पताल न पहुँचे।',
     title: 'Free Early Screening Detection Camp — Lions Club Grounds'
   },
   {
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB1880QY6OfofO_mmX-rcXHaAug2vtajUZh8wdyvyqOs-NaTEQrISBKKhz9xeQgcTlC5jGjaEbX6dXF-hpCOnnp3qkIBX9FtSLLJSYipUBmqlfLRKOe1YyNGL9eU7xm3UJGGfwfa0hzgZtRm0RApDf0USsey-4LTvHj50vopmZyMZ9I2a3YBFRnEtIlpunCn73x9iJUPbEU_ZqtR-eWf4p9Huxa_-3qA6JOYgrtyM5h8eOk8CROTwZOjg',
     tag: 'Community Outreach',
+    badge: 'Life Saving Blood Support | रक्तदान - महादान',
+    titleHi: 'रक्तदान से बचेगी जान,',
+    highlight: 'हर मरीज को मिलेगा संबल।',
+    descHi: 'कैंसर सर्जरी और कीमोथेरेपी के दौरान आवश्यक रक्त और प्लेटलेट्स आपूर्ति हेतु विशाल रक्तदान शिविर। आपके एक कदम से किसी परिवार को नया जीवन मिल सकता है।',
     title: 'Mega Blood Donation Drive — City Hospital Community Hall'
   },
   {
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDFFddb5pzA21ANryP1YyFAiRmDv3cYKLcxSom4PCWLLeWaQ8A9CbdNUwr3WkjBBYOn3LnlsIkQeMOH0pdfIrZhvJPAvTw17EErc46zNEX8ktzX2GaIp4MBMvS_10RSOBY7NyFOgnXVvwb9nDgasMYo7nvtJOitIe-_wl00F8YY3Oq7ScymOSyvjIIKe7LNrvezd0HA_o2odBXvMSfPkLqst0_XXIqta3AqnH3LrGtn46PXutTIuwRPYg',
     tag: 'Support Workshops',
+    badge: 'Holistic Recovery | स्वास्थ्य एवं पोषण',
+    titleHi: 'इलाज के बाद सही पोषण और',
+    highlight: 'रिकवरी मार्गदर्शन।',
+    descHi: 'विशेषज्ञ ऑन्को-न्यूट्रिशनिस्ट और फिजियोथेरेपिस्ट द्वारा कैंसर मरीजों और उनके परिजनों के लिए विशेष आहार, योग और पुनर्वास मार्गदर्शन कार्यशाला।',
     title: 'Nutrition Post-Treatment & Holistic Recovery Workshop'
   },
   {
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC4FXV2Dd6jmMTFi2iPnEYwnPBnlna3noopCsiVkX8csJqIRzvs_8sM9KXJFNvLLTFXIupQaBHhKKejejKGV3TdbCbIdGl2qvvFBX7JBhylg5jOL_48iNOY691vu4z79TCldatGuGOO22TJEWAMmwMSbdf2XBARbtJ-nW1ValYq3fbh1tYvwsyrZdSJCcL5V36MLpED3n83SZK-pvi-1bMJ65sV8d9s5Ln1DMJ6SyGFjzfh3-ZktqCxYw',
     tag: 'Educational Resources',
+    badge: 'Preventive Awareness | जागरूकता ही बचाव है',
+    titleHi: 'सही जानकारी और शुरुआती',
+    highlight: 'लक्षणों से जीतें जंग।',
+    descHi: 'मुफ्त ओरल, स्तन और गर्भाशय ग्रीवा कैंसर प्रिवेंटिव हेल्थ गाइड्स। शुरुआती संकेतों को समझें और समय पर जाँच कराकर अपने परिवार की सुरक्षा सुनिश्चित करें।',
     title: 'Awareness Seminars & Cancer Early Detection Guides'
   }
 ];
@@ -43,11 +59,11 @@ function AnimatedCounter({ value }: { value: string }) {
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      
+
       // Easing function: easeOutQuad
       const easedProgress = progress * (2 - progress);
       const currentCount = Math.floor(easedProgress * target);
-      
+
       setCount(currentCount);
 
       if (progress < 1) {
@@ -121,19 +137,18 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
     <div className="space-y-12">
       {/* Hero Banner Section with Background Slides */}
       <section className="relative rounded-3xl min-h-[560px] md:min-h-[590px] lg:min-h-[620px] flex flex-col justify-between p-6 sm:p-8 md:p-12 lg:p-14 border border-outline-variant/30 overflow-hidden shadow-2xl bg-neutral-950">
-        
+
         {/* Background Slide Elements */}
         <div className="absolute inset-0 z-0">
           {CAROUSEL_SLIDES.map((slide, idx) => (
             <div
               key={idx}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                idx === activeSlide ? 'opacity-100' : 'opacity-0'
-              }`}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === activeSlide ? 'opacity-100' : 'opacity-0'
+                }`}
             >
-              <img 
-                src={slide.image} 
-                alt={slide.title} 
+              <img
+                src={slide.image}
+                alt={slide.title}
                 className="w-full h-full object-cover transform scale-105 transition-transform duration-[6000ms]"
                 referrerPolicy="no-referrer"
               />
@@ -147,19 +162,20 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
 
         {/* Foreground Content Layout - Top/Center portion */}
         <div className="relative z-10 w-full mt-auto mb-10 md:mb-12">
-          <div className="max-w-3xl space-y-5 text-left">
+          <div key={activeSlide} className="max-w-3xl space-y-5 text-left transition-all duration-500 animate-[fadeIn_0.5s_ease-out]">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white backdrop-blur-md text-xs font-semibold uppercase tracking-wider border border-white/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Bridging Medical Expertise & Empathy
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              {CAROUSEL_SLIDES[activeSlide].badge}
             </span>
-            
+
             <h1 className="font-display-lg text-white text-3xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight drop-shadow-md">
-              Clinical Authority. <span className="text-secondary-container">Human Compassion.</span>
+              {CAROUSEL_SLIDES[activeSlide].titleHi} <span className="text-secondary-container">{CAROUSEL_SLIDES[activeSlide].highlight}</span>
             </h1>
-            
+
             <p className="font-body-lg text-slate-100 max-w-2xl text-sm md:text-base leading-relaxed drop-shadow-sm">
-              We connect local families, patient advocates, and corporate partners with India’s leading healthcare institutes to enable early cancer screening, diagnostic navigation, and therapeutic healing.
+              {CAROUSEL_SLIDES[activeSlide].descHi}
             </p>
-            
+
             <div className="flex flex-wrap gap-4 pt-2">
               <button
                 onClick={() => navigate('/events')}
@@ -168,10 +184,10 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
                 Find Free Screening Camps <ChevronRight className="w-4 h-4" />
               </button>
               <button
-                onClick={onOpenEnquiry}
+                onClick={() => navigate('/join-us')}
                 className="px-6 py-3 rounded-xl bg-white/15 border border-white/20 text-white font-semibold text-sm hover:bg-white/25 hover:border-white/40 backdrop-blur-md transition-all duration-300 cursor-pointer hover:scale-[1.02]"
               >
-                Request Patient Navigation
+                Join Our Mission
               </button>
             </div>
           </div>
@@ -188,7 +204,7 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
                 {CAROUSEL_SLIDES[activeSlide].title}
               </p>
             </div>
-            
+
             <div className="flex items-center justify-between md:justify-end gap-6 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-white/10">
               {/* Dots indicator */}
               <div className="flex gap-1.5">
@@ -196,9 +212,8 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
                   <button
                     key={idx}
                     onClick={() => setActiveSlide(idx)}
-                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                      idx === activeSlide ? 'w-5 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'
-                    }`}
+                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${idx === activeSlide ? 'w-5 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'
+                      }`}
                     aria-label={`Go to slide ${idx + 1}`}
                   />
                 ))}
@@ -249,9 +264,9 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
       {/* Pillars of Purpose / Core Programs */}
       <section className="space-y-6">
         <div className="text-center max-w-2xl mx-auto space-y-2">
-          <h2 className="font-headline-lg text-primary text-2xl md:text-3xl font-extrabold">Our Pillars of Purpose</h2>
+          <h2 className="font-headline-lg text-primary text-2xl md:text-3xl font-extrabold">हमारे मुख्य उद्देश्य और स्तंभ</h2>
           <p className="font-body-md text-on-surface-variant text-sm">
-            Tackling oncology care holistically by combining state-of-the-art clinical guidance with localized grassroots efforts.
+            आधुनिक नैदानिक मार्गदर्शन और ग्रामीण जमीनी प्रयासों का समन्वय करके कैंसर देखभाल को सर्वसुलभ बनाना।
           </p>
         </div>
 
@@ -260,9 +275,9 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
             <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
               <Microscope className="w-5.5 h-5.5" />
             </div>
-            <h3 className="font-title-md text-primary mb-2">Early Detection Camps</h3>
+            <h3 className="font-title-md text-primary mb-2">निःशुल्क शुरुआती जांच शिविर (Early Screening Camps)</h3>
             <p className="font-body-md text-sm text-on-surface-variant leading-relaxed">
-              We operate highly organized mobile clinics with specialized oncologists to provide free mammographies, oral cancer screening, and cervical PAP tests right at villagers' doorsteps.
+              हम विशेषज्ञ ऑन्कोलॉजिस्ट के साथ सुसज्जित मोबाइल क्लीनिक संचालित करते हैं, जो ग्रामीणों के घर तक निःशुल्क मैमोग्राफी, मुख (oral) कैंसर और प्रिवेंटिव PAP जांच पहुँचाते हैं।
             </p>
           </div>
 
@@ -270,9 +285,9 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
             <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center mb-4">
               <HeartHandshake className="w-5.5 h-5.5" />
             </div>
-            <h3 className="font-title-md text-primary mb-2">Empathetic Case Navigation</h3>
+            <h3 className="font-title-md text-primary mb-2">संवेदनशील मरीज सहायता व रेफरल (Empathetic Navigation)</h3>
             <p className="font-body-md text-sm text-on-surface-variant leading-relaxed">
-              Receiving a cancer diagnosis can be overwhelming. Our certified regional caseworkers hold patients' hands, organizing second opinions, translating schedules, and helping access government aid.
+              कैंसर की आशंका या निदान के समय मरीज और परिवार घबरा जाते हैं। हमारे प्रशिक्षित क्षेत्रीय स्वयंसेवक मरीजों को सही मार्गदर्शन, सेकंड ओपिनियन और सरकारी सहायता प्राप्त कराने में निरंतर मदद करते हैं।
             </p>
           </div>
 
@@ -280,9 +295,9 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4">
               <BookOpen className="w-5.5 h-5.5" />
             </div>
-            <h3 className="font-title-md text-primary mb-2">Clinical Education & Prevention</h3>
+            <h3 className="font-title-md text-primary mb-2">स्वास्थ्य शिक्षा व रोकथाम (Clinical Education & Prevention)</h3>
             <p className="font-body-md text-sm text-on-surface-variant leading-relaxed">
-              Demystifying cancer warning signs, guiding families on self-examination protocols, and providing nutrition frameworks to prevent disease and speed up healing post-treatment.
+              कैंसर के शुरुआती चेतावनी संकेतों के बारे में जागरूकता फैलाना, स्व-जांच विधियाँ सिखाना और उपचार के बाद तेजी से स्वास्थ्य सुधार हेतु सही पोषण ढांचा प्रदान करना।
             </p>
           </div>
         </div>
@@ -318,11 +333,10 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
                         <button
                           key={g}
                           onClick={() => setGender(g)}
-                          className={`p-4 rounded-xl border text-sm font-semibold transition-all cursor-pointer ${
-                            gender === g 
-                              ? 'bg-primary text-white border-primary shadow-sm' 
+                          className={`p-4 rounded-xl border text-sm font-semibold transition-all cursor-pointer ${gender === g
+                              ? 'bg-primary text-white border-primary shadow-sm'
                               : 'bg-surface-container-lowest border-outline-variant hover:bg-surface-container-low'
-                          }`}
+                            }`}
                         >
                           {g}
                         </button>
@@ -340,11 +354,10 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
                         <button
                           key={age}
                           onClick={() => setAgeRange(age)}
-                          className={`p-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-                            ageRange === age 
-                              ? 'bg-primary text-white border-primary shadow-sm' 
+                          className={`p-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${ageRange === age
+                              ? 'bg-primary text-white border-primary shadow-sm'
                               : 'bg-surface-container-lowest border-outline-variant hover:bg-surface-container-low'
-                          }`}
+                            }`}
                         >
                           {age}
                         </button>
@@ -369,11 +382,10 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
                           <button
                             key={h.id}
                             onClick={() => toggleHabit(h.id)}
-                            className={`p-3 rounded-xl border text-xs text-left font-semibold transition-all flex justify-between items-center cursor-pointer ${
-                              hasHabit 
-                                ? 'bg-primary text-white border-primary shadow-sm' 
+                            className={`p-3 rounded-xl border text-xs text-left font-semibold transition-all flex justify-between items-center cursor-pointer ${hasHabit
+                                ? 'bg-primary text-white border-primary shadow-sm'
                                 : 'bg-surface-container-lowest border-outline-variant hover:bg-surface-container-low'
-                            }`}
+                              }`}
                           >
                             <span>{h.label}</span>
                             {hasHabit && <CheckCircle2 className="w-4 h-4 text-white" />}
@@ -401,11 +413,10 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
                           <button
                             key={s.id}
                             onClick={() => toggleSymptom(s.id)}
-                            className={`p-3 rounded-xl border text-xs text-left font-semibold transition-all flex justify-between items-center cursor-pointer ${
-                              hasSymp 
-                                ? 'bg-primary text-white border-primary shadow-sm' 
+                            className={`p-3 rounded-xl border text-xs text-left font-semibold transition-all flex justify-between items-center cursor-pointer ${hasSymp
+                                ? 'bg-primary text-white border-primary shadow-sm'
                                 : 'bg-surface-container-lowest border-outline-variant hover:bg-surface-container-low'
-                            }`}
+                              }`}
                           >
                             <span>{s.label}</span>
                             {hasSymp && <CheckCircle2 className="w-4 h-4 text-white" />}
@@ -420,9 +431,9 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
                 <div className="flex justify-between items-center pt-6 border-t border-outline-variant/20 mt-4">
                   <div className="flex space-x-1">
                     {[0, 1, 2, 3].map(stepNum => (
-                      <span 
-                        key={stepNum} 
-                        className={`w-4 h-1.5 rounded-full ${stepNum === quizStep ? 'bg-primary' : 'bg-outline-variant/40'}`} 
+                      <span
+                        key={stepNum}
+                        className={`w-4 h-1.5 rounded-full ${stepNum === quizStep ? 'bg-primary' : 'bg-outline-variant/40'}`}
                       />
                     ))}
                   </div>
@@ -562,7 +573,7 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
                   </p>
                 </div>
               </div>
-              
+
               <div className="px-5 pb-5 pt-2 border-t border-outline-variant/10 flex items-center justify-between">
                 <span className="text-xs text-on-surface-variant font-medium">
                   Slots remaining: <strong className="text-primary">{camp.capacity - camp.registeredCount}</strong> / {camp.capacity}
