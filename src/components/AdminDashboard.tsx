@@ -8,7 +8,10 @@ import {
 } from 'lucide-react';
 import { enquiryStore, useEnquiries, useNotifications } from '../enquiryStore';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
-import { PatientEnquiry } from '../types';
+import { PatientEnquiry, BlogArticle } from '../types';
+import { INITIAL_BLOGS } from '../data';
+import { useToast } from './common/Toast';
+import StatusBadge from './common/StatusBadge';
 
 import {
   INITIAL_KPI_METRICS, INITIAL_PATIENTS, INITIAL_ADMIN_VOLUNTEERS,
@@ -18,6 +21,7 @@ import {
 } from '../adminDashboardData';
 
 export default function AdminDashboard({ onPageChange, onLogout }: { onPageChange?: (page: string) => void; onLogout: () => void }) {
+  const toast = useToast();
   // Sidebar collapsed state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -79,9 +83,34 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     }
     return INITIAL_HOSPITAL_REQUESTS;
   });
-  const [campaignRequests, setCampaignRequests] = useState<CampaignRequest[]>(INITIAL_CAMPAIGN_REQUESTS);
-  const [donations, setDonations] = useState<AdminDonation[]>(INITIAL_ADMIN_DONATIONS);
-  const [feedbacks, setFeedbacks] = useState<AdminFeedback[]>(INITIAL_ADMIN_FEEDBACKS);
+  const [campaignRequests, setCampaignRequests] = useState<CampaignRequest[]>(() => {
+    const stored = localStorage.getItem('aware_bharat_campaign_requests');
+    if (stored) {
+      try { return JSON.parse(stored); } catch (e) {}
+    }
+    return INITIAL_CAMPAIGN_REQUESTS;
+  });
+  const [donations, setDonations] = useState<AdminDonation[]>(() => {
+    const stored = localStorage.getItem('aware_bharat_donations');
+    if (stored) {
+      try { return JSON.parse(stored); } catch (e) {}
+    }
+    return INITIAL_ADMIN_DONATIONS;
+  });
+  const [feedbacks, setFeedbacks] = useState<AdminFeedback[]>(() => {
+    const stored = localStorage.getItem('aware_bharat_volunteer_feedback');
+    if (stored) {
+      try { return JSON.parse(stored); } catch (e) {}
+    }
+    return INITIAL_ADMIN_FEEDBACKS;
+  });
+  const [blogs, setBlogs] = useState<BlogArticle[]>(() => {
+    const stored = localStorage.getItem('aware_bharat_blogs');
+    if (stored) {
+      try { return JSON.parse(stored); } catch (e) {}
+    }
+    return INITIAL_BLOGS;
+  });
   const [kpiMetrics, setKpiMetrics] = useState(INITIAL_KPI_METRICS);
 
   // Search & Filter states
@@ -107,6 +136,12 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const [newCampaignLocation, setNewCampaignLocation] = useState('');
   const [campaignSuccessToast, setCampaignSuccessToast] = useState(false);
 
+  // Form states (Add Blog Article)
+  const [newBlogCategory, setNewBlogCategory] = useState<'Prevention' | 'Nutrition' | 'Survivors' | 'Research'>('Prevention');
+  const [newBlogTitle, setNewBlogTitle] = useState('');
+  const [newBlogSummary, setNewBlogSummary] = useState('');
+  const [newBlogAuthor, setNewBlogAuthor] = useState('Dr. Ramesh Sharma');
+
   // Form states (Notification Announcements)
   const [announcementTitle, setAnnouncementTitle] = useState('');
   const [announcementMessage, setAnnouncementMessage] = useState('');
@@ -117,8 +152,20 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const [feedbackReplyText, setFeedbackReplyText] = useState('');
 
   // Admin Profile settings
-  const [profileName, setProfileName] = useState('Dwarka Admin Node');
-  const [profileEmail, setProfileEmail] = useState('dwarka@awarebharat.org');
+  const [profileName, setProfileName] = useState(() => {
+    const stored = localStorage.getItem('aware_bharat_admin_profile');
+    if (stored) {
+      try { return JSON.parse(stored).profileName; } catch (e) {}
+    }
+    return 'Dwarka Admin Node';
+  });
+  const [profileEmail, setProfileEmail] = useState(() => {
+    const stored = localStorage.getItem('aware_bharat_admin_profile');
+    if (stored) {
+      try { return JSON.parse(stored).profileEmail; } catch (e) {}
+    }
+    return 'dwarka@awarebharat.org';
+  });
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   // Get active administrative session metadata
@@ -165,13 +212,59 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     setShowPatientModal(true);
   };
 
+  // Close open modals on ESC key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowPatientModal(false);
+        setShowApproveEnquiryModal(null);
+        setShowRejectEnquiryModal(null);
+        setShowAdminDeclineModal(null);
+        setTimelineEnquiry(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleExportEnquiriesCSV = () => {
+    if (enquiries.length === 0) {
+      toast.info('No Enquiries', 'There are no enquiries to export.');
+      return;
+    }
+    const headers = ['Enquiry ID', 'Reference Number', 'Patient Name', 'Age', 'Gender', 'Phone', 'City', 'Reason', 'Priority', 'Status', 'Date'];
+    const rows = enquiries.map(e => [
+      e.enquiryId,
+      e.referenceNumber,
+      `"${(e.patientName || '').replace(/"/g, '""')}"`,
+      e.age,
+      e.gender,
+      e.phone,
+      `"${(e.city || '').replace(/"/g, '""')}"`,
+      `"${(e.reason || '').replace(/"/g, '""')}"`,
+      e.priority,
+      `"${(e.status || '').replace(/"/g, '""')}"`,
+      e.date
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Cancer_Aware_Bharat_Enquiries_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Export Complete', 'Enquiries CSV downloaded successfully.');
+  };
+
   const handleSavePatient = (e: React.FormEvent) => {
     e.preventDefault();
     if (!patientFormName || !patientFormAge || !patientFormDiagnosis) return;
 
+    let updatedList: Patient[];
     if (editingPatient) {
       // Edit mode
-      setPatients(prev => prev.map(p => p.id === editingPatient.id ? {
+      updatedList = patients.map(p => p.id === editingPatient.id ? {
         ...p,
         name: patientFormName,
         age: parseInt(patientFormAge),
@@ -180,7 +273,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
         hospitalName: patientFormHospital,
         financialAidStatus: patientFormAid,
         financialAidAmount: patientFormAidAmt ? parseFloat(patientFormAidAmt) : undefined
-      } : p));
+      } : p);
     } else {
       // Add mode
       const newPat: Patient = {
@@ -195,14 +288,21 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
         financialAidAmount: patientFormAidAmt ? parseFloat(patientFormAidAmt) : undefined,
         status: 'Under Treatment'
       };
-      setPatients(prev => [...prev, newPat]);
+      updatedList = [...patients, newPat];
     }
+
+    setPatients(updatedList);
+    localStorage.setItem('aware_bharat_patients', JSON.stringify(updatedList));
+    toast.success(editingPatient ? 'Patient Record Updated' : 'New Patient Record Added', `Record for ${patientFormName} saved.`);
     setShowPatientModal(false);
   };
 
   const handleDeletePatient = (id: string) => {
     if (window.confirm('Are you sure you want to remove this patient record?')) {
-      setPatients(prev => prev.filter(p => p.id !== id));
+      const updated = patients.filter(p => p.id !== id);
+      setPatients(updated);
+      localStorage.setItem('aware_bharat_patients', JSON.stringify(updated));
+      toast.info('Patient Record Removed');
     }
   };
 
@@ -210,11 +310,21 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   // VOLUNTEER UTILITIES
   // ==========================================
   const handleApproveVolunteer = (id: string) => {
-    setVolunteers(prev => prev.map(v => v.id === id ? { ...v, status: 'Approved' } : v));
+    setVolunteers(prev => {
+      const updated = prev.map(v => v.id === id ? { ...v, status: 'Approved' as const } : v);
+      localStorage.setItem('aware_bharat_volunteers', JSON.stringify(updated));
+      return updated;
+    });
+    toast.success('Volunteer Approved', 'Volunteer granted active status.');
   };
 
   const handleRejectVolunteer = (id: string) => {
-    setVolunteers(prev => prev.filter(v => v.id !== id));
+    setVolunteers(prev => {
+      const updated = prev.filter(v => v.id !== id);
+      localStorage.setItem('aware_bharat_volunteers', JSON.stringify(updated));
+      return updated;
+    });
+    toast.info('Volunteer Declined');
   };
 
   // ==========================================
@@ -223,6 +333,12 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const handleAddCampaign = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCampaignTitle || !newCampaignDate || !newCampaignLocation) return;
+
+    enquiryStore.addNotification({
+      targetRole: 'volunteer',
+      title: `New Campaign Scheduled: ${newCampaignTitle}`,
+      message: `Operational screening drive scheduled at ${newCampaignLocation} on ${newCampaignDate}. Volunteers invited for participation.`,
+    });
 
     setKpiMetrics(prev => ({
       ...prev,
@@ -238,6 +354,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     setNewCampaignLocation('');
     setCampaignSuccessToast(true);
     setTimeout(() => setCampaignSuccessToast(false), 3000);
+    toast.success('Campaign Scheduled', `Campaign "${newCampaignTitle}" broadcasted to volunteer network.`);
   };
 
   // Decline hospital modal state
@@ -265,6 +382,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
       }
       return updated;
     });
+    toast.success('Hospital Recommended', 'Hospital application forwarded to Super Admin board.');
   };
 
   const handleDeclineHospitalByAdmin = (id: string) => {
@@ -287,6 +405,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     });
     setShowAdminDeclineModal(null);
     setAdminDeclineReason('');
+    toast.warning('Hospital Declined', 'Application marked as declined.');
   };
 
   const handleVerifyDocument = (id: string) => {
@@ -302,16 +421,22 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
       }
       return updated;
     });
+    toast.success('Documents Verified', 'Hospital accreditation documents verified.');
   };
 
   // ==========================================
   // CAMPAIGN REQUESTS UTILITIES
   // ==========================================
   const handleScheduleFromRequest = (req: CampaignRequest) => {
-    setCampaignRequests(prev => prev.map(c => c.id === req.id ? { ...c, status: 'Scheduled' } : c));
+    setCampaignRequests(prev => {
+      const updated = prev.map(c => c.id === req.id ? { ...c, status: 'Scheduled' as const } : c);
+      localStorage.setItem('aware_bharat_campaign_requests', JSON.stringify(updated));
+      return updated;
+    });
     setNewCampaignTitle(req.organizationName + ' Screening Camp');
     setNewCampaignLocation(req.location);
     setActiveTab('campaigns');
+    toast.info('Request Converted to Camp', 'Pre-filled campaign form in scheduler.');
   };
 
   // ==========================================
@@ -319,22 +444,150 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   // ==========================================
   const handleSendFeedbackReply = (id: string) => {
     if (!feedbackReplyText.trim()) return;
-    setFeedbacks(prev => prev.map(f => f.id === id ? { ...f, status: 'Responded', response: feedbackReplyText } : f));
+    setFeedbacks(prev => {
+      const updated = prev.map(f => f.id === id ? { ...f, status: 'Responded' as const, response: feedbackReplyText } : f);
+      localStorage.setItem('aware_bharat_volunteer_feedback', JSON.stringify(updated));
+      return updated;
+    });
+    toast.success('Feedback Replied', 'Response sent to volunteer.');
     setFeedbackReplyText('');
     setActiveFeedbackId(null);
   };
 
   // ==========================================
-  // ANNOUNCEMENTS
+  // ANNOUNCEMENTS & BLOG UTILITIES
   // ==========================================
   const handleSendAnnouncement = (e: React.FormEvent) => {
     e.preventDefault();
     if (!announcementTitle || !announcementMessage) return;
 
+    enquiryStore.addNotification({
+      targetRole: 'volunteer',
+      title: announcementTitle,
+      message: announcementMessage
+    });
+
     setAnnouncementTitle('');
     setAnnouncementMessage('');
     setNotifSuccessToast(true);
     setTimeout(() => setNotifSuccessToast(false), 3000);
+    toast.success('Broadcast Alert Sent', 'Notification dispatched to volunteer network.');
+  };
+
+  const handlePublishBlog = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBlogTitle.trim() || !newBlogSummary.trim()) return;
+
+    const newBlogItem: BlogArticle = {
+      id: 'blog-' + Date.now(),
+      title: newBlogTitle,
+      summary: newBlogSummary,
+      content: newBlogSummary + '\n\nFull guidance and clinical information available on Cancer Aware Bharat medical portal.',
+      category: newBlogCategory,
+      author: newBlogAuthor || 'Dwarka Admin Node',
+      role: 'Regional Medical Lead',
+      date: new Date().toLocaleDateString('en-IN', { month: 'long', day: 'numeric', year: 'numeric' }),
+      readTime: '4 min read',
+      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80',
+      tags: [newBlogCategory, 'Health', 'Awareness']
+    };
+
+    const updated = [newBlogItem, ...blogs];
+    setBlogs(updated);
+    localStorage.setItem('aware_bharat_blogs', JSON.stringify(updated));
+    setNewBlogTitle('');
+    setNewBlogSummary('');
+    toast.success('Blog Article Published', `"${newBlogItem.title}" is now live on Portal News.`);
+  };
+
+  const handleDeleteBlog = (id: string) => {
+    if (window.confirm('Are you sure you want to remove this published article?')) {
+      const updated = blogs.filter(b => b.id !== id);
+      setBlogs(updated);
+      localStorage.setItem('aware_bharat_blogs', JSON.stringify(updated));
+      toast.info('Blog Article Removed');
+    }
+  };
+
+  const handleExportPatientsCSV = () => {
+    if (patients.length === 0) {
+      toast.info('No Patients', 'There are no patient records to export.');
+      return;
+    }
+    const headers = ['Patient Code', 'Full Name', 'Age', 'Gender', 'Primary Diagnosis', 'Clinic Partner', 'Financial Aid Status', 'Aid Amount'];
+    const rows = patients.map(p => [
+      p.id,
+      `"${(p.name || '').replace(/"/g, '""')}"`,
+      p.age,
+      p.gender,
+      `"${(p.diagnosis || '').replace(/"/g, '""')}"`,
+      `"${(p.hospitalName || '').replace(/"/g, '""')}"`,
+      p.financialAidStatus,
+      p.financialAidAmount || 0
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Cancer_Aware_Bharat_Patients_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Export Complete', 'Patients CSV downloaded successfully.');
+  };
+
+  const handleExportVolunteersCSV = () => {
+    if (volunteers.length === 0) {
+      toast.info('No Volunteers', 'There are no volunteer records to export.');
+      return;
+    }
+    const headers = ['Volunteer ID', 'Full Name', 'Email', 'Phone', 'Domain', 'Registered Date', 'Hours Logged', 'Attendance Rate', 'Status'];
+    const rows = volunteers.map(v => [
+      v.id,
+      `"${(v.name || '').replace(/"/g, '""')}"`,
+      v.email,
+      v.phone,
+      `"${(v.domain || '').replace(/"/g, '""')}"`,
+      v.registeredDate,
+      v.hoursLogged,
+      v.attendanceRate + '%',
+      v.status
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Cancer_Aware_Bharat_Volunteers_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Export Complete', 'Volunteers CSV downloaded successfully.');
+  };
+
+  const handleExportDonationsCSV = () => {
+    if (donations.length === 0) {
+      toast.info('No Ledger Entries', 'There are no donation records to export.');
+      return;
+    }
+    const headers = ['Receipt ID', 'Donor Entity', 'Entity Type', 'Inflow Amount (INR)', 'Audit Date', 'Inflow Channel', 'Tax Exemption Status'];
+    const rows = donations.map(d => [
+      d.id,
+      `"${(d.donorName || '').replace(/"/g, '""')}"`,
+      d.donorType,
+      d.amount,
+      d.date,
+      d.paymentMethod,
+      d.receiptSent ? 'Sent (80G)' : 'Pending'
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Cancer_Aware_Bharat_Donations_Ledger_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Export Complete', 'Donations ledger CSV downloaded successfully.');
   };
 
   // ==========================================
@@ -674,15 +927,25 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                     </button>
                   ))}
                 </div>
-                <div className="relative w-full sm:w-64">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search ID, patient, city..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-primary"
-                  />
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Search ID, patient, city..."
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-primary"
+                    />
+                  </div>
+                  <button
+                    onClick={handleExportEnquiriesCSV}
+                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                    title="Export Enquiries to CSV"
+                  >
+                    <Download className="w-3.5 h-3.5 text-primary" />
+                    <span>Export CSV</span>
+                  </button>
                 </div>
               </div>
 
@@ -741,15 +1004,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                               {enq.date}
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                                enq.status === 'Pending Admin Review' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                enq.status === 'Approved by Admin' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                enq.status === 'Appointment Confirmed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                enq.status === 'Rejected by Admin' ? 'bg-red-50 text-red-700 border-red-200' :
-                                'bg-indigo-50 text-indigo-700 border-indigo-200'
-                              }`}>
-                                {enq.status}
-                              </span>
+                              <StatusBadge status={enq.status} />
                             </td>
                             <td className="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
                               {enq.status === 'Pending Admin Review' && (
@@ -820,6 +1075,14 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                       <option value="Not Requested">Not Requested</option>
                     </select>
                   </div>
+                  <button
+                    onClick={handleExportPatientsCSV}
+                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                    title="Export Patients CSV"
+                  >
+                    <Download className="w-3.5 h-3.5 text-primary" />
+                    <span>Export CSV</span>
+                  </button>
                   <button
                     onClick={() => handleOpenPatientForm(null)}
                     className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold shadow-sm hover:opacity-95 cursor-pointer flex items-center gap-1 shrink-0"
@@ -902,15 +1165,25 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                     className="bg-transparent border-none outline-none text-xs w-full"
                   />
                 </div>
-                <select
-                  value={volunteerFilter}
-                  onChange={e => setVolunteerFilter(e.target.value)}
-                  className="px-4 py-2 border border-outline-variant rounded-xl text-xs bg-slate-50 cursor-pointer outline-none w-full sm:w-auto"
-                >
-                  <option value="All">All Verification Status</option>
-                  <option value="Pending Approval">Pending Approval</option>
-                  <option value="Approved">Approved</option>
-                </select>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <select
+                    value={volunteerFilter}
+                    onChange={e => setVolunteerFilter(e.target.value)}
+                    className="px-4 py-2 border border-outline-variant rounded-xl text-xs bg-slate-50 cursor-pointer outline-none w-full sm:w-auto"
+                  >
+                    <option value="All">All Verification Status</option>
+                    <option value="Pending Approval">Pending Approval</option>
+                    <option value="Approved">Approved</option>
+                  </select>
+                  <button
+                    onClick={handleExportVolunteersCSV}
+                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                    title="Export Volunteers CSV"
+                  >
+                    <Download className="w-3.5 h-3.5 text-primary" />
+                    <span>Export CSV</span>
+                  </button>
+                </div>
               </div>
 
               {/* Volunteers list */}
@@ -1307,7 +1580,10 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
               <div className="bg-white rounded-2xl border border-outline-variant/30 overflow-hidden shadow-xs">
                 <div className="p-4 border-b border-outline-variant/20 flex items-center justify-between">
                   <h3 className="text-sm font-bold text-slate-900">Donation Ledgers</h3>
-                  <button className="px-3.5 py-1.5 border border-outline-variant/50 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-700 cursor-pointer flex items-center gap-1.5">
+                  <button
+                    onClick={handleExportDonationsCSV}
+                    className="px-3.5 py-1.5 border border-outline-variant/50 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-700 cursor-pointer flex items-center gap-1.5"
+                  >
                     <Download className="w-4 h-4" /> Export Ledger (Excel)
                   </button>
                 </div>
@@ -1340,7 +1616,11 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                               <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">✓ Sent (80G)</span>
                             ) : (
                               <button
-                                onClick={() => setDonations(prev => prev.map(d => d.id === don.id ? { ...d, receiptSent: true } : d))}
+                                onClick={() => setDonations(prev => {
+                                  const updated = prev.map(d => d.id === don.id ? { ...d, receiptSent: true } : d);
+                                  localStorage.setItem('aware_bharat_donations', JSON.stringify(updated));
+                                  return updated;
+                                })}
                                 className="px-2.5 py-1 bg-primary text-white rounded text-[10px] font-bold hover:opacity-95"
                               >
                                 Email Receipt
@@ -1368,14 +1648,18 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                   <BookOpen className="w-4.5 h-4.5 text-primary" /> Publish Notice / Blog
                 </h3>
                 
-                <form onSubmit={e => e.preventDefault()} className="space-y-4 text-xs">
+                <form onSubmit={handlePublishBlog} className="space-y-4 text-xs">
                   <div className="space-y-1">
                     <label className="font-bold text-slate-600 block">Post Category</label>
-                    <select className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none cursor-pointer">
-                      <option>Oncology Prevention</option>
-                      <option>Nutrition Guide</option>
-                      <option>Important Announcement</option>
-                      <option>Survivor Story</option>
+                    <select
+                      value={newBlogCategory}
+                      onChange={e => setNewBlogCategory(e.target.value as any)}
+                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none cursor-pointer"
+                    >
+                      <option value="Prevention">Oncology Prevention</option>
+                      <option value="Nutrition">Nutrition Guide</option>
+                      <option value="Research">Important Announcement / Research</option>
+                      <option value="Survivors">Survivor Story</option>
                     </select>
                   </div>
 
@@ -1384,6 +1668,8 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                     <input
                       type="text"
                       required
+                      value={newBlogTitle}
+                      onChange={e => setNewBlogTitle(e.target.value)}
                       placeholder="e.g. Nutrition Tips during Chemotherapy"
                       className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
                     />
@@ -1392,13 +1678,19 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                   <div className="space-y-1">
                     <label className="font-bold text-slate-600 block">Abstract Summary</label>
                     <textarea
-                      rows={2}
-                      placeholder="Write brief description..."
+                      rows={3}
+                      required
+                      value={newBlogSummary}
+                      onChange={e => setNewBlogSummary(e.target.value)}
+                      placeholder="Write brief description for public readers..."
                       className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary resize-none"
                     />
                   </div>
 
-                  <button className="w-full py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-95 transition-opacity">
+                  <button
+                    type="submit"
+                    className="w-full py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-95 shadow-sm transition-opacity cursor-pointer"
+                  >
                     Publish to Portal News
                   </button>
                 </form>
@@ -1406,21 +1698,21 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
 
               {/* Published articles log */}
               <div className="lg:col-span-2 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs">
-                <h3 className="text-sm font-bold text-slate-900 mb-4">Published Announcements</h3>
+                <h3 className="text-sm font-bold text-slate-900 mb-4">Published Announcements & News</h3>
                 
                 <div className="space-y-3">
-                  {[
-                    { title: '5 Warning Signs of Breast Cancer You Should Never Ignore', date: 'July 12, 2026', author: 'Dr. Ramesh Sharma', category: 'Prevention' },
-                    { title: 'Healing Foods: Designing a Chemo-Friendly Diet', date: 'July 15, 2026', author: 'Dr. Anjali Deshmukh', category: 'Nutrition' },
-                    { title: 'Mega Blood Donation Drive scheduled in Dwarka', date: 'July 21, 2026', author: 'Dwarka Admin Node', category: 'Announcement' }
-                  ].map((art, idx) => (
-                    <div key={idx} className="p-3 border border-outline-variant/40 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-between text-xs">
+                  {blogs.map((art) => (
+                    <div key={art.id} className="p-3 border border-outline-variant/40 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-between text-xs">
                       <div>
                         <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[9px] font-bold border border-slate-200">{art.category}</span>
                         <h4 className="font-bold text-slate-900 mt-2">{art.title}</h4>
                         <p className="text-slate-400 mt-0.5">Author: {art.author} • {art.date}</p>
                       </div>
-                      <button className="p-1 hover:bg-slate-100 rounded text-slate-400">
+                      <button
+                        onClick={() => handleDeleteBlog(art.id)}
+                        className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg cursor-pointer transition-colors"
+                        title="Delete Blog Article"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -1582,7 +1874,13 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                 </div>
               )}
 
-              <form onSubmit={e => { e.preventDefault(); setPasswordSuccess(true); setTimeout(() => setPasswordSuccess(false), 3000); }} className="space-y-5">
+              <form onSubmit={e => {
+                e.preventDefault();
+                localStorage.setItem('aware_bharat_admin_profile', JSON.stringify({ profileName, profileEmail }));
+                setPasswordSuccess(true);
+                setTimeout(() => setPasswordSuccess(false), 3000);
+                toast.success('Settings Saved', 'Administrative preferences updated successfully.');
+              }} className="space-y-5">
                 
                 {/* Node details */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1820,7 +2118,9 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
               <button
                 onClick={() => {
                   enquiryStore.adminApproveEnquiry(showApproveEnquiryModal.id, approveRemarks, 'Dr. Ramesh Sharma');
+                  toast.success('Enquiry Approved', `Patient ${showApproveEnquiryModal.patientName} forwarded to Super Admin board.`);
                   setShowApproveEnquiryModal(null);
+                  setApproveRemarks('');
                 }}
                 className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-sm cursor-pointer"
               >
@@ -1875,7 +2175,9 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                 onClick={() => {
                   if (rejectReasonText.trim()) {
                     enquiryStore.adminRejectEnquiry(showRejectEnquiryModal.id, rejectReasonText, 'Dr. Ramesh Sharma');
+                    toast.warning('Enquiry Rejected', `Patient ${showRejectEnquiryModal.patientName} enquiry declined.`);
                     setShowRejectEnquiryModal(null);
+                    setRejectReasonText('');
                   }
                 }}
                 className="px-5 py-2 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 shadow-sm disabled:opacity-50 cursor-pointer"

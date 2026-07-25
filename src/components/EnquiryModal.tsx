@@ -37,11 +37,30 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
     }
   }, [selectedHospitalId]);
 
+  // Handle ESC key to close modal
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleSimulatedFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files);
+      
+      // File size validation (Max 10MB per file)
+      const oversized = files.find(f => f.size > 10 * 1024 * 1024);
+      if (oversized) {
+        setErrorMessage(`File "${oversized.name}" exceeds the maximum allowed 10 MB size limit.`);
+        return;
+      }
+
       const newReports: UploadedReport[] = files.map((file, idx) => ({
         id: 'rep-' + Date.now() + '-' + idx,
         name: file.name,
@@ -50,6 +69,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
         uploadedAt: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
       }));
       setUploadedFiles(prev => [...prev, ...newReports]);
+      setErrorMessage('');
     }
   };
 

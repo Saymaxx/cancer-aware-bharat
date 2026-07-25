@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -12,17 +12,35 @@ import MissionTab from './components/MissionTab';
 import JoinUsTab from './components/JoinUsTab';
 import DoctorsTab from './components/DoctorsTab';
 import VolunteerAuthPage from './components/VolunteerAuthPage';
-import VolunteerDashboard from './components/VolunteerDashboard';
 import AdminAuthPage from './components/AdminAuthPage';
-import AdminDashboard from './components/AdminDashboard';
-import SuperAdminDashboard from './components/SuperAdminDashboard';
 import HospitalAuthPage from './components/HospitalAuthPage';
-import HospitalDashboard from './components/HospitalDashboard';
+
+// Common Polish Components
+import ErrorBoundary from './components/common/ErrorBoundary';
+import { ToastProvider } from './components/common/Toast';
 
 // Modals
 import VolunteerModal from './components/VolunteerModal';
 import EnquiryModal from './components/EnquiryModal';
 import SitemapModal from './components/SitemapModal';
+
+// Lazy Loaded Heavy Dashboard Components (Code Splitting & Performance)
+const VolunteerDashboard = lazy(() => import('./components/VolunteerDashboard'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const SuperAdminDashboard = lazy(() => import('./components/SuperAdminDashboard'));
+const HospitalDashboard = lazy(() => import('./components/HospitalDashboard'));
+
+// Loading Fallback Spinner for Suspense
+function PageLoadingFallback() {
+  return (
+    <div className="min-h-[400px] w-full flex items-center justify-center p-12">
+      <div className="flex flex-col items-center space-y-3">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-bold text-slate-500 animate-pulse">Loading Cancer Aware Bharat Portal...</p>
+      </div>
+    </div>
+  );
+}
 
 // ---------- Auth Guard ----------
 function AuthGuard({ storageKey, requiredRole, redirectTo = '/', children }: {
@@ -62,7 +80,7 @@ function PublicLayout({
     <>
       {/* Top Banner Alert */}
       <div className="bg-primary text-white text-xs py-2 px-4 text-center font-semibold leading-relaxed border-b border-primary-container">
-        📢 <strong className="text-secondary-container">Campaign Alert:</strong> Free Early Detection & Screening Camps are now active across New Delhi & Pune. Register in 30 seconds for prioritized callback guidelines.
+        📢 <strong className="text-secondary-container">Campaign Alert:</strong> Free Early Detection & Screening Camps active across New Delhi & Pune. Register for prioritized callback.
       </div>
 
       {/* Main Sticky Navbar */}
@@ -81,7 +99,7 @@ function PublicLayout({
         onOpenSitemap={onOpenSitemap}
       />
 
-      {/* Floating Action Button (Hidden on Auth pages to prevent UI overlap) */}
+      {/* Floating Action Button */}
       {!isAuthPage && (
         <div className="fixed bottom-6 right-6 z-40 hidden sm:block">
           <button
@@ -96,8 +114,8 @@ function PublicLayout({
   );
 }
 
-// ---------- App ----------
-export default function App() {
+// ---------- App Inner Component ----------
+function AppContent() {
   const navigate = useNavigate();
   const [volunteerOpen, setVolunteerOpen] = useState(false);
   const [enquiryOpen, setEnquiryOpen] = useState(false);
@@ -224,7 +242,7 @@ export default function App() {
           </PublicLayout>
         } />
 
-        {/* ===== Hidden Admin Auth Pages (with Navbar/Footer but no public links) ===== */}
+        {/* ===== Hidden Admin Auth Pages ===== */}
         <Route path="/admin" element={
           <PublicLayout {...publicLayoutProps}>
             <main className="flex-grow w-full mx-auto">
@@ -240,61 +258,69 @@ export default function App() {
           </PublicLayout>
         } />
 
-        {/* ===== Protected Dashboard Pages (no Navbar/Footer) ===== */}
+        {/* ===== Protected Dashboard Pages (Lazy Loaded for Performance) ===== */}
         <Route path="/volunteer/dashboard" element={
           <AuthGuard storageKey="aware_bharat_logged_in_volunteer" redirectTo="/volunteer/login">
             <main className="flex-grow w-full mx-auto">
-              <VolunteerDashboard
-                onLogout={() => {
-                  localStorage.removeItem('aware_bharat_logged_in_volunteer');
-                  navigate('/volunteer/login');
-                }}
-              />
+              <Suspense fallback={<PageLoadingFallback />}>
+                <VolunteerDashboard
+                  onLogout={() => {
+                    localStorage.removeItem('aware_bharat_logged_in_volunteer');
+                    navigate('/volunteer/login');
+                  }}
+                />
+              </Suspense>
             </main>
           </AuthGuard>
         } />
         <Route path="/hospital/dashboard" element={
           <AuthGuard storageKey="aware_bharat_logged_in_hospital" redirectTo="/hospital/login">
             <main className="flex-grow w-full mx-auto">
-              <HospitalDashboard
-                onLogout={() => {
-                  localStorage.removeItem('aware_bharat_logged_in_hospital');
-                  navigate('/hospital/login');
-                }}
-              />
+              <Suspense fallback={<PageLoadingFallback />}>
+                <HospitalDashboard
+                  onLogout={() => {
+                    localStorage.removeItem('aware_bharat_logged_in_hospital');
+                    navigate('/hospital/login');
+                  }}
+                />
+              </Suspense>
             </main>
           </AuthGuard>
         } />
         <Route path="/admin/dashboard" element={
           <AuthGuard storageKey="aware_bharat_logged_in_staff" requiredRole="admin" redirectTo="/admin">
             <main className="flex-grow w-full mx-auto">
-              <AdminDashboard
-                onLogout={() => {
-                  localStorage.removeItem('aware_bharat_logged_in_staff');
-                  navigate('/admin');
-                }}
-              />
+              <Suspense fallback={<PageLoadingFallback />}>
+                <AdminDashboard
+                  onLogout={() => {
+                    localStorage.removeItem('aware_bharat_logged_in_staff');
+                    navigate('/admin');
+                  }}
+                />
+              </Suspense>
             </main>
           </AuthGuard>
         } />
         <Route path="/superadmin/dashboard" element={
           <AuthGuard storageKey="aware_bharat_logged_in_staff" requiredRole="superadmin" redirectTo="/superadmin">
             <main className="flex-grow w-full mx-auto">
-              <SuperAdminDashboard
-                onLogout={() => {
-                  localStorage.removeItem('aware_bharat_logged_in_staff');
-                  navigate('/superadmin');
-                }}
-              />
+              <Suspense fallback={<PageLoadingFallback />}>
+                <SuperAdminDashboard
+                  onLogout={() => {
+                    localStorage.removeItem('aware_bharat_logged_in_staff');
+                    navigate('/superadmin');
+                  }}
+                />
+              </Suspense>
             </main>
           </AuthGuard>
         } />
 
-        {/* ===== Catch-all: redirect unknown routes to home ===== */}
+        {/* ===== Catch-all ===== */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {/* High-fidelity Interactive Modals (always available) */}
+      {/* High-fidelity Interactive Modals */}
       <VolunteerModal
         isOpen={volunteerOpen}
         onClose={() => setVolunteerOpen(false)}
@@ -313,5 +339,16 @@ export default function App() {
         onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
       />
     </div>
+  );
+}
+
+// Global Provider Wrapper Export
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }

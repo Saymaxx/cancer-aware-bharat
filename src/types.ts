@@ -165,7 +165,7 @@ export interface HospitalPartnerRequest {
 
 export interface AppNotification {
   id: string;
-  targetRole: 'admin' | 'superadmin' | 'hospital' | 'patient';
+  targetRole: 'admin' | 'superadmin' | 'hospital' | 'patient' | 'volunteer';
   targetHospitalId?: string;
   title: string;
   message: string;

@@ -282,7 +282,7 @@ export const enquiryStore = {
     }
   },
 
-  getNotifications(role?: 'admin' | 'superadmin' | 'hospital' | 'patient', hospitalId?: string): AppNotification[] {
+  getNotifications(role?: 'admin' | 'superadmin' | 'hospital' | 'patient' | 'volunteer', hospitalId?: string): AppNotification[] {
     const raw = localStorage.getItem(NOTIFICATIONS_KEY);
     let list: AppNotification[] = [];
     if (!raw) {
@@ -768,7 +768,7 @@ export function useEnquiries(): PatientEnquiry[] {
 }
 
 // React Hook for Notifications
-export function useNotifications(role?: 'admin' | 'superadmin' | 'hospital' | 'patient', hospitalId?: string): AppNotification[] {
+export function useNotifications(role?: 'admin' | 'superadmin' | 'hospital' | 'patient' | 'volunteer', hospitalId?: string): AppNotification[] {
   const [notifications, setNotifications] = useState<AppNotification[]>(() =>
     enquiryStore.getNotifications(role, hospitalId)
   );
@@ -783,5 +783,7 @@ export function useNotifications(role?: 'admin' | 'superadmin' | 'hospital' | 'p
     };
   }, [role, hospitalId]);
 
+
   return notifications;
 }
+

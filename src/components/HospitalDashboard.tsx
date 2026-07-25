@@ -12,6 +12,8 @@ import {
 import { enquiryStore, useEnquiries, useNotifications } from '../enquiryStore';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
+import { useToast } from './common/Toast';
+import StatusBadge from './common/StatusBadge';
 
 import {
   INITIAL_HOSPITAL_KPI, INITIAL_ASSIGNED_PATIENTS, INITIAL_NGO_REFERRALS,
@@ -174,6 +176,7 @@ const getInitialHospitalData = (profileEmail: string) => {
 };
 
 export default function HospitalDashboard({ onPageChange, onLogout }: { onPageChange?: (page: string) => void; onLogout: () => void }) {
+  const toast = useToast();
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);

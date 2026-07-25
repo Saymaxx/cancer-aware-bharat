@@ -10,6 +10,7 @@ import {
   QrCode, Share2, PlusCircle, Check, Printer, RefreshCw, Filter,
   ShieldCheck, AlertTriangle, PhoneCall, Mail, Globe
 } from 'lucide-react';
+import { useToast } from './common/Toast';
 
 import {
   MOTIVATIONAL_QUOTES, DEFAULT_VOLUNTEER_STATS,
@@ -117,6 +118,7 @@ interface VolunteerDashboardProps {
 }
 
 export default function VolunteerDashboard({ onPageChange, onLogout }: VolunteerDashboardProps) {
+  const toast = useToast();
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -145,7 +147,13 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
   const [trainingModules, setTrainingModules] = useState<TrainingResource[]>(TRAINING_RESOURCES);
   const [galleryList, setGalleryList] = useState<GalleryPhoto[]>(GALLERY_PHOTOS);
   const [notifFilter, setNotifFilter] = useState<string>('All');
-  const [userStats, setUserStats] = useState(DEFAULT_VOLUNTEER_STATS);
+  const [userStats, setUserStats] = useState(() => {
+    const stored = localStorage.getItem('aware_bharat_volunteer_stats');
+    if (stored) {
+      try { return JSON.parse(stored); } catch (e) {}
+    }
+    return DEFAULT_VOLUNTEER_STATS;
+  });
 
   // Modal States
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
@@ -178,6 +186,26 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3500);
   };
+
+  // Close open modals on ESC key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActivePassModal(null);
+        setActiveProtocolModal(null);
+        setActiveLeadContactModal(null);
+        setActiveTrainingModal(null);
+        setActiveCertModal(null);
+        setSelectedBadgeModal(null);
+        setShowPhotoUploadModal(false);
+        setShowLogHoursModal(false);
+        setShowReportIssueModal(false);
+        setLightboxPhoto(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Motivational quote cycle
   useEffect(() => {
@@ -254,10 +282,14 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
   const handleLogHoursSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (loggedHoursCount <= 0 || !loggedHoursActivity.trim()) return;
-    setUserStats(prev => ({
-      ...prev,
-      volunteerHours: prev.volunteerHours + loggedHoursCount
-    }));
+    setUserStats(prev => {
+      const updated = {
+        ...prev,
+        volunteerHours: prev.volunteerHours + loggedHoursCount
+      };
+      localStorage.setItem('aware_bharat_volunteer_stats', JSON.stringify(updated));
+      return updated;
+    });
     setShowLogHoursModal(false);
     setLoggedHoursActivity('');
     showToast(`✓ ${loggedHoursCount} volunteer hours logged successfully for approval!`);
@@ -1578,6 +1610,21 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 10. LIGHTBOX PHOTO PREVIEW MODAL */}
+      {lightboxPhoto && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setLightboxPhoto(null)}>
+          <div className="relative max-w-4xl w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setLightboxPhoto(null)}
+              className="absolute -top-10 right-0 text-white/80 hover:text-white p-2 rounded-full cursor-pointer"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img src={lightboxPhoto} alt="Gallery Preview" className="max-h-[85vh] w-auto rounded-2xl shadow-2xl object-contain" referrerPolicy="no-referrer" />
           </div>
         </div>
       )}
