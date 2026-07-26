@@ -645,9 +645,10 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     { id: 'donations', label: 'Donations Audit', icon: DollarSign },
     { id: 'blogs', label: 'Blog & Event News', icon: BookOpen },
     { id: 'feedback', label: 'Volunteer Feedback', icon: MessageSquare },
-    { id: 'notifications', label: 'Notification Center', icon: Bell },
     { id: 'settings', label: 'Admin Settings', icon: Settings },
   ];
+
+  const unreadAdminNotifCount = useMemo(() => adminNotifications.filter(n => !n.read).length, [adminNotifications]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-800">
@@ -721,16 +722,6 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
           </nav>
         </div>
 
-        {/* Sidebar Footer Logout */}
-        <div className="p-3 border-t border-white/10">
-          <button
-            onClick={onLogout}
-            className="w-full flex items-center rounded-xl p-3 text-sm font-semibold text-red-300 hover:text-red-100 hover:bg-red-950/20 cursor-pointer"
-          >
-            <LogOut className={`w-5 h-5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3.5'}`} />
-            {(!sidebarCollapsed || mobileSidebarOpen) && <span>Secure Logout</span>}
-          </button>
-        </div>
       </aside>
 
       {/* =====================================================
@@ -759,14 +750,35 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
             </h2>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             {/* Quick connection state badge */}
             <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200 gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> dwarka-node-sync
             </span>
+            <button
+              onClick={() => setActiveTab('notifications')}
+              className={`relative p-2 rounded-xl transition-colors cursor-pointer ${
+                activeTab === 'notifications' ? 'bg-primary/10 text-primary' : 'text-slate-500 hover:bg-slate-100'
+              }`}
+              title="Notifications"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadAdminNotifCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-secondary text-white text-[9px] font-bold flex items-center justify-center">
+                  {unreadAdminNotifCount}
+                </span>
+              )}
+            </button>
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary border border-primary/20">
               AD
             </div>
+            <button
+              onClick={onLogout}
+              className="p-2 rounded-xl text-red-500 hover:bg-red-50 cursor-pointer transition-colors"
+              title="Secure Logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </header>
 
