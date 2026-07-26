@@ -6,6 +6,7 @@ const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost
 
 const STAFF_SESSION_KEY = 'aware_bharat_logged_in_staff';
 const HOSPITAL_SESSION_KEY = 'aware_bharat_logged_in_hospital';
+const VOLUNTEER_SESSION_KEY = 'aware_bharat_logged_in_volunteer';
 
 export class ApiError extends Error {
   status: number;
@@ -85,6 +86,31 @@ export function setHospitalSession(session: HospitalSession) {
   localStorage.setItem(HOSPITAL_SESSION_KEY, JSON.stringify(session));
 }
 
+// ---------------- Volunteer session ----------------
+
+export interface VolunteerSession {
+  fullName: string;
+  email: string;
+  volunteerId: string;
+  city: string;
+  domain: string;
+  accessToken: string;
+}
+
+export function getVolunteerSession(): VolunteerSession | null {
+  const raw = localStorage.getItem(VOLUNTEER_SESSION_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function setVolunteerSession(session: VolunteerSession) {
+  localStorage.setItem(VOLUNTEER_SESSION_KEY, JSON.stringify(session));
+}
+
 // ---------------- Auth ----------------
 
 interface TokenResponse {
@@ -106,6 +132,41 @@ export async function loginHospital(email: string, password: string): Promise<To
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
+}
+
+export async function loginVolunteer(email: string, password: string): Promise<TokenResponse> {
+  return request<TokenResponse>('/auth/volunteer/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export interface RegisterVolunteerPayload {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  area?: string;
+  motivation?: string;
+}
+
+export interface ApiVolunteer {
+  id: string;
+  volunteerId: string;
+  name: string;
+  email: string;
+  phone: string;
+  area: string | null;
+  availableDays: string[];
+  motivation: string | null;
+}
+
+export function registerVolunteer(payload: RegisterVolunteerPayload): Promise<ApiVolunteer> {
+  return request<ApiVolunteer>('/auth/volunteer/register', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export function getMyVolunteerProfile(token: string): Promise<ApiVolunteer> {
+  return request<ApiVolunteer>('/volunteers/me', {}, token);
 }
 
 // ---------------- Raw API shapes (camelCase, as returned by FastAPI) ----------------

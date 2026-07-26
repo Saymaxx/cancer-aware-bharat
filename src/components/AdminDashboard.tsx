@@ -1841,21 +1841,21 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                 </form>
               </div>
 
-              {/* Logs */}
+              {/* Live notifications from the enquiry workflow */}
               <div className="lg:col-span-2 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs">
-                <h3 className="text-sm font-bold text-slate-900 mb-4">Historical System Logs</h3>
+                <h3 className="text-sm font-bold text-slate-900 mb-4">Enquiry Workflow Notifications</h3>
                 <div className="space-y-4">
-                  {[
-                    { title: 'Volunteer Verification Completed', text: 'Volunteer accounts registered in Pune database sync check.', time: 'July 21, 2026 • 2:10 PM' },
-                    { title: 'Database Backed Up', text: 'System backup trace uploaded to primary AWS secure server.', time: 'July 20, 2026 • 11:59 PM' },
-                    { title: 'MFA Credential Session Reset', text: 'Admin security passcode validated and credentials authorized.', time: 'July 18, 2026 • 10:15 AM' }
-                  ].map((l, idx) => (
-                    <div key={idx} className="p-3 border border-outline-variant/40 rounded-xl text-xs">
-                      <h4 className="font-bold text-slate-900">{l.title}</h4>
-                      <p className="text-slate-600 mt-1">{l.text}</p>
-                      <span className="text-[10px] text-slate-400 mt-1 block">{l.time}</span>
-                    </div>
-                  ))}
+                  {adminNotifications.length === 0 ? (
+                    <p className="text-xs text-slate-500 text-center py-6">No notifications yet.</p>
+                  ) : (
+                    adminNotifications.map((n) => (
+                      <div key={n.id} className={`p-3 border rounded-xl text-xs ${n.read ? 'border-outline-variant/40' : 'border-primary/30 bg-primary/5'}`}>
+                        <h4 className="font-bold text-slate-900">{n.title}</h4>
+                        <p className="text-slate-600 mt-1">{n.message}</p>
+                        <span className="text-[10px] text-slate-400 mt-1 block">{n.timestamp}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 

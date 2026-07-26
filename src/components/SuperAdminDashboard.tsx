@@ -2012,18 +2012,19 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                 </form>
               </div>
               <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/60 p-6 shadow-xs">
-                <h3 className="text-sm font-bold text-slate-900 mb-4">Sent Notifications</h3>
+                <h3 className="text-sm font-bold text-slate-900 mb-4">Enquiry Workflow Notifications</h3>
                 <div className="space-y-3">
-                  {sentNotifications.map(n => (
-                    <div key={n.id} className="p-4 border border-slate-200/60 rounded-xl">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="text-xs font-bold text-slate-900">{n.title}</h4>
-                        <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold border border-indigo-200">{n.audience}</span>
+                  {superAdminNotifications.length === 0 ? (
+                    <p className="text-xs text-slate-500 text-center py-6">No notifications yet.</p>
+                  ) : (
+                    superAdminNotifications.map(n => (
+                      <div key={n.id} className={`p-4 border rounded-xl ${n.read ? 'border-slate-200/60' : 'border-indigo-300 bg-indigo-50/40'}`}>
+                        <h4 className="text-xs font-bold text-slate-900 mb-1">{n.title}</h4>
+                        <p className="text-[11px] text-slate-600 leading-relaxed">{n.message}</p>
+                        <p className="text-[10px] text-slate-400 mt-2">{n.timestamp}</p>
                       </div>
-                      <p className="text-[11px] text-slate-600 leading-relaxed">{n.message}</p>
-                      <p className="text-[10px] text-slate-400 mt-2">{n.sentAt} • {n.recipientCount.toLocaleString()} recipients</p>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </div>

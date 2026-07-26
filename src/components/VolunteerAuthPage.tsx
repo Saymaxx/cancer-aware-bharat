@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Eye, EyeOff, CheckCircle, Shield, Users, Calendar, ArrowRight, User, Mail, Phone, Lock, MapPin, Briefcase, Sparkles } from 'lucide-react';
+import { ApiError, getMyVolunteerProfile, loginVolunteer, registerVolunteer, setVolunteerSession } from '../api/client';
 
 interface VolunteerAuthPageProps {}
 
@@ -78,7 +79,7 @@ export default function VolunteerAuthPage({}: VolunteerAuthPageProps) {
     }, 200);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -87,32 +88,28 @@ export default function VolunteerAuthPage({}: VolunteerAuthPageProps) {
       return;
     }
 
-    // Check localStorage for registered volunteers
-    const existing = localStorage.getItem('aware_bharat_volunteer_accounts');
-    const accounts = existing ? JSON.parse(existing) : [];
-    const account = accounts.find((a: any) => a.email === loginForm.email && a.password === loginForm.password);
-
-    if (!account) {
-      // Also check if email exists at all
-      const emailExists = accounts.find((a: any) => a.email === loginForm.email);
-      if (emailExists) {
-        setErrorMessage('Incorrect password. Please try again.');
-      } else {
-        setErrorMessage('No account found with this email. Please register first.');
-      }
-      return;
-    }
-
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setLoggedInUser(account.fullName);
+    try {
+      const token = await loginVolunteer(loginForm.email.trim(), loginForm.password);
+      const profile = await getMyVolunteerProfile(token.accessToken);
+      setVolunteerSession({
+        fullName: token.name,
+        email: loginForm.email,
+        volunteerId: profile.volunteerId,
+        city: profile.area || '',
+        domain: 'General Volunteer',
+        accessToken: token.accessToken,
+      });
+      setLoggedInUser(token.name);
       setSubmitSuccess(true);
-      localStorage.setItem('aware_bharat_logged_in_volunteer', JSON.stringify(account));
-    }, 1200);
+    } catch (err) {
+      setErrorMessage(err instanceof ApiError ? err.message : 'Unable to reach the server. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -136,39 +133,32 @@ export default function VolunteerAuthPage({}: VolunteerAuthPageProps) {
       return;
     }
 
-    // Check if email already exists
-    const existing = localStorage.getItem('aware_bharat_volunteer_accounts');
-    const accounts = existing ? JSON.parse(existing) : [];
-    if (accounts.find((a: any) => a.email === registerForm.email)) {
-      setErrorMessage('An account with this email already exists. Please login instead.');
-      return;
-    }
-
     setIsSubmitting(true);
-    setTimeout(() => {
-      const randomNum = Math.floor(1000 + Math.random() * 9000);
-      const volunteerId = `V-2026-${randomNum}`;
-
-      const newAccount = {
-        id: Math.random().toString(36).substr(2, 9),
-        fullName: registerForm.fullName,
-        email: registerForm.email,
+    try {
+      const created = await registerVolunteer({
+        name: registerForm.fullName,
+        email: registerForm.email.trim(),
         phone: registerForm.phone,
         password: registerForm.password,
+        area: registerForm.city,
+        motivation: `Interested domain: ${registerForm.domain}`,
+      });
+      const token = await loginVolunteer(registerForm.email.trim(), registerForm.password);
+      setVolunteerSession({
+        fullName: registerForm.fullName,
+        email: registerForm.email,
+        volunteerId: created.volunteerId,
         city: registerForm.city,
         domain: registerForm.domain,
-        volunteerId,
-        registeredDate: new Date().toLocaleDateString(),
-      };
-
-      accounts.push(newAccount);
-      localStorage.setItem('aware_bharat_volunteer_accounts', JSON.stringify(accounts));
-      localStorage.setItem('aware_bharat_logged_in_volunteer', JSON.stringify(newAccount));
-
-      setIsSubmitting(false);
+        accessToken: token.accessToken,
+      });
       setLoggedInUser(registerForm.fullName);
       setSubmitSuccess(true);
-    }, 1500);
+    } catch (err) {
+      setErrorMessage(err instanceof ApiError ? err.message : 'Unable to reach the server. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Stats for the side panel
