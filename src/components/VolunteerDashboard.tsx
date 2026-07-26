@@ -2,22 +2,22 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Heart, Calendar, Clock, MapPin, Users, Award, Bell, BookOpen,
-  FileText, Image, MessageSquare, LogOut, ChevronRight, ChevronDown,
-  CheckCircle, Star, TrendingUp, Shield, Phone, ExternalLink,
-  Download, X, Eye, Send, Sparkles, Target, Zap, BarChart3,
-  GraduationCap, Play, FileCheck, AlertCircle, User, ArrowRight,
-  Timer, CircleCheck, Circle, Flame, Medal, Terminal, CheckCircle2, UserCheck, Menu,
-  QrCode, Share2, PlusCircle, Check, Printer, RefreshCw, Filter,
-  ShieldCheck, AlertTriangle, PhoneCall, Mail, Globe
+  FileText, MessageSquare, LogOut,
+  CheckCircle, Phone,
+  Download, X, Send, Sparkles, Target, BarChart3,
+  GraduationCap, Play, AlertCircle, User, ArrowRight,
+  Timer, CircleCheck, Circle, Terminal, CheckCircle2, UserCheck, Menu,
+  QrCode, Check,
+  ShieldCheck, AlertTriangle, PhoneCall, Globe
 } from 'lucide-react';
 import { useToast } from './common/Toast';
 
 import {
   MOTIVATIONAL_QUOTES, DEFAULT_VOLUNTEER_STATS,
-  MY_ACTIVE_CAMPAIGNS, TODAYS_SCHEDULE, ACHIEVEMENTS, NOTIFICATIONS,
-  TRAINING_RESOURCES, CERTIFICATES, GALLERY_PHOTOS, MONTHLY_IMPACT,
+  MY_ACTIVE_CAMPAIGNS, TODAYS_SCHEDULE, NOTIFICATIONS,
+  TRAINING_RESOURCES,
   type ActiveCampaign, type Notification as NotifType, type ScheduleItem,
-  type TrainingResource, type Certificate, type Achievement, type GalleryPhoto
+  type TrainingResource,
 } from '../volunteerDashboardData';
 
 // ===========================
@@ -145,9 +145,8 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
   const [scheduleList, setScheduleList] = useState<ScheduleItem[]>(TODAYS_SCHEDULE);
   const [notifications, setNotifications] = useState<NotifType[]>(NOTIFICATIONS);
   const [trainingModules, setTrainingModules] = useState<TrainingResource[]>(TRAINING_RESOURCES);
-  const [galleryList, setGalleryList] = useState<GalleryPhoto[]>(GALLERY_PHOTOS);
   const [notifFilter, setNotifFilter] = useState<string>('All');
-  const [userStats, setUserStats] = useState(() => {
+  const [userStats] = useState(() => {
     const stored = localStorage.getItem('aware_bharat_volunteer_stats');
     if (stored) {
       try { return JSON.parse(stored); } catch (e) {}
@@ -156,23 +155,12 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
   });
 
   // Modal States
-  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const [activePassModal, setActivePassModal] = useState<ActiveCampaign | null>(null);
   const [activeProtocolModal, setActiveProtocolModal] = useState<ActiveCampaign | null>(null);
   const [activeLeadContactModal, setActiveLeadContactModal] = useState<ActiveCampaign | null>(null);
   const [activeTrainingModal, setActiveTrainingModal] = useState<TrainingResource | null>(null);
   const [trainingQuizAnswer, setTrainingQuizAnswer] = useState<number | null>(null);
-  const [activeCertModal, setActiveCertModal] = useState<Certificate | null>(null);
-  const [selectedBadgeModal, setSelectedBadgeModal] = useState<Achievement | null>(null);
-  const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
-  const [newPhotoUrl, setNewPhotoUrl] = useState('');
-  const [newPhotoCaption, setNewPhotoCaption] = useState('');
-  const [newPhotoCampaign, setNewPhotoCampaign] = useState('Oral Screening Drive');
-  
-  const [showLogHoursModal, setShowLogHoursModal] = useState(false);
-  const [loggedHoursCount, setLoggedHoursCount] = useState<number>(4);
-  const [loggedHoursActivity, setLoggedHoursActivity] = useState('');
-  
+
   const [showReportIssueModal, setShowReportIssueModal] = useState(false);
   const [issueCategory, setIssueCategory] = useState('Kit Shortage');
   const [issueDescription, setIssueDescription] = useState('');
@@ -195,12 +183,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
         setActiveProtocolModal(null);
         setActiveLeadContactModal(null);
         setActiveTrainingModal(null);
-        setActiveCertModal(null);
-        setSelectedBadgeModal(null);
-        setShowPhotoUploadModal(false);
-        setShowLogHoursModal(false);
         setShowReportIssueModal(false);
-        setLightboxPhoto(null);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -262,39 +245,6 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
     setTrainingQuizAnswer(null);
   };
 
-  const handlePhotoUploadSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPhotoCaption.trim()) return;
-    const newPhoto: GalleryPhoto = {
-      id: 'photo-' + Date.now(),
-      image: newPhotoUrl.trim() || 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=600&q=80',
-      caption: newPhotoCaption,
-      campaign: newPhotoCampaign,
-      date: new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })
-    };
-    setGalleryList(prev => [newPhoto, ...prev]);
-    setShowPhotoUploadModal(false);
-    setNewPhotoUrl('');
-    setNewPhotoCaption('');
-    showToast('Photo successfully submitted to campaign gallery!');
-  };
-
-  const handleLogHoursSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loggedHoursCount <= 0 || !loggedHoursActivity.trim()) return;
-    setUserStats(prev => {
-      const updated = {
-        ...prev,
-        volunteerHours: prev.volunteerHours + loggedHoursCount
-      };
-      localStorage.setItem('aware_bharat_volunteer_stats', JSON.stringify(updated));
-      return updated;
-    });
-    setShowLogHoursModal(false);
-    setLoggedHoursActivity('');
-    showToast(`✓ ${loggedHoursCount} volunteer hours logged successfully for approval!`);
-  };
-
   const handleReportIssueSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!issueDescription.trim()) return;
@@ -345,12 +295,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
     { id: 'dashboard', label: 'Dashboard Overview', icon: BarChart3 },
     { id: 'campaigns', label: 'Approved Campaigns', icon: Calendar, badge: myCampaigns.length },
     { id: 'schedule', label: 'Today\'s Agenda', icon: Timer },
-    { id: 'impact', label: 'Impact Analytics', icon: TrendingUp },
-    { id: 'achievements', label: 'Badges & Rewards', icon: Award },
-    { id: 'notifications', label: 'Notification Center', icon: Bell, badge: unreadCount },
     { id: 'training', label: 'Training Modules', icon: GraduationCap },
-    { id: 'certificates', label: 'Certificates', icon: FileCheck },
-    { id: 'gallery', label: 'Photo Gallery', icon: Image },
     { id: 'feedback', label: 'Volunteer Feedback', icon: MessageSquare },
   ];
 
@@ -440,13 +385,6 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
             <Globe className={`w-4.5 h-4.5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3'}`} />
             {(!sidebarCollapsed || mobileSidebarOpen) && <span>Return to Main Website</span>}
           </button>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center rounded-xl p-2.5 text-xs font-semibold text-red-300 hover:text-red-100 hover:bg-red-950/20 cursor-pointer transition-colors"
-          >
-            <LogOut className={`w-4.5 h-4.5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3'}`} />
-            {(!sidebarCollapsed || mobileSidebarOpen) && <span>Secure Logout</span>}
-          </button>
         </div>
       </aside>
 
@@ -477,13 +415,34 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
             </h2>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200 gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> volunteer-node-sync
             </span>
+            <button
+              onClick={() => setActiveTab('notifications')}
+              className={`relative p-2 rounded-xl transition-colors cursor-pointer ${
+                activeTab === 'notifications' ? 'bg-primary/10 text-primary' : 'text-slate-500 hover:bg-slate-100'
+              }`}
+              title="Notifications"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-secondary text-white text-[9px] font-bold flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary border border-primary/20">
               {volunteerInitials}
             </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-xl text-red-500 hover:bg-red-50 cursor-pointer transition-colors"
+              title="Secure Logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </header>
 
@@ -548,13 +507,10 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
               </section>
 
               {/* Action Buttons Bar */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {[
                   { label: 'Approved Campaigns', icon: Calendar, color: 'text-primary bg-primary/10 border-primary/20', tab: 'campaigns' },
                   { label: 'Today\'s Agenda', icon: Timer, color: 'text-amber-700 bg-amber-50 border-amber-200', tab: 'schedule' },
-                  { label: 'Impact Report', icon: TrendingUp, color: 'text-emerald-700 bg-emerald-50 border-emerald-200', tab: 'impact' },
-                  { label: 'Badges & XP', icon: Award, color: 'text-purple-700 bg-purple-50 border-purple-200', tab: 'achievements' },
-                  { label: 'Certificates', icon: FileCheck, color: 'text-blue-700 bg-blue-50 border-blue-200', tab: 'certificates' },
                   { label: 'Send Feedback', icon: MessageSquare, color: 'text-pink-700 bg-pink-50 border-pink-200', tab: 'feedback' },
                 ].map((act, i) => {
                   const IconC = act.icon;
@@ -808,122 +764,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
           )}
 
           {/* =====================================================
-              TAB 4: IMPACT ANALYTICS
-          ===================================================== */}
-          {activeTab === 'impact' && (
-            <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
-              <div className="flex items-center justify-between">
-                <SectionHeader icon={TrendingUp} title="Volunteer Impact Metrics" subtitle="Quantifiable healthcare contributions tracked by Cancer Aware Bharat" />
-                <button
-                  onClick={() => setShowLogHoursModal(true)}
-                  className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 flex items-center gap-1.5 shadow-xs cursor-pointer"
-                >
-                  <PlusCircle className="w-4 h-4" /> Log Extra Hours
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  { label: 'Volunteer Hours Logged', value: userStats.volunteerHours, suffix: ' hrs', icon: Clock, color: 'text-primary bg-primary/10 border-primary/20' },
-                  { label: 'Approved Campaigns Done', value: userStats.campaignsCompleted, suffix: '', icon: CheckCircle, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-                  { label: 'Citizens Educated', value: userStats.peopleReached, suffix: '+', icon: Users, color: 'text-blue-600 bg-blue-50 border-blue-200' },
-                  { label: 'Patients Navigated', value: 340, suffix: '+', icon: Heart, color: 'text-pink-600 bg-pink-50 border-pink-200' },
-                ].map((item, i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-outline-variant/30 p-5 shadow-xs flex items-center space-x-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${item.color}`}>
-                      <item.icon className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-black text-slate-900">
-                        <AnimatedCounter value={item.value} />{item.suffix}
-                      </p>
-                      <p className="text-xs text-slate-500 font-semibold mt-0.5">{item.label}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Monthly Bar Chart */}
-              <div className="bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs">
-                <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-primary" /> Monthly Hours Contribution (2026)
-                </h3>
-                <div className="flex items-end justify-between gap-3 h-48 pt-6">
-                  {MONTHLY_IMPACT.map((m, i) => {
-                    const maxHours = Math.max(...MONTHLY_IMPACT.map(x => x.hours));
-                    const heightPercent = (m.hours / maxHours) * 100;
-                    return (
-                      <div key={i} className="flex-1 flex flex-col items-center gap-1.5 group">
-                        <span className="text-[10px] font-bold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {m.hours}h
-                        </span>
-                        <div className="w-full relative rounded-t-xl overflow-hidden bg-slate-100" style={{ height: '100%' }}>
-                          <div
-                            className="absolute bottom-0 w-full rounded-t-xl bg-gradient-to-t from-primary to-primary-container transition-all duration-700 group-hover:from-secondary group-hover:to-secondary/80"
-                            style={{ height: `${heightPercent}%` }}
-                          />
-                        </div>
-                        <span className="text-[11px] font-semibold text-slate-500">{m.month}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* =====================================================
-              TAB 5: ACHIEVEMENTS & REWARDS
-          ===================================================== */}
-          {activeTab === 'achievements' && (
-            <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
-
-              {/* Level XP Bar */}
-              <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 rounded-2xl border border-primary/20 p-6 shadow-xs">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Medal className="w-6 h-6 text-secondary" />
-                    <span className="text-base font-bold text-slate-900">Level 3 — Rising Star Volunteer</span>
-                  </div>
-                  <span className="text-xs font-bold text-primary bg-white px-3 py-1 rounded-full shadow-xs">750 / 1000 XP</span>
-                </div>
-                <div className="h-3.5 bg-slate-200 rounded-full overflow-hidden mt-3">
-                  <div className="h-full rounded-full bg-gradient-to-r from-primary via-secondary to-primary-container transition-all duration-1000" style={{ width: '75%' }} />
-                </div>
-                <p className="text-xs text-slate-500 mt-2 font-medium">250 XP remaining to unlock Level 4 — Community Champion</p>
-              </div>
-
-              {/* Badges Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {ACHIEVEMENTS.map((badge) => (
-                  <div
-                    key={badge.id}
-                    onClick={() => setSelectedBadgeModal(badge)}
-                    className={`rounded-2xl border p-5 text-center transition-all cursor-pointer ${badge.unlocked
-                        ? 'bg-white border-outline-variant/30 shadow-xs hover:shadow-md hover:scale-[1.02]'
-                        : 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-80'
-                      }`}
-                  >
-                    <div className="text-4xl mb-3">{badge.icon}</div>
-                    <h4 className="text-xs font-bold text-slate-900">{badge.name}</h4>
-                    <p className="text-[10px] text-slate-500 mt-1 line-clamp-2">{badge.description}</p>
-                    {badge.unlocked ? (
-                      <span className="inline-block mt-3 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                        ✓ {badge.unlockedDate}
-                      </span>
-                    ) : (
-                      <span className="inline-block mt-3 text-[10px] font-bold text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-full">
-                        🔒 Locked
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* =====================================================
-              TAB 6: NOTIFICATION CENTER
+              NOTIFICATION CENTER (accessed via the bell icon in the header)
           ===================================================== */}
           {activeTab === 'notifications' && (
             <div className="bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs space-y-4 animate-[fadeInUp_0.4s_ease-out]">
@@ -1038,85 +879,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
           )}
 
           {/* =====================================================
-              TAB 8: CERTIFICATES
-          ===================================================== */}
-          {activeTab === 'certificates' && (
-            <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
-              <SectionHeader icon={FileCheck} title="Earned Certificates" subtitle="Official appreciation certificates issued by Cancer Aware Bharat" />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                {CERTIFICATES.map((cert) => (
-                  <div key={cert.id} className="bg-white rounded-2xl border border-outline-variant/30 overflow-hidden shadow-xs hover:shadow-md transition-all">
-                    <div className="h-36 bg-gradient-to-br from-primary via-primary-container to-primary relative flex items-center justify-center p-4">
-                      <div className="relative text-center text-white">
-                        <Award className="w-10 h-10 mx-auto mb-1 text-secondary-container" />
-                        <p className="text-[9px] font-bold uppercase tracking-widest text-white/80">Certificate of Appreciation</p>
-                        <p className="text-xs font-bold mt-0.5">Cancer Aware Bharat</p>
-                      </div>
-                    </div>
-                    <div className="p-4 space-y-3">
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-900">{cert.title}</h4>
-                        <p className="text-[10px] text-slate-500 mt-0.5">{cert.campaignName}</p>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px] pt-2 border-t border-slate-100">
-                        <div>
-                          <p className="font-semibold text-slate-600">{cert.issuedDate} • {cert.hours} hrs</p>
-                          <p className="font-mono text-slate-400 text-[9px] mt-0.5">{cert.certificateId}</p>
-                        </div>
-                        <button
-                          onClick={() => setActiveCertModal(cert)}
-                          className="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors cursor-pointer"
-                          title="View / Download Certificate"
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* =====================================================
-              TAB 9: PHOTO GALLERY
-          ===================================================== */}
-          {activeTab === 'gallery' && (
-            <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
-              <SectionHeader 
-                icon={Image} 
-                title="Campaign Photo Gallery" 
-                subtitle="Moments captured from screening drives and outreach events" 
-                action={
-                  <button
-                    onClick={() => setShowPhotoUploadModal(true)}
-                    className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 flex items-center gap-1.5 shadow-xs cursor-pointer"
-                  >
-                    <PlusCircle className="w-4 h-4" /> Submit Photo
-                  </button>
-                }
-              />
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {galleryList.map((photo) => (
-                  <button
-                    key={photo.id}
-                    onClick={() => setLightboxPhoto(photo.image)}
-                    className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer border border-slate-200 shadow-xs hover:shadow-md transition-all"
-                  >
-                    <img src={photo.image} alt={photo.caption} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                      <p className="text-white text-[10px] font-bold leading-tight">{photo.caption}</p>
-                      <p className="text-white/70 text-[9px] mt-0.5">{photo.campaign}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* =====================================================
-              TAB 10: VOLUNTEER FEEDBACK
+              TAB 8: VOLUNTEER FEEDBACK
           ===================================================== */}
           {activeTab === 'feedback' && (
             <div className="bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs max-w-2xl animate-[fadeInUp_0.4s_ease-out]">
@@ -1359,205 +1122,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
         </div>
       )}
 
-      {/* 5. OFFICIAL CERTIFICATE PREVIEW MODAL */}
-      {activeCertModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setActiveCertModal(null)}>
-          <div className="bg-white w-full max-w-2xl rounded-3xl p-8 shadow-2xl border-4 border-amber-300 relative space-y-6 text-slate-900" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setActiveCertModal(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-              <X className="w-6 h-6" />
-            </button>
-            <div className="text-center space-y-2">
-              <Award className="w-16 h-16 text-amber-500 mx-auto" />
-              <p className="text-xs font-bold uppercase tracking-widest text-amber-700">Certificate of Healthcare Contribution</p>
-              <h2 className="text-2xl font-black text-slate-900 font-headline-lg">{activeCertModal.title}</h2>
-              <p className="text-xs text-slate-500">Issued by <strong>Cancer Aware Bharat Trust</strong></p>
-            </div>
-            <div className="text-center space-y-3 py-4 border-y border-amber-200">
-              <p className="text-xs text-slate-600">This is to certify that</p>
-              <p className="text-xl font-bold text-primary font-headline-lg">{volunteerName}</p>
-              <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
-                has successfully served as an active healthcare volunteer for <strong>{activeCertModal.campaignName}</strong> logging <strong>{activeCertModal.hours} hours</strong> of dedicated community outreach and patient navigation.
-              </p>
-            </div>
-            <div className="flex items-center justify-between text-xs pt-2">
-              <div>
-                <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Issue Date</p>
-                <p className="font-bold text-slate-800">{activeCertModal.issuedDate}</p>
-              </div>
-              <div className="text-center">
-                <p className="font-mono text-[10px] text-slate-400">{activeCertModal.certificateId}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Authorized Signatory</p>
-                <p className="font-bold text-slate-800">Dr. Ramesh Sharma, Director</p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  window.print();
-                  showToast(`Printing Certificate: ${activeCertModal.title}`);
-                }}
-                className="flex-1 py-2.5 bg-primary text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary/90 shadow-xs cursor-pointer"
-              >
-                <Printer className="w-4 h-4" /> Print / Save PDF
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 6. BADGE DETAILS MODAL */}
-      {selectedBadgeModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4" onClick={() => setSelectedBadgeModal(null)}>
-          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-4 text-center text-xs" onClick={e => e.stopPropagation()}>
-            <div className="text-6xl mb-2">{selectedBadgeModal.icon}</div>
-            <h3 className="font-bold text-base text-slate-900">{selectedBadgeModal.name}</h3>
-            <p className="text-slate-600 leading-relaxed">{selectedBadgeModal.description}</p>
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Requirement</p>
-              <p className="font-semibold text-slate-800 mt-0.5">{selectedBadgeModal.requirement}</p>
-            </div>
-            {selectedBadgeModal.unlocked ? (
-              <p className="text-emerald-600 font-bold text-xs">✓ Earned on {selectedBadgeModal.unlockedDate}</p>
-            ) : (
-              <p className="text-slate-400 font-bold text-xs">🔒 Complete requirement to unlock +150 XP</p>
-            )}
-            <button
-              onClick={() => setSelectedBadgeModal(null)}
-              className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-bold"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 7. SUBMIT PHOTO MODAL */}
-      {showPhotoUploadModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4" onClick={() => setShowPhotoUploadModal(false)}>
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-4 text-xs" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                <Image className="w-5 h-5 text-primary" /> Submit Photo to Gallery
-              </h3>
-              <button onClick={() => setShowPhotoUploadModal(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handlePhotoUploadSubmit} className="space-y-3">
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Image URL *</label>
-                <input
-                  type="url"
-                  required
-                  value={newPhotoUrl}
-                  onChange={e => setNewPhotoUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Caption Description *</label>
-                <input
-                  type="text"
-                  required
-                  value={newPhotoCaption}
-                  onChange={e => setNewPhotoCaption(e.target.value)}
-                  placeholder="e.g. Doctor counseling patient during screening..."
-                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Campaign Drive</label>
-                <select
-                  value={newPhotoCampaign}
-                  onChange={e => setNewPhotoCampaign(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none text-xs"
-                >
-                  <option value="Oral Screening Drive">Free Oral Cancer Screening Drive</option>
-                  <option value="Community Blood Donation">Community Blood Donation Camp</option>
-                  <option value="Rural Village Outreach">Rural Village Outreach - Rewari</option>
-                  <option value="Women's Health Awareness">Women's Breast Health Drive</option>
-                </select>
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowPhotoUploadModal(false)}
-                  className="flex-1 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 cursor-pointer shadow-xs"
-                >
-                  Upload Photo
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 8. LOG EXTRA HOURS MODAL */}
-      {showLogHoursModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4" onClick={() => setShowLogHoursModal(false)}>
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-4 text-xs" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-primary" /> Log Extra Volunteer Hours
-              </h3>
-              <button onClick={() => setShowLogHoursModal(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handleLogHoursSubmit} className="space-y-3">
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Hours Spent *</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={24}
-                  required
-                  value={loggedHoursCount}
-                  onChange={e => setLoggedHoursCount(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none text-xs font-bold"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Activity Description *</label>
-                <textarea
-                  rows={3}
-                  required
-                  value={loggedHoursActivity}
-                  onChange={e => setLoggedHoursActivity(e.target.value)}
-                  placeholder="e.g. Conducted phone counseling for 12 patients and distributed awareness pamphlets in local sector..."
-                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none text-xs"
-                />
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowLogHoursModal(false)}
-                  className="flex-1 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 cursor-pointer shadow-xs"
-                >
-                  Submit Hours
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 9. REPORT SCHEDULE ISSUE MODAL */}
+      {/* 5. REPORT SCHEDULE ISSUE MODAL */}
       {showReportIssueModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4" onClick={() => setShowReportIssueModal(false)}>
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-4 text-xs" onClick={e => e.stopPropagation()}>
@@ -1610,21 +1175,6 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* 10. LIGHTBOX PHOTO PREVIEW MODAL */}
-      {lightboxPhoto && (
-        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setLightboxPhoto(null)}>
-          <div className="relative max-w-4xl w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
-            <button
-              onClick={() => setLightboxPhoto(null)}
-              className="absolute -top-10 right-0 text-white/80 hover:text-white p-2 rounded-full cursor-pointer"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            <img src={lightboxPhoto} alt="Gallery Preview" className="max-h-[85vh] w-auto rounded-2xl shadow-2xl object-contain" referrerPolicy="no-referrer" />
           </div>
         </div>
       )}
