@@ -5,6 +5,7 @@
 const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
 
 const STAFF_SESSION_KEY = 'aware_bharat_logged_in_staff';
+const HOSPITAL_SESSION_KEY = 'aware_bharat_logged_in_hospital';
 
 export class ApiError extends Error {
   status: number;
@@ -60,6 +61,30 @@ export function setStaffSession(session: StaffSession) {
   localStorage.setItem(STAFF_SESSION_KEY, JSON.stringify(session));
 }
 
+// ---------------- Hospital session ----------------
+
+export interface HospitalSession {
+  name: string;
+  email: string;
+  accessToken: string;
+  sessionKey: string;
+  loginTime: string;
+}
+
+export function getHospitalSession(): HospitalSession | null {
+  const raw = localStorage.getItem(HOSPITAL_SESSION_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function setHospitalSession(session: HospitalSession) {
+  localStorage.setItem(HOSPITAL_SESSION_KEY, JSON.stringify(session));
+}
+
 // ---------------- Auth ----------------
 
 interface TokenResponse {
@@ -71,6 +96,13 @@ interface TokenResponse {
 
 export async function loginStaff(email: string, password: string): Promise<TokenResponse> {
   return request<TokenResponse>('/auth/staff/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function loginHospital(email: string, password: string): Promise<TokenResponse> {
+  return request<TokenResponse>('/auth/hospital/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
@@ -232,6 +264,27 @@ export function assignHospital(id: string, token: string, hospitalId: string, re
   return request<ApiPatientEnquiry>(`/enquiries/${id}/assign-hospital`, {
     method: 'POST',
     body: JSON.stringify({ hospitalId, remarks }),
+  }, token);
+}
+
+export function hospitalAcceptEnquiry(
+  id: string,
+  token: string,
+  appointmentDate: string,
+  appointmentTime: string,
+  doctorName: string,
+  remarks?: string,
+): Promise<ApiPatientEnquiry> {
+  return request<ApiPatientEnquiry>(`/enquiries/${id}/hospital-accept`, {
+    method: 'POST',
+    body: JSON.stringify({ appointmentDate, appointmentTime, doctorName, remarks }),
+  }, token);
+}
+
+export function hospitalDeclineEnquiry(id: string, token: string, declineReason: string): Promise<ApiPatientEnquiry> {
+  return request<ApiPatientEnquiry>(`/enquiries/${id}/hospital-decline`, {
+    method: 'POST',
+    body: JSON.stringify({ declineReason }),
   }, token);
 }
 

@@ -7,6 +7,7 @@ import {
   HelpCircle, ChevronDown, ChevronUp, Download, Layers, Users, CheckSquare, Info,
   X, UserCheck, Calendar, DollarSign, Globe, ExternalLink, RefreshCw, Key, Printer
 } from 'lucide-react';
+import { ApiError, loginHospital, setHospitalSession } from '../api/client';
 
 interface HospitalAuthPageProps {
   onPageChange?: (page: string) => void;
@@ -14,14 +15,6 @@ interface HospitalAuthPageProps {
 
 type AuthMode = 'login' | 'register';
 type FormStep = 1 | 2 | 3 | 4 | 5;
-
-// Mock pre-approved hospital credentials for demonstration
-const PRE_APPROVED_HOSPITALS = [
-  { email: 'rgci@awarebharat.org', password: 'RGCI-CAB-2026-TEMP', name: 'Rajiv Gandhi Cancer Institute', city: 'Rohini, New Delhi' },
-  { email: 'admin@maxhealthcare.com', password: 'MAX-CAB-2026', name: 'Max Super Speciality Hospital', city: 'Saket, New Delhi' },
-  { email: 'info@fortishospitals.com', password: 'FORTIS-CAB-2026', name: 'Fortis Oncology Center', city: 'Gurugram, Haryana' },
-  { email: 'proton@apollohospitals.com', password: 'APOLLO-CAB-2026', name: 'Apollo Proton Cancer Centre', city: 'Chennai, Tamil Nadu' },
-];
 
 export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps) {
   const navigate = useNavigate();
@@ -40,8 +33,8 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
 
   // Login form state
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+  const [loginEmail, setLoginEmail] = useState('hospital1@awarebharat.local');
+  const [loginPassword, setLoginPassword] = useState('ChangeMe123!');
 
   // Step 1: Hospital Details State
   const [hospName, setHospName] = useState('');
@@ -233,7 +226,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
   };
 
   // ---- Login Handler ----
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -242,30 +235,21 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
       return;
     }
 
-    let matched = PRE_APPROVED_HOSPITALS.find(h => h.email.toLowerCase() === loginEmail.trim().toLowerCase() && h.password === loginPassword);
-
-    if (!matched) {
-      const storedRequests = localStorage.getItem('aware_bharat_hospital_requests');
-      if (storedRequests) {
-        const list = JSON.parse(storedRequests);
-        const found = list.find((h: any) => h.generatedCredentials && h.generatedCredentials.email === loginEmail && h.generatedCredentials.tempPassword === loginPassword);
-        if (found) {
-          matched = { email: found.generatedCredentials.email, password: found.generatedCredentials.tempPassword, name: found.hospitalName || found.name, city: found.city };
-        }
-      }
-    }
-
-    if (matched) {
-      localStorage.setItem('aware_bharat_logged_in_hospital', JSON.stringify({
-        name: matched!.name,
-        email: matched!.email,
-        city: matched!.city,
+    setIsSubmitting(true);
+    try {
+      const token = await loginHospital(loginEmail.trim(), loginPassword);
+      setHospitalSession({
+        name: token.name,
+        email: loginEmail,
+        accessToken: token.accessToken,
         sessionKey: 'HOSP-' + Math.random().toString(36).substring(2, 9).toUpperCase(),
-        loginTime: new Date().toLocaleString()
-      }));
+        loginTime: new Date().toLocaleString(),
+      });
       navigate('/hospital/dashboard', { replace: true });
-    } else {
-      setErrorMessage('Invalid hospital credentials. Ensure password is correct and your application is approved.');
+    } catch (err) {
+      setErrorMessage(err instanceof ApiError ? err.message : 'Unable to reach the server. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -630,8 +614,8 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                 <p className="font-bold text-[11px] uppercase tracking-wider text-[#063b42] flex items-center gap-1.5">
                   <Key className="w-3.5 h-3.5 text-teal-600" /> Demo Approved Credentials:
                 </p>
-                <p className="font-mono text-[11px]">Email: <span className="font-bold text-slate-900">rgci@awarebharat.org</span></p>
-                <p className="font-mono text-[11px]">Password: <span className="font-bold text-slate-900">RGCI-CAB-2026-TEMP</span></p>
+                <p className="font-mono text-[11px]">Email: <span className="font-bold text-slate-900">hospital1@awarebharat.local</span></p>
+                <p className="font-mono text-[11px]">Password: <span className="font-bold text-slate-900">ChangeMe123!</span></p>
               </div>
 
               <button

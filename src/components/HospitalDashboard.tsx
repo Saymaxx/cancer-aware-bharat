@@ -9,7 +9,8 @@ import {
   Eye, EyeOff, FileCheck, Share2, HelpCircle, UserPlus, RefreshCw,
   Sparkles, CheckSquare, Layers, Lock, ShieldAlert, Globe, Menu
 } from 'lucide-react';
-import { enquiryStore, useEnquiries, useNotifications } from '../enquiryStore';
+import { useApiEnquiries, useApiNotifications } from '../api/hooks';
+import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, ApiError, getHospitalSession } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
@@ -306,27 +307,21 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
     return stored ? JSON.parse(stored) : { name: profile.name, email: profile.email, city: profile.city };
   }, [profile]);
 
-  // Real-time Patient Enquiries from Enquiry Store
-  const enquiries = useEnquiries();
-  const hospitalNotifications = useNotifications('hospital', hospitalSession?.id);
+  // Real-time Patient Enquiries & Notifications from the backend API.
+  // GET /enquiries already scopes results to this hospital's own JWT identity,
+  // so we only need to narrow down to the stages relevant post-assignment.
+  const apiToken = useMemo(() => getHospitalSession()?.accessToken || null, []);
+  const { enquiries, refetch: refetchEnquiries } = useApiEnquiries(apiToken);
+  const { notifications: hospitalNotifications } = useApiNotifications(apiToken);
 
   const assignedEnquiriesForThisHospital = useMemo(() => {
-    return enquiries.filter(e => {
-      // Check if explicitly assigned to this hospital or in pipeline for hospital acceptance
-      const matchHospital =
-        (e.hospitalId && (e.hospitalId === hospitalSession?.id || profile.name.toLowerCase().includes(e.hospitalId.toLowerCase()))) ||
-        (e.assignedHospitalName && e.assignedHospitalName.toLowerCase().includes(profile.name.toLowerCase())) ||
-        (e.preferredHospitalName && e.preferredHospitalName.toLowerCase().includes(profile.name.toLowerCase()));
-
-      const isHospitalStage =
-        e.status === 'Assigned to Hospital' ||
-        e.status === 'Accepted by Hospital' ||
-        e.status === 'Declined by Hospital' ||
-        e.status === 'Appointment Confirmed';
-
-      return matchHospital && isHospitalStage;
-    });
-  }, [enquiries, profile.name, hospitalSession]);
+    return enquiries.filter(e =>
+      e.status === 'Assigned to Hospital' ||
+      e.status === 'Accepted by Hospital' ||
+      e.status === 'Declined by Hospital' ||
+      e.status === 'Appointment Confirmed'
+    );
+  }, [enquiries]);
 
   const pendingAssignedEnquiriesCount = useMemo(() => {
     return assignedEnquiriesForThisHospital.filter(e => e.status === 'Assigned to Hospital').length;
@@ -1912,17 +1907,23 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  enquiryStore.hospitalAcceptEnquiry(
-                    acceptingEnquiry.id,
-                    acceptDate,
-                    acceptTime,
-                    acceptDoctor,
-                    acceptRemarks,
-                    profile.name
-                  );
-                  setAcceptingEnquiry(null);
-                  showToast(`Patient ${acceptingEnquiry.patientName} accepted & appointment created!`);
+                onClick={async () => {
+                  if (!apiToken) return;
+                  try {
+                    await hospitalAcceptEnquiry(
+                      acceptingEnquiry.id,
+                      apiToken,
+                      acceptDate,
+                      acceptTime,
+                      acceptDoctor,
+                      acceptRemarks || undefined
+                    );
+                    showToast(`Patient ${acceptingEnquiry.patientName} accepted & appointment created!`);
+                    setAcceptingEnquiry(null);
+                    refetchEnquiries();
+                  } catch (err) {
+                    showToast(err instanceof ApiError ? err.message : 'Unable to reach the server.');
+                  }
                 }}
                 className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm cursor-pointer flex items-center gap-1.5"
               >
@@ -1975,11 +1976,15 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               </button>
               <button
                 disabled={!hospitalDeclineReasonText.trim()}
-                onClick={() => {
-                  if (hospitalDeclineReasonText.trim()) {
-                    enquiryStore.hospitalDeclineEnquiry(decliningEnquiry.id, hospitalDeclineReasonText, profile.name);
-                    setDecliningEnquiry(null);
+                onClick={async () => {
+                  if (!hospitalDeclineReasonText.trim() || !apiToken) return;
+                  try {
+                    await hospitalDeclineEnquiry(decliningEnquiry.id, apiToken, hospitalDeclineReasonText);
                     showToast(`Patient ${decliningEnquiry.patientName} declined and returned to Super Admin.`);
+                    setDecliningEnquiry(null);
+                    refetchEnquiries();
+                  } catch (err) {
+                    showToast(err instanceof ApiError ? err.message : 'Unable to reach the server.');
                   }
                 }}
                 className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow-sm disabled:opacity-50 cursor-pointer"
