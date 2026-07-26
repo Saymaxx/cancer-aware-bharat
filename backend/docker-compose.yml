@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cab_user
+      POSTGRES_PASSWORD: cab_password
+      POSTGRES_DB: cancer_aware_bharat
+    ports:
+      - "5433:5432"
+    volumes:
+      - cab_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cab_user -d cancer_aware_bharat"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  cab_postgres_data:
