@@ -6,7 +6,9 @@ import {
   TrendingUp, DollarSign, BookOpen, MessageSquare, AlertCircle, AlertTriangle,
   Award, RefreshCw, Terminal, CheckCircle2, User, Key, Menu, Stethoscope, Clock
 } from 'lucide-react';
-import { enquiryStore, useEnquiries, useNotifications } from '../enquiryStore';
+import { enquiryStore } from '../enquiryStore';
+import { useApiEnquiries, useApiNotifications } from '../api/hooks';
+import { adminApproveEnquiry, adminRejectEnquiry, ApiError, getStaffSession } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, BlogArticle } from '../types';
 import { INITIAL_BLOGS } from '../data';
@@ -27,9 +29,10 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
-  // Real-time Patient Enquiries & Notifications from Enquiry Store
-  const enquiries = useEnquiries();
-  const adminNotifications = useNotifications('admin');
+  // Real-time Patient Enquiries & Notifications from the backend API
+  const apiToken = useMemo(() => getStaffSession()?.accessToken || null, []);
+  const { enquiries, refetch: refetchEnquiries } = useApiEnquiries(apiToken);
+  const { notifications: adminNotifications } = useApiNotifications(apiToken);
   const pendingAdminCount = useMemo(() => enquiries.filter(e => e.status === 'Pending Admin Review').length, [enquiries]);
 
   // Admin Enquiry Modals state
@@ -2116,11 +2119,17 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  enquiryStore.adminApproveEnquiry(showApproveEnquiryModal.id, approveRemarks, 'Dr. Ramesh Sharma');
-                  toast.success('Enquiry Approved', `Patient ${showApproveEnquiryModal.patientName} forwarded to Super Admin board.`);
-                  setShowApproveEnquiryModal(null);
-                  setApproveRemarks('');
+                onClick={async () => {
+                  if (!apiToken) return;
+                  try {
+                    await adminApproveEnquiry(showApproveEnquiryModal.id, apiToken, approveRemarks || undefined);
+                    toast.success('Enquiry Approved', `Patient ${showApproveEnquiryModal.patientName} forwarded to Super Admin board.`);
+                    setShowApproveEnquiryModal(null);
+                    setApproveRemarks('');
+                    refetchEnquiries();
+                  } catch (err) {
+                    toast.error('Approval Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+                  }
                 }}
                 className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-sm cursor-pointer"
               >
@@ -2172,12 +2181,16 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
               </button>
               <button
                 disabled={!rejectReasonText.trim()}
-                onClick={() => {
-                  if (rejectReasonText.trim()) {
-                    enquiryStore.adminRejectEnquiry(showRejectEnquiryModal.id, rejectReasonText, 'Dr. Ramesh Sharma');
+                onClick={async () => {
+                  if (!rejectReasonText.trim() || !apiToken) return;
+                  try {
+                    await adminRejectEnquiry(showRejectEnquiryModal.id, apiToken, rejectReasonText);
                     toast.warning('Enquiry Rejected', `Patient ${showRejectEnquiryModal.patientName} enquiry declined.`);
                     setShowRejectEnquiryModal(null);
                     setRejectReasonText('');
+                    refetchEnquiries();
+                  } catch (err) {
+                    toast.error('Rejection Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
                   }
                 }}
                 className="px-5 py-2 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 shadow-sm disabled:opacity-50 cursor-pointer"

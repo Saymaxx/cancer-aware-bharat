@@ -10,9 +10,11 @@ import {
   Crown, Fingerprint, KeyRound, UserPlus, UserMinus, UserCog, Layers,
   PieChart, LayoutDashboard, Megaphone, FolderArchive, Menu, Stethoscope
 } from 'lucide-react';
-import { enquiryStore, useEnquiries, useNotifications } from '../enquiryStore';
+import { enquiryStore } from '../enquiryStore';
+import { useApiEnquiries, useApiNotifications, useApiHospitals } from '../api/hooks';
+import { assignHospital, ApiError, getStaffSession } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
-import { INITIAL_HOSPITALS, INITIAL_BLOGS } from '../data';
+import { INITIAL_BLOGS } from '../data';
 import { PatientEnquiry, Hospital, BlogArticle } from '../types';
 import { useToast } from './common/Toast';
 import StatusBadge from './common/StatusBadge';
@@ -42,9 +44,10 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
-  // Real-time Patient Enquiries from Enquiry Store
-  const enquiries = useEnquiries();
-  const superAdminNotifications = useNotifications('superadmin');
+  // Real-time Patient Enquiries & Notifications from the backend API
+  const apiToken = useMemo(() => getStaffSession()?.accessToken || null, []);
+  const { enquiries, refetch: refetchEnquiries } = useApiEnquiries(apiToken);
+  const { notifications: superAdminNotifications } = useApiNotifications(apiToken);
   const pendingHospitalAssignmentCount = useMemo(() => {
     return enquiries.filter(e =>
       e.status === 'Approved by Admin' ||
@@ -113,37 +116,8 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     toast.success('Export Complete', 'Hospital assignments CSV downloaded successfully.');
   };
 
-  // Registered Hospitals for assignment
-  const allRegisteredHospitals: Hospital[] = useMemo(() => {
-    const list = [...INITIAL_HOSPITALS];
-    try {
-      const storedReqs = localStorage.getItem('aware_bharat_hospital_requests');
-      if (storedReqs) {
-        const parsed = JSON.parse(storedReqs);
-        parsed.forEach((req: any) => {
-          if ((req.status === 'Approved' || req.status === 'Active Partner') && !list.some(h => h.id === req.id)) {
-            list.push({
-              id: req.id || 'hosp-' + Math.random().toString(36).substr(2, 5),
-              name: req.hospitalName || req.name || 'Hospital Node',
-              logo: '',
-              type: req.type || 'Community Partner',
-              region: req.region || 'north',
-              city: req.city || 'New Delhi',
-              state: req.state || 'Delhi',
-              specialties: req.specialties ? (Array.isArray(req.specialties) ? req.specialties : req.specialties.split(',')) : ['Oncology', 'Screening'],
-              phone: req.contactPhone || req.phone || '+91 11 0000 0000',
-              email: req.contactEmail || req.email || 'info@hospital.org',
-              address: req.address || `${req.city}`,
-              lat: 28.6139,
-              lng: 77.2090,
-              description: 'Approved Network Hospital'
-            });
-          }
-        });
-      }
-    } catch (e) {}
-    return list;
-  }, []);
+  // Registered Hospitals for assignment -- live directory from the backend
+  const { hospitals: allRegisteredHospitals } = useApiHospitals();
 
   const filteredHospitalsForAssignment = useMemo(() => {
     return allRegisteredHospitals.filter(h => {
@@ -1162,7 +1136,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                                 <button
                                   onClick={() => {
                                     setAssigningEnquiry(enq);
-                                    setSelectedHospitalForAssign(enq.hospitalId || INITIAL_HOSPITALS[0].id);
+                                    setSelectedHospitalForAssign(enq.hospitalId || allRegisteredHospitals[0]?.id || '');
                                     setAssignRemarks('');
                                   }}
                                   className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
@@ -2482,21 +2456,19 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
               </button>
               <button
                 disabled={!selectedHospitalForAssign}
-                onClick={() => {
-                  if (selectedHospitalForAssign) {
-                    const targetHosp = allRegisteredHospitals.find(h => h.id === selectedHospitalForAssign);
-                    const targetName = targetHosp?.name || 'Partner Hospital';
-                    enquiryStore.superAdminAssignHospital(
-                      assigningEnquiry.id,
-                      selectedHospitalForAssign,
-                      targetName,
-                      assignRemarks,
-                      'Board Administrator'
-                    );
+                onClick={async () => {
+                  if (!selectedHospitalForAssign || !apiToken) return;
+                  const targetHosp = allRegisteredHospitals.find(h => h.id === selectedHospitalForAssign);
+                  const targetName = targetHosp?.name || 'Partner Hospital';
+                  try {
+                    await assignHospital(assigningEnquiry.id, apiToken, selectedHospitalForAssign, assignRemarks || undefined);
                     toast.success('Hospital Assigned', `Patient ${assigningEnquiry.patientName} assigned to ${targetName}.`);
                     setAssigningEnquiry(null);
                     setAssignRemarks('');
                     setSelectedHospitalForAssign('');
+                    refetchEnquiries();
+                  } catch (err) {
+                    toast.error('Assignment Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
                   }
                 }}
                 className="px-5 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-1.5"

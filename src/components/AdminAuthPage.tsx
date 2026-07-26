@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldAlert, Eye, EyeOff, CheckCircle, Shield, Building, Lock, Mail, Key, UserCheck, ArrowRight, Activity, Terminal, Database, Server, RefreshCw } from 'lucide-react';
+import { ApiError, loginStaff, setStaffSession } from '../api/client';
 
 interface AdminAuthPageProps {
   initialRole?: 'admin' | 'superadmin';
@@ -19,12 +20,12 @@ export default function AdminAuthPage({ initialRole = 'admin', lockedRole }: Adm
   const [animateIn, setAnimateIn] = useState(true);
 
   // Forms state
-  const [adminEmail, setAdminEmail] = useState('admin@awarebharat.org');
-  const [adminPassword, setAdminPassword] = useState('adminpassword');
+  const [adminEmail, setAdminEmail] = useState('admin@awarebharat.local');
+  const [adminPassword, setAdminPassword] = useState('ChangeMe123!');
   const [adminPasscode, setAdminPasscode] = useState('12345');
 
-  const [superEmail, setSuperEmail] = useState('board@awarebharat.org');
-  const [superPassword, setSuperPassword] = useState('superpassword');
+  const [superEmail, setSuperEmail] = useState('superadmin@awarebharat.local');
+  const [superPassword, setSuperPassword] = useState('ChangeMe123!');
   const [superMfaToken, setSuperMfaToken] = useState('999999');
 
   const switchRole = (newRole: AuthRole) => {
@@ -36,7 +37,7 @@ export default function AdminAuthPage({ initialRole = 'admin', lockedRole }: Adm
     }, 200);
   };
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -45,46 +46,30 @@ export default function AdminAuthPage({ initialRole = 'admin', lockedRole }: Adm
       return;
     }
 
-    const emailLower = adminEmail.trim().toLowerCase();
-    let isValid = (
-      (emailLower === 'dwarka@awarebharat.org' || emailLower === 'admin@awarebharat.org' || emailLower === 'admin' || emailLower.includes('admin')) &&
-      (adminPassword === 'adminpassword' || adminPassword.length > 0) &&
-      (adminPasscode === '12345' || adminPasscode.length > 0)
-    );
-
-    if (!isValid) {
-      const storedAdmins = localStorage.getItem('aware_bharat_staff_accounts');
-      if (storedAdmins) {
-        try {
-          const list = JSON.parse(storedAdmins);
-          const found = list.find((a: any) => a.email.toLowerCase() === emailLower && a.status === 'Active');
-          if (found) {
-            isValid = true;
-          }
-        } catch (err) {
-          console.error('Failed to parse staff accounts', err);
-        }
+    setIsSubmitting(true);
+    try {
+      const token = await loginStaff(adminEmail.trim(), adminPassword);
+      if (token.role !== 'admin') {
+        setErrorMessage('This account is not an Admin account. Use the Super Admin tab instead.');
+        return;
       }
-    }
-
-    if (isValid) {
-      setIsSubmitting(true);
-      setTimeout(() => {
-        localStorage.setItem('aware_bharat_logged_in_staff', JSON.stringify({
-          role: 'admin',
-          email: adminEmail,
-          lastAccess: new Date().toLocaleString(),
-          sessionKey: 'STAFF-' + Math.random().toString(36).substr(2, 9).toUpperCase()
-        }));
-        setIsSubmitting(false);
-        setSubmitSuccess(true);
-      }, 800);
-    } else {
-      setErrorMessage('Access Denied. Invalid admin email, password, or security passcode (Default Passcode: 12345).');
+      setStaffSession({
+        role: 'admin',
+        email: adminEmail,
+        name: token.name,
+        accessToken: token.accessToken,
+        lastAccess: new Date().toLocaleString(),
+        sessionKey: 'STAFF-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+      });
+      setSubmitSuccess(true);
+    } catch (err) {
+      setErrorMessage(err instanceof ApiError ? err.message : 'Unable to reach the server. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleSuperAdminLogin = (e: React.FormEvent) => {
+  const handleSuperAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -93,24 +78,26 @@ export default function AdminAuthPage({ initialRole = 'admin', lockedRole }: Adm
       return;
     }
 
-    if (
-      (superEmail.toLowerCase() === 'board@awarebharat.org' || superEmail.toLowerCase().includes('super') || superEmail.toLowerCase().includes('board')) &&
-      (superPassword === 'superpassword' || superPassword.length > 0) &&
-      (superMfaToken === '999999' || superMfaToken.length > 0)
-    ) {
-      setIsSubmitting(true);
-      setTimeout(() => {
-        localStorage.setItem('aware_bharat_logged_in_staff', JSON.stringify({
-          role: 'superadmin',
-          email: superEmail,
-          lastAccess: new Date().toLocaleString(),
-          sessionKey: 'SUPER-' + Math.random().toString(36).substr(2, 9).toUpperCase()
-        }));
-        setIsSubmitting(false);
-        setSubmitSuccess(true);
-      }, 800);
-    } else {
-      setErrorMessage('Critical Security Failure: Unauthorized Trust access or invalid MFA token.');
+    setIsSubmitting(true);
+    try {
+      const token = await loginStaff(superEmail.trim(), superPassword);
+      if (token.role !== 'superadmin') {
+        setErrorMessage('This account is not a Super Admin account. Use the Admin tab instead.');
+        return;
+      }
+      setStaffSession({
+        role: 'superadmin',
+        email: superEmail,
+        name: token.name,
+        accessToken: token.accessToken,
+        lastAccess: new Date().toLocaleString(),
+        sessionKey: 'SUPER-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+      });
+      setSubmitSuccess(true);
+    } catch (err) {
+      setErrorMessage(err instanceof ApiError ? err.message : 'Unable to reach the server. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

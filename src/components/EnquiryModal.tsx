@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { X, CheckCircle, Phone, Stethoscope, Clock, Calendar, Upload, FileText, Trash2, Mail } from 'lucide-react';
-import { INITIAL_HOSPITALS } from '../data';
 import { PatientEnquiry, UploadedReport } from '../types';
-import { enquiryStore } from '../enquiryStore';
+import { ApiError, submitEnquiry, uploadEnquiryReport } from '../api/client';
+import { mapApiEnquiry } from '../api/mappers';
+import { useApiHospitals } from '../api/hooks';
+
+type PendingFile = UploadedReport & { file: File };
 
 interface EnquiryModalProps {
   isOpen: boolean;
@@ -11,8 +14,10 @@ interface EnquiryModalProps {
 }
 
 export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: EnquiryModalProps) {
+  const { hospitals } = useApiHospitals();
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [createdEnquiry, setCreatedEnquiry] = useState<PatientEnquiry | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form inputs
   const [patientName, setPatientName] = useState('');
@@ -24,10 +29,10 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
   const [address, setAddress] = useState('');
   const [reason, setReason] = useState('Free Cancer Screening');
   const [cancerType, setCancerType] = useState('Breast Cancer');
-  const [hospitalId, setHospitalId] = useState(selectedHospitalId || INITIAL_HOSPITALS[0].id);
+  const [hospitalId, setHospitalId] = useState(selectedHospitalId || '');
   const [preferredDate, setPreferredDate] = useState('');
   const [notes, setNotes] = useState('');
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedReport[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<PendingFile[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
 
   // Sync state if selectedHospitalId changes or is loaded
@@ -36,6 +41,13 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
       setHospitalId(selectedHospitalId);
     }
   }, [selectedHospitalId]);
+
+  // Default to the first hospital once the live directory has loaded
+  React.useEffect(() => {
+    if (!hospitalId && hospitals.length > 0) {
+      setHospitalId(hospitals[0].id);
+    }
+  }, [hospitals, hospitalId]);
 
   // Handle ESC key to close modal
   React.useEffect(() => {
@@ -61,12 +73,13 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
         return;
       }
 
-      const newReports: UploadedReport[] = files.map((file, idx) => ({
+      const newReports: PendingFile[] = files.map((file, idx) => ({
         id: 'rep-' + Date.now() + '-' + idx,
         name: file.name,
         size: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
         type: file.type || 'application/pdf',
-        uploadedAt: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+        uploadedAt: new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }),
+        file,
       }));
       setUploadedFiles(prev => [...prev, ...newReports]);
       setErrorMessage('');
@@ -77,7 +90,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
     setUploadedFiles(prev => prev.filter(f => f.id !== id));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!patientName || !age || !phone || !city || !preferredDate) {
       setErrorMessage('Please fill in all the required fields (*).');
@@ -90,31 +103,45 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
       return;
     }
 
-    // Save using enquiryStore (Step 1 requirement)
-    const saved = enquiryStore.saveEnquiry({
-      patientName: patientName.trim(),
-      age: ageNum,
-      gender,
-      phone: phone.trim(),
-      email: email.trim(),
-      address: address.trim() || city,
-      city: city.trim(),
-      reason,
-      cancerType,
-      symptoms: notes,
-      notes,
-      uploadedReports: uploadedFiles,
-      preferredHospitalId: hospitalId,
-      preferredDate,
-      priority: notes.toLowerCase().includes('stage') || notes.toLowerCase().includes('biopsy') ? 'Urgent' : 'Normal'
-    });
-
-    setCreatedEnquiry(saved);
-    setFormSubmitted(true);
+    setIsSubmitting(true);
     setErrorMessage('');
+    try {
+      const created = await submitEnquiry({
+        patientName: patientName.trim(),
+        age: ageNum,
+        gender,
+        phone: phone.trim(),
+        email: email.trim() || undefined,
+        address: address.trim() || city,
+        city: city.trim(),
+        reason,
+        cancerType,
+        symptoms: notes,
+        notes,
+        preferredHospitalId: hospitalId || undefined,
+        preferredDate,
+      });
+
+      // Upload any attached reports now that the enquiry exists server-side
+      const uploadedReports = [];
+      for (const pending of uploadedFiles) {
+        try {
+          uploadedReports.push(await uploadEnquiryReport(created.id, pending.file));
+        } catch {
+          // Skip files that fail to upload rather than blocking the whole submission
+        }
+      }
+
+      setCreatedEnquiry(mapApiEnquiry({ ...created, uploadedReports }));
+      setFormSubmitted(true);
+    } catch (err) {
+      setErrorMessage(err instanceof ApiError ? err.message : 'Unable to reach the server. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const selectedHospital = INITIAL_HOSPITALS.find(h => h.id === hospitalId) || INITIAL_HOSPITALS[0];
+  const selectedHospital = hospitals.find(h => h.id === hospitalId) || hospitals[0];
 
   const handleReset = () => {
     setFormSubmitted(false);
@@ -128,7 +155,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
     setAddress('');
     setReason('Free Cancer Screening');
     setCancerType('Breast Cancer');
-    setHospitalId(INITIAL_HOSPITALS[0].id);
+    setHospitalId(hospitals[0]?.id || '');
     setPreferredDate('');
     setNotes('');
     setUploadedFiles([]);
@@ -306,7 +333,8 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
                     onChange={e => setHospitalId(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-outline-variant bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm"
                   >
-                    {INITIAL_HOSPITALS.map(h => (
+                    {hospitals.length === 0 && <option value="">Loading hospitals...</option>}
+                    {hospitals.map(h => (
                       <option key={h.id} value={h.id}>
                         {h.name} ({h.city})
                       </option>
@@ -401,10 +429,20 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
                 </button>
                 <button
                   type="submit"
-                  className="flex-grow py-2.5 rounded-xl bg-primary text-white font-semibold text-sm hover:opacity-95 shadow-md transition-opacity cursor-pointer flex items-center justify-center gap-2"
+                  disabled={isSubmitting}
+                  className="flex-grow py-2.5 rounded-xl bg-primary text-white font-semibold text-sm hover:opacity-95 shadow-md transition-opacity cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  <Stethoscope className="w-4 h-4" />
-                  <span>Submit Inquiry</span>
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Stethoscope className="w-4 h-4" />
+                      <span>Submit Inquiry</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -449,7 +487,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
                     </div>
                     <div>
                       <span className="text-slate-500 block">Target Hospital:</span>
-                      <p className="font-semibold text-primary">{createdEnquiry.preferredHospitalName || selectedHospital.name}</p>
+                      <p className="font-semibold text-primary">{createdEnquiry.preferredHospitalName || selectedHospital?.name || 'N/A'}</p>
                     </div>
                   </div>
 
