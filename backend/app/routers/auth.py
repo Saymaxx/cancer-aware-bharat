@@ -1,8 +1,9 @@
 import random
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 
+from app.core.limiter import limiter
 from app.core.security import create_access_token, hash_password, verify_password
 from app.deps import DbSession
 from app.models.hospital import Hospital
@@ -15,7 +16,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/staff/login", response_model=TokenOut)
-def staff_login(payload: LoginIn, db: DbSession):
+@limiter.limit("10/minute")
+def staff_login(request: Request, payload: LoginIn, db: DbSession):
     user = db.query(User).filter(User.email == payload.email).first()
     if not user or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
@@ -24,7 +26,8 @@ def staff_login(payload: LoginIn, db: DbSession):
 
 
 @router.post("/hospital/login", response_model=TokenOut)
-def hospital_login(payload: LoginIn, db: DbSession):
+@limiter.limit("10/minute")
+def hospital_login(request: Request, payload: LoginIn, db: DbSession):
     hospital = db.query(Hospital).filter(Hospital.login_email == payload.email).first()
     if not hospital or not hospital.hashed_password or not verify_password(payload.password, hospital.hashed_password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
@@ -35,7 +38,8 @@ def hospital_login(payload: LoginIn, db: DbSession):
 
 
 @router.post("/volunteer/login", response_model=TokenOut)
-def volunteer_login(payload: LoginIn, db: DbSession):
+@limiter.limit("10/minute")
+def volunteer_login(request: Request, payload: LoginIn, db: DbSession):
     volunteer = db.query(Volunteer).filter(Volunteer.email == payload.email).first()
     if not volunteer or not verify_password(payload.password, volunteer.hashed_password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
@@ -44,7 +48,8 @@ def volunteer_login(payload: LoginIn, db: DbSession):
 
 
 @router.post("/volunteer/register", response_model=VolunteerOut, status_code=status.HTTP_201_CREATED)
-def volunteer_register(payload: VolunteerRegisterIn, db: DbSession):
+@limiter.limit("5/minute")
+def volunteer_register(request: Request, payload: VolunteerRegisterIn, db: DbSession):
     if db.query(Volunteer).filter(Volunteer.email == payload.email).first():
         raise HTTPException(status.HTTP_409_CONFLICT, "An account with this email already exists")
 

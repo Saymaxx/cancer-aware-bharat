@@ -1,9 +1,10 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from app.core.limiter import limiter
 from app.deps import DbSession, require_roles
 from app.models.hospital import Hospital, HospitalPartnerRequest
 from app.schemas.hospital import HospitalOut, HospitalPartnerRequestIn, HospitalPartnerRequestOut
@@ -26,13 +27,14 @@ def get_hospital(hospital_id: UUID, db: DbSession):
 
 
 @router.post("/partner-requests", response_model=HospitalPartnerRequestOut, status_code=status.HTTP_201_CREATED)
-def submit_partner_request(payload: HospitalPartnerRequestIn, db: DbSession):
+@limiter.limit("5/minute")
+def submit_partner_request(request: Request, payload: HospitalPartnerRequestIn, db: DbSession):
     """Public - a hospital applying to join the network (JoinUsTab / HospitalAuthPage register flow)."""
-    request = HospitalPartnerRequest(**payload.model_dump())
-    db.add(request)
+    partner_request = HospitalPartnerRequest(**payload.model_dump())
+    db.add(partner_request)
     db.commit()
-    db.refresh(request)
-    return request
+    db.refresh(partner_request)
+    return partner_request
 
 
 @router.get("/partner-requests/all", response_model=list[HospitalPartnerRequestOut])

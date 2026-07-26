@@ -3,10 +3,11 @@ from pathlib import Path
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.limiter import limiter
 from app.deps import (
     DbSession,
     current_hospital_id,
@@ -40,13 +41,15 @@ def _staff_name(db: Session, claims: dict) -> str:
 
 
 @router.post("", response_model=PatientEnquiryOut, status_code=status.HTTP_201_CREATED)
-def create_enquiry(payload: PatientEnquiryCreate, db: DbSession):
+@limiter.limit("10/minute")
+def create_enquiry(request: Request, payload: PatientEnquiryCreate, db: DbSession):
     """Public endpoint - anyone can submit a patient enquiry, no login required."""
     return enquiry_workflow.submit_enquiry(db, payload)
 
 
 @router.post("/lookup", response_model=PatientEnquiryOut)
-def lookup_enquiry(payload: EnquiryLookupIn, db: DbSession):
+@limiter.limit("20/minute")
+def lookup_enquiry(request: Request, payload: EnquiryLookupIn, db: DbSession):
     """Public endpoint - patients check their own status via reference number + phone."""
     enquiry = (
         db.query(PatientEnquiry)
@@ -145,7 +148,8 @@ def hospital_decline_enquiry(
 
 
 @router.post("/{enquiry_id}/reports", response_model=UploadedReportOut, status_code=status.HTTP_201_CREATED)
-async def upload_report(enquiry_id: UUID, db: DbSession, file: UploadFile):
+@limiter.limit("20/minute")
+async def upload_report(request: Request, enquiry_id: UUID, db: DbSession, file: UploadFile):
     """Public - attached during patient enquiry submission (or added later by reference number)."""
     enquiry = db.query(PatientEnquiry).filter(PatientEnquiry.id == enquiry_id).first()
     if enquiry is None:
