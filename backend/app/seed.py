@@ -3,7 +3,15 @@
 Ports the hardcoded arrays from the frontend's src/data.ts so the API has
 something to serve while the dashboards are wired up. Safe to re-run --
 skips anything that already exists.
+
+Every account this script creates uses the same publicly-documented password
+("ChangeMe123!", see README). It refuses to run against a production
+environment for that reason -- use `python -m app.create_superadmin` there
+instead, which prompts for a real password interactively.
 """
+import sys
+
+from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.security import hash_password
 from app.models.hospital import Hospital
@@ -37,6 +45,15 @@ STAFF = [
 
 
 def run() -> None:
+    if settings.is_production:
+        print(
+            "Refusing to run: ENVIRONMENT=production. This script creates accounts "
+            "with a password documented in this repo's README -- use "
+            "`python -m app.create_superadmin` instead for a real deployment.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     db = SessionLocal()
     try:
         for h in HOSPITALS:

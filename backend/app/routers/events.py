@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.deps import DbSession
 from app.models.event import Event
@@ -10,8 +10,12 @@ router = APIRouter(prefix="/events", tags=["events"])
 
 
 @router.get("", response_model=list[EventOut])
-def list_events(db: DbSession):
-    return db.query(Event).order_by(Event.created_at.desc()).all()
+def list_events(
+    db: DbSession,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=500, ge=1, le=1000),
+):
+    return db.query(Event).order_by(Event.created_at.desc()).offset(skip).limit(limit).all()
 
 
 @router.get("/{event_id}", response_model=EventOut)

@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.limiter import limiter
@@ -13,9 +13,20 @@ router = APIRouter(prefix="/hospitals", tags=["hospitals"])
 
 
 @router.get("", response_model=list[HospitalOut])
-def list_hospitals(db: DbSession):
+def list_hospitals(
+    db: DbSession,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=500, ge=1, le=1000),
+):
     """Public directory - powers the frontend hospital map/list."""
-    return db.query(Hospital).filter(Hospital.is_active.is_(True)).order_by(Hospital.name).all()
+    return (
+        db.query(Hospital)
+        .filter(Hospital.is_active.is_(True))
+        .order_by(Hospital.name)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 @router.get("/{hospital_id}", response_model=HospitalOut)
@@ -41,5 +52,13 @@ def submit_partner_request(request: Request, payload: HospitalPartnerRequestIn, 
 def list_partner_requests(
     db: DbSession,
     claims: Annotated[dict, Depends(require_roles("admin", "superadmin"))],
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=500, ge=1, le=1000),
 ):
-    return db.query(HospitalPartnerRequest).order_by(HospitalPartnerRequest.created_at.desc()).all()
+    return (
+        db.query(HospitalPartnerRequest)
+        .order_by(HospitalPartnerRequest.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )

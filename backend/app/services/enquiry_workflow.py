@@ -30,6 +30,23 @@ def _get_enquiry_or_404(db: Session, enquiry_id: UUID) -> PatientEnquiry:
     return enquiry
 
 
+def _assert_status(enquiry: PatientEnquiry, *legal_statuses: str) -> None:
+    """Guard every workflow transition against being driven out of order.
+
+    Without this, admin_approve could be called on an already-rejected or
+    already-completed enquiry (silently overwriting the decision and
+    re-firing notifications), assign-hospital could skip admin approval
+    entirely, and hospital accept/decline could fire on an enquiry that was
+    never actually assigned to that hospital's queue.
+    """
+    if enquiry.status not in legal_statuses:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"Cannot perform this action: enquiry is currently '{enquiry.status}', "
+            f"expected one of {list(legal_statuses)}.",
+        )
+
+
 def submit_enquiry(db: Session, data: PatientEnquiryCreate) -> PatientEnquiry:
     year = datetime.now(timezone.utc).year
     random_num = random.randint(10000, 99999)
@@ -94,6 +111,7 @@ def submit_enquiry(db: Session, data: PatientEnquiryCreate) -> PatientEnquiry:
 
 def admin_approve(db: Session, enquiry_id: UUID, admin_name: str, remarks: str | None) -> PatientEnquiry:
     enquiry = _get_enquiry_or_404(db, enquiry_id)
+    _assert_status(enquiry, "Pending Admin Review")
     now = _now_formatted()
     remarks = remarks or "Approved after document verification."
 
@@ -124,6 +142,7 @@ def admin_approve(db: Session, enquiry_id: UUID, admin_name: str, remarks: str |
 
 def admin_reject(db: Session, enquiry_id: UUID, admin_name: str, reason: str) -> PatientEnquiry:
     enquiry = _get_enquiry_or_404(db, enquiry_id)
+    _assert_status(enquiry, "Pending Admin Review")
     now = _now_formatted()
 
     enquiry.status = "Rejected by Admin"
@@ -152,6 +171,11 @@ def super_admin_assign_hospital(
     db: Session, enquiry_id: UUID, hospital_id: UUID, super_admin_name: str, remarks: str | None
 ) -> PatientEnquiry:
     enquiry = _get_enquiry_or_404(db, enquiry_id)
+    # Legal from "Approved by Admin" (the normal path) and from
+    # "Declined by Hospital" (reassignment after a hospital turns a patient
+    # down) -- the frontend's Super Admin dashboard offers "Reassign
+    # Hospital" specifically for the latter case.
+    _assert_status(enquiry, "Approved by Admin", "Declined by Hospital")
     hospital = db.query(Hospital).filter(Hospital.id == hospital_id).first()
     if hospital is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Hospital not found")
@@ -195,6 +219,7 @@ def hospital_accept(
     enquiry = _get_enquiry_or_404(db, enquiry_id)
     if enquiry.hospital_id != acting_hospital_id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "This enquiry is not assigned to your hospital")
+    _assert_status(enquiry, "Assigned to Hospital")
 
     hospital_name = enquiry.assigned_hospital_name or "Partner Hospital"
     now = _now_formatted()
@@ -256,6 +281,7 @@ def hospital_decline(db: Session, enquiry_id: UUID, acting_hospital_id: UUID, re
     enquiry = _get_enquiry_or_404(db, enquiry_id)
     if enquiry.hospital_id != acting_hospital_id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "This enquiry is not assigned to your hospital")
+    _assert_status(enquiry, "Assigned to Hospital")
 
     hospital_name = enquiry.assigned_hospital_name or "Partner Hospital"
     now = _now_formatted()

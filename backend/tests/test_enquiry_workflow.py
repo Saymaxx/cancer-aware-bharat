@@ -86,6 +86,125 @@ class TestAuthAndRoleGuards:
         assert resp.status_code == 403
 
 
+class TestStatusGuards:
+    """Regression coverage for the status-guard fix: every transition must
+    reject being called from an illegal predecessor state instead of
+    silently re-applying (see _assert_status in enquiry_workflow.py)."""
+
+    def test_cannot_approve_an_already_approved_enquiry(self, client, admin_token):
+        enquiry = submit_sample_enquiry(client)
+        first = client.post(f"/enquiries/{enquiry['id']}/admin-approve", json={}, headers=auth_header(admin_token))
+        assert first.status_code == 200
+
+        second = client.post(f"/enquiries/{enquiry['id']}/admin-approve", json={}, headers=auth_header(admin_token))
+        assert second.status_code == 409
+
+    def test_cannot_approve_an_already_rejected_enquiry(self, client, admin_token):
+        enquiry = submit_sample_enquiry(client)
+        client.post(
+            f"/enquiries/{enquiry['id']}/admin-reject",
+            json={"rejectionReason": "duplicate"}, headers=auth_header(admin_token),
+        )
+        resp = client.post(f"/enquiries/{enquiry['id']}/admin-approve", json={}, headers=auth_header(admin_token))
+        assert resp.status_code == 409
+
+    def test_cannot_reject_an_already_approved_enquiry(self, client, admin_token):
+        enquiry = submit_sample_enquiry(client)
+        client.post(f"/enquiries/{enquiry['id']}/admin-approve", json={}, headers=auth_header(admin_token))
+        resp = client.post(
+            f"/enquiries/{enquiry['id']}/admin-reject",
+            json={"rejectionReason": "too late"}, headers=auth_header(admin_token),
+        )
+        assert resp.status_code == 409
+
+    def test_cannot_assign_hospital_before_admin_approval(self, client, superadmin_token, hospitals):
+        """Without the guard, a direct API call could skip admin review
+        entirely and jump straight to hospital assignment."""
+        enquiry = submit_sample_enquiry(client)
+        resp = client.post(
+            f"/enquiries/{enquiry['id']}/assign-hospital",
+            json={"hospitalId": hospitals[0]["id"]},
+            headers=auth_header(superadmin_token),
+        )
+        assert resp.status_code == 409
+
+    def test_can_reassign_hospital_after_a_decline(self, client, admin_token, superadmin_token, hospital1_token, hospitals):
+        """assign-hospital must stay legal from "Declined by Hospital" --
+        that's the real reassignment path the Super Admin dashboard offers,
+        not a case the guard should block."""
+        enquiry = submit_sample_enquiry(client)
+        client.post(f"/enquiries/{enquiry['id']}/admin-approve", json={}, headers=auth_header(admin_token))
+        apex_id = find_hospital_id(hospitals, "Apex Oncology Institute")
+        client.post(
+            f"/enquiries/{enquiry['id']}/assign-hospital",
+            json={"hospitalId": apex_id}, headers=auth_header(superadmin_token),
+        )
+        client.post(
+            f"/enquiries/{enquiry['id']}/hospital-decline",
+            json={"declineReason": "no beds"}, headers=auth_header(hospital1_token),
+        )
+        carewell_id = find_hospital_id(hospitals, "CareWell Cancer Hospital")
+        reassigned = client.post(
+            f"/enquiries/{enquiry['id']}/assign-hospital",
+            json={"hospitalId": carewell_id}, headers=auth_header(superadmin_token),
+        )
+        assert reassigned.status_code == 200
+        assert reassigned.json()["status"] == "Assigned to Hospital"
+        assert reassigned.json()["assignedHospitalName"] == "CareWell Cancer Hospital"
+
+    def test_cannot_accept_an_enquiry_not_yet_assigned(self, client, admin_token, hospital1_token):
+        enquiry = submit_sample_enquiry(client)
+        client.post(f"/enquiries/{enquiry['id']}/admin-approve", json={}, headers=auth_header(admin_token))
+        # approved, but never assigned to a hospital -- hospital1 has no
+        # legitimate claim on it yet, and the ownership check (hospital_id
+        # is None) would already 403 it; this proves the status guard is a
+        # real independent second layer, not just ownership.
+        resp = client.post(
+            f"/enquiries/{enquiry['id']}/hospital-accept",
+            json={"appointmentDate": "2026-09-01", "appointmentTime": "10:00 AM", "doctorName": "Dr. X"},
+            headers=auth_header(hospital1_token),
+        )
+        assert resp.status_code == 403
+
+    def test_cannot_accept_an_already_accepted_enquiry(self, client, admin_token, superadmin_token, hospital1_token, hospitals):
+        enquiry = submit_sample_enquiry(client)
+        client.post(f"/enquiries/{enquiry['id']}/admin-approve", json={}, headers=auth_header(admin_token))
+        apex_id = find_hospital_id(hospitals, "Apex Oncology Institute")
+        client.post(
+            f"/enquiries/{enquiry['id']}/assign-hospital",
+            json={"hospitalId": apex_id}, headers=auth_header(superadmin_token),
+        )
+        accept_payload = {"appointmentDate": "2026-09-01", "appointmentTime": "10:00 AM", "doctorName": "Dr. X"}
+        first = client.post(
+            f"/enquiries/{enquiry['id']}/hospital-accept", json=accept_payload, headers=auth_header(hospital1_token),
+        )
+        assert first.status_code == 200
+
+        second = client.post(
+            f"/enquiries/{enquiry['id']}/hospital-accept", json=accept_payload, headers=auth_header(hospital1_token),
+        )
+        assert second.status_code == 409
+
+    def test_cannot_decline_an_already_confirmed_appointment(self, client, admin_token, superadmin_token, hospital1_token, hospitals):
+        enquiry = submit_sample_enquiry(client)
+        client.post(f"/enquiries/{enquiry['id']}/admin-approve", json={}, headers=auth_header(admin_token))
+        apex_id = find_hospital_id(hospitals, "Apex Oncology Institute")
+        client.post(
+            f"/enquiries/{enquiry['id']}/assign-hospital",
+            json={"hospitalId": apex_id}, headers=auth_header(superadmin_token),
+        )
+        client.post(
+            f"/enquiries/{enquiry['id']}/hospital-accept",
+            json={"appointmentDate": "2026-09-01", "appointmentTime": "10:00 AM", "doctorName": "Dr. X"},
+            headers=auth_header(hospital1_token),
+        )
+        resp = client.post(
+            f"/enquiries/{enquiry['id']}/hospital-decline",
+            json={"declineReason": "changed my mind"}, headers=auth_header(hospital1_token),
+        )
+        assert resp.status_code == 409
+
+
 class TestFullWorkflow:
     def test_happy_path_submit_to_appointment_confirmed(self, client, admin_token, superadmin_token, hospital1_token, hospitals):
         enquiry = submit_sample_enquiry(client, patientName="Full Flow Patient")

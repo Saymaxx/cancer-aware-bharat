@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.deps import DbSession, get_current_claims
 from app.models.notification import Notification
@@ -11,12 +11,17 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
 
 
 @router.get("", response_model=list[NotificationOut])
-def list_notifications(db: DbSession, claims: Annotated[dict, Depends(get_current_claims)]):
+def list_notifications(
+    db: DbSession,
+    claims: Annotated[dict, Depends(get_current_claims)],
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=200),
+):
     role = claims["role"]
     query = db.query(Notification).filter(Notification.target_role == role)
     if role == "hospital":
         query = query.filter(Notification.target_hospital_id == UUID(claims["sub"]))
-    return query.order_by(Notification.created_at.desc()).limit(100).all()
+    return query.order_by(Notification.created_at.desc()).offset(skip).limit(limit).all()
 
 
 @router.post("/{notification_id}/read", response_model=NotificationOut)

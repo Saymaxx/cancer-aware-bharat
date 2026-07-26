@@ -43,7 +43,9 @@ function PageLoadingFallback() {
 }
 
 // ---------- Auth Guard ----------
-function AuthGuard({ storageKey, requiredRole, redirectTo = '/', children }: {
+// Exported (not just used locally) so it can be unit-tested in isolation --
+// see src/App.test.tsx.
+export function AuthGuard({ storageKey, requiredRole, redirectTo = '/', children }: {
   storageKey: string;
   requiredRole?: string;
   redirectTo?: string;

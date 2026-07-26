@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.deps import DbSession
 from app.models.blog import BlogArticle
@@ -10,8 +10,12 @@ router = APIRouter(prefix="/blogs", tags=["blogs"])
 
 
 @router.get("", response_model=list[BlogArticleOut])
-def list_blogs(db: DbSession):
-    return db.query(BlogArticle).order_by(BlogArticle.created_at.desc()).all()
+def list_blogs(
+    db: DbSession,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=500, ge=1, le=1000),
+):
+    return db.query(BlogArticle).order_by(BlogArticle.created_at.desc()).offset(skip).limit(limit).all()
 
 
 @router.get("/{blog_id}", response_model=BlogArticleOut)

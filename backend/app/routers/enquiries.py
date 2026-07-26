@@ -4,7 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
 from app.core.limiter import limiter
@@ -69,13 +69,24 @@ def list_enquiries(
     db: DbSession,
     claims: Annotated[dict, Depends(require_roles("admin", "superadmin", "hospital"))],
     status_filter: str | None = Query(default=None, alias="status"),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=500, ge=1, le=1000),
 ):
-    query = db.query(PatientEnquiry)
+    # selectinload avoids an N+1: without it, each enquiry's timeline,
+    # uploaded_reports, and appointment lazy-load with a separate query per
+    # row while PatientEnquiryOut serializes the list (100 enquiries would
+    # be 300+ queries). skip/limit cap the result set so this endpoint can
+    # never return an unbounded, ever-growing table in one response.
+    query = db.query(PatientEnquiry).options(
+        selectinload(PatientEnquiry.timeline),
+        selectinload(PatientEnquiry.uploaded_reports),
+        selectinload(PatientEnquiry.appointment),
+    )
     if claims["role"] == "hospital":
         query = query.filter(PatientEnquiry.hospital_id == UUID(claims["sub"]))
     if status_filter:
         query = query.filter(PatientEnquiry.status == status_filter)
-    return query.order_by(PatientEnquiry.created_at.desc()).all()
+    return query.order_by(PatientEnquiry.created_at.desc()).offset(skip).limit(limit).all()
 
 
 @router.get("/{enquiry_id}", response_model=PatientEnquiryOut)
@@ -161,9 +172,13 @@ async def upload_report(request: Request, enquiry_id: UUID, db: DbSession, file:
     if len(contents) > MAX_REPORT_BYTES:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "File exceeds the 10 MB limit")
 
+    # file.filename is fully client-controlled. Path(...).name strips any
+    # directory components (e.g. "../../etc/passwd" -> "passwd"), so the
+    # write can never escape upload_dir no matter what a client sends.
+    safe_filename = Path(file.filename or "").name or "upload"
     upload_dir = Path(settings.upload_dir) / str(enquiry_id)
     upload_dir.mkdir(parents=True, exist_ok=True)
-    stored_name = f"{uuid.uuid4()}_{file.filename}"
+    stored_name = f"{uuid.uuid4()}_{safe_filename}"
     (upload_dir / stored_name).write_bytes(contents)
 
     report = UploadedReport(
