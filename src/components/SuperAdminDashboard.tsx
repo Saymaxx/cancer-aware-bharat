@@ -769,13 +769,14 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     { id: 'reports', label: 'Reports & Export', icon: FileText },
     { id: 'analytics', label: 'Global Analytics', icon: PieChart },
     { id: 'audit', label: 'Audit Logs', icon: Clipboard },
-    { id: 'notifications', label: 'Notification Center', icon: Bell },
     { id: 'settings', label: 'System Settings', icon: Settings },
     { id: 'roles', label: 'Roles & Permissions', icon: Layers },
     { id: 'database', label: 'Database Backup', icon: Database },
     { id: 'security', label: 'Security Center', icon: ShieldCheck },
     { id: 'profile', label: 'Profile', icon: User },
   ];
+
+  const unreadSuperAdminNotifCount = useMemo(() => superAdminNotifications.filter(n => !n.read).length, [superAdminNotifications]);
 
   const kpi = SUPER_ADMIN_KPI;
 
@@ -858,12 +859,6 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
           </nav>
         </div>
 
-        <div className="p-3 border-t border-white/10">
-          <button onClick={onLogout} className="w-full flex items-center rounded-xl p-3 text-sm font-semibold text-red-300 hover:text-red-100 hover:bg-red-950/20 cursor-pointer">
-            <LogOut className={`w-5 h-5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3.5'}`} />
-            {(!sidebarCollapsed || mobileSidebarOpen) && <span>Secure Logout</span>}
-          </button>
-        </div>
       </aside>
 
       {/* ===== MAIN ===== */}
@@ -888,11 +883,32 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
             </button>
             <h2 className="font-headline-lg text-base sm:text-lg font-bold text-slate-900 capitalize">{activeTab.replace('-', ' ')}</h2>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-semibold border border-purple-200 gap-1.5">
               <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" /> SUPER-ADMIN-NODE
             </span>
+            <button
+              onClick={() => setActiveTab('notifications')}
+              className={`relative p-2 rounded-xl transition-colors cursor-pointer ${
+                activeTab === 'notifications' ? 'bg-purple-100 text-purple-700' : 'text-slate-500 hover:bg-slate-100'
+              }`}
+              title="Notifications"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadSuperAdminNotifCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-purple-600 text-white text-[9px] font-bold flex items-center justify-center">
+                  {unreadSuperAdminNotifCount}
+                </span>
+              )}
+            </button>
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white text-xs shadow-md">SA</div>
+            <button
+              onClick={onLogout}
+              className="p-2 rounded-xl text-red-500 hover:bg-red-50 cursor-pointer transition-colors"
+              title="Secure Logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </header>
 
