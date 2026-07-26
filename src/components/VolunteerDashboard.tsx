@@ -8,9 +8,10 @@ import {
   GraduationCap, Play, AlertCircle, User, ArrowRight,
   Timer, CircleCheck, Circle, Terminal, CheckCircle2, UserCheck, Menu,
   QrCode, Check,
-  ShieldCheck, AlertTriangle, PhoneCall, Globe
+  ShieldCheck, AlertTriangle, PhoneCall, Globe, IdCard, Mail
 } from 'lucide-react';
 import { useToast } from './common/Toast';
+import { ApiError, ApiVolunteer, getMyVolunteerProfile } from '../api/client';
 
 import {
   MOTIVATIONAL_QUOTES, DEFAULT_VOLUNTEER_STATS,
@@ -135,6 +136,22 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
   const volunteerId = volunteer?.volunteerId || 'V-2026-0842';
   const volunteerDomain = volunteer?.domain || 'Community Outreach';
   const volunteerCity = volunteer?.city || 'New Delhi';
+
+  // Live profile data straight from the backend (name/phone/area/availableDays/motivation/createdAt)
+  const [profile, setProfile] = useState<ApiVolunteer | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState('');
+
+  useEffect(() => {
+    if (!volunteer?.accessToken) {
+      setProfileLoading(false);
+      return;
+    }
+    getMyVolunteerProfile(volunteer.accessToken)
+      .then(setProfile)
+      .catch(err => setProfileError(err instanceof ApiError ? err.message : 'Unable to load your profile.'))
+      .finally(() => setProfileLoading(false));
+  }, [volunteer?.accessToken]);
 
   // State Management
   const [quoteIndex, setQuoteIndex] = useState(Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length));
@@ -297,6 +314,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
     { id: 'schedule', label: 'Today\'s Agenda', icon: Timer },
     { id: 'training', label: 'Training Modules', icon: GraduationCap },
     { id: 'feedback', label: 'Volunteer Feedback', icon: MessageSquare },
+    { id: 'profile', label: 'My Profile', icon: IdCard },
   ];
 
   return (
@@ -943,6 +961,106 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
                     Submit Another Response
                   </button>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* =====================================================
+              TAB 9: MY PROFILE
+          ===================================================== */}
+          {activeTab === 'profile' && (
+            <div className="max-w-3xl space-y-6 animate-[fadeInUp_0.4s_ease-out]">
+              {profileLoading ? (
+                <div className="bg-white rounded-2xl border border-outline-variant/30 p-10 shadow-xs flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                </div>
+              ) : profileError ? (
+                <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl p-5 text-xs font-semibold">
+                  {profileError}
+                </div>
+              ) : (
+                <>
+                  {/* Identity Card */}
+                  <div className="bg-white rounded-2xl border border-outline-variant/30 p-6 sm:p-8 shadow-xs">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                      <div className="w-20 h-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                        <span className="text-2xl font-black text-primary">{volunteerInitials}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h2 className="font-headline-lg text-xl font-bold text-slate-900">{profile?.name || volunteerName}</h2>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold uppercase tracking-wider text-primary">
+                            {profile?.volunteerId || volunteerId}
+                          </span>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-600">
+                            {volunteerDomain}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contact & Location */}
+                  <div className="bg-white rounded-2xl border border-outline-variant/30 p-6 sm:p-8 shadow-xs">
+                    <SectionHeader icon={IdCard} title="Contact & Location" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                      <div className="flex items-start gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200/60">
+                        <Mail className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email</p>
+                          <p className="font-semibold text-slate-800 mt-0.5 break-all">{profile?.email || volunteer?.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200/60">
+                        <Phone className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Phone</p>
+                          <p className="font-semibold text-slate-800 mt-0.5">{profile?.phone || 'Not provided'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200/60">
+                        <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Area / City</p>
+                          <p className="font-semibold text-slate-800 mt-0.5">{profile?.area || volunteerCity}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200/60">
+                        <Clock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Member Since</p>
+                          <p className="font-semibold text-slate-800 mt-0.5">
+                            {profile?.createdAt
+                              ? new Date(profile.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
+                              : '—'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Availability */}
+                  {profile && profile.availableDays.length > 0 && (
+                    <div className="bg-white rounded-2xl border border-outline-variant/30 p-6 sm:p-8 shadow-xs">
+                      <SectionHeader icon={Calendar} title="Availability" subtitle="Days you're generally free for campaign duty" />
+                      <div className="flex flex-wrap gap-2">
+                        {profile.availableDays.map(day => (
+                          <span key={day} className="px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-xs font-bold text-primary">
+                            {day}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Motivation / Bio */}
+                  {profile?.motivation && (
+                    <div className="bg-white rounded-2xl border border-outline-variant/30 p-6 sm:p-8 shadow-xs">
+                      <SectionHeader icon={Heart} title="Motivation" />
+                      <p className="text-xs text-slate-600 leading-relaxed">{profile.motivation}</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

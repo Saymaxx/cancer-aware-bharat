@@ -159,6 +159,7 @@ export interface ApiVolunteer {
   area: string | null;
   availableDays: string[];
   motivation: string | null;
+  createdAt: string;
 }
 
 export function registerVolunteer(payload: RegisterVolunteerPayload): Promise<ApiVolunteer> {

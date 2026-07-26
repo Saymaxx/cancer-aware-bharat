@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import EmailStr
@@ -24,3 +25,4 @@ class VolunteerOut(CamelModel):
     area: str | None = None
     available_days: list[str] = []
     motivation: str | None = None
+    created_at: datetime
