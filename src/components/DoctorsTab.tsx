@@ -63,8 +63,8 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
           
           {/* Section Header Badge & Language Toggle */}
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-emerald-300 backdrop-blur-md text-xs font-bold uppercase tracking-wider border border-white/15">
-              <Stethoscope className="w-4 h-4 text-emerald-400" />
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-slate-300 backdrop-blur-md text-xs font-bold uppercase tracking-wider border border-white/15">
+              <Stethoscope className="w-4 h-4 text-slate-400" />
               <span>5. OUR DOCTORS / विशेषज्ञ टीम</span>
             </span>
 
@@ -128,11 +128,11 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
       <section className="bg-white rounded-3xl p-6 sm:p-10 border border-outline-variant/30 shadow-xl space-y-8">
         
         <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-          <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center font-bold">
             <Award className="w-5.5 h-5.5" />
           </div>
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-600">INSPIRATION & LEAD MENTOR</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-secondary">INSPIRATION & LEAD MENTOR</span>
             <h2 className="font-headline-lg text-2xl sm:text-3xl font-black text-slate-900">
               4. DR. AJAY KUMAR / प्रेरणास्रोत
             </h2>
@@ -147,9 +147,9 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
               <img
                 src={APPROVED_DOCTORS_PANEL[0].image}
                 alt="Dr. Ajay Kumar"
-                className="w-48 h-48 sm:w-56 sm:h-56 rounded-3xl object-cover border-4 border-amber-400/40 shadow-2xl mx-auto"
+                className="w-48 h-48 sm:w-56 sm:h-56 rounded-3xl object-cover border-4 border-slate-400/40 shadow-2xl mx-auto"
               />
-              <span className="absolute -bottom-3 right-4 bg-amber-500 text-neutral-950 px-3 py-1 rounded-full text-xs font-black shadow-lg flex items-center gap-1">
+              <span className="absolute -bottom-3 right-4 bg-secondary text-neutral-950 px-3 py-1 rounded-full text-xs font-black shadow-lg flex items-center gap-1">
                 <Star className="w-3.5 h-3.5 fill-current" /> Gold Medalist
               </span>
             </div>
@@ -161,7 +161,7 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
               <p className="text-xs font-bold text-primary">
                 Surgical Oncologist
               </p>
-              <p className="text-xs text-amber-700 font-bold">
+              <p className="text-xs text-slate-700 font-bold">
                 {APPROVED_DOCTORS_PANEL[0].honors}
               </p>
               <p className="text-[10px] text-slate-400 italic">
@@ -174,7 +174,7 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
           <div className="lg:col-span-8 space-y-6">
             <div className="bg-surface-container-low p-6 sm:p-8 rounded-2xl border border-outline-variant/20 space-y-4">
               <h4 className="font-bold text-base text-primary flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-500" />
+                <Sparkles className="w-5 h-5 text-secondary" />
                 <span>कैंसर जागरूकता का प्रेरक आधार</span>
               </h4>
               <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-semibold border-l-4 border-primary pl-4">
@@ -191,7 +191,7 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
                 onClick={() => navigate('/gallery')}
                 className="px-5 py-3 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary/90 shadow-lg flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
               >
-                <PlayCircle className="w-4 h-4 text-emerald-300" />
+                <PlayCircle className="w-4 h-4 text-slate-300" />
                 <span>कैंसर जागरूकता वीडियो देखें</span>
               </button>
 
@@ -199,7 +199,7 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
                 onClick={() => navigate('/events')}
                 className="px-5 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 shadow-md"
               >
-                <Calendar className="w-4 h-4 text-amber-400" />
+                <Calendar className="w-4 h-4 text-slate-400" />
                 <span>आगामी कैंप देखें</span>
               </button>
 
@@ -248,7 +248,7 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
                       alt={doc.name}
                       className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-2 border-primary/20 shadow-md group-hover:scale-105 transition-transform"
                     />
-                    <span className="absolute -bottom-2 -right-2 bg-emerald-500 text-white p-1 rounded-full shadow-md" title="Verified Doctor">
+                    <span className="absolute -bottom-2 -right-2 bg-primary text-white p-1 rounded-full shadow-md" title="Verified Doctor">
                       <ShieldCheck className="w-4 h-4" />
                     </span>
                   </div>
@@ -263,7 +263,7 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
                     </p>
 
                     {doc.honors && (
-                      <p className="text-[11px] text-amber-700 font-bold">
+                      <p className="text-[11px] text-slate-700 font-bold">
                         🏅 {doc.honors}
                       </p>
                     )}

@@ -752,8 +752,8 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
 
           <div className="flex items-center space-x-2 sm:space-x-3">
             {/* Quick connection state badge */}
-            <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200 gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> dwarka-node-sync
+            <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200 gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" /> dwarka-node-sync
             </span>
             <button
               onClick={() => setActiveTab('notifications')}
@@ -796,7 +796,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                   { label: 'Total Patients Managed', value: summaryKpis.totalPatients, icon: Heart, color: 'text-primary bg-primary/10 border-primary/15' },
                   { label: 'Registered Volunteers', value: summaryKpis.totalVolunteers, icon: Users, color: 'text-secondary bg-secondary/10 border-secondary/15' },
                   { label: 'Campaigns Scheduled', value: summaryKpis.activeCampaigns, icon: Calendar, color: 'text-indigo-600 bg-indigo-50 border-indigo-100' },
-                  { label: 'Donations Audited (INR)', value: `₹${summaryKpis.donationsReceived.toLocaleString()}`, icon: DollarSign, color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+                  { label: 'Donations Audited (INR)', value: `₹${summaryKpis.donationsReceived.toLocaleString()}`, icon: DollarSign, color: 'text-slate-700 bg-slate-50 border-slate-200' },
                 ].map((kpi, idx) => (
                   <div key={idx} className="bg-white rounded-2xl border border-outline-variant/30 p-5 shadow-xs flex items-center space-x-4">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${kpi.color}`}>
@@ -882,7 +882,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
               {/* KPI Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-secondary">
                     <Stethoscope className="w-6 h-6" />
                   </div>
                   <div>
@@ -891,7 +891,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                   </div>
                 </div>
                 <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-primary-container">
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
                   <div>
@@ -902,7 +902,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                   </div>
                 </div>
                 <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-primary-container">
                     <Calendar className="w-6 h-6" />
                   </div>
                   <div>
@@ -1026,7 +1026,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                                 <>
                                   <button
                                     onClick={() => { setShowApproveEnquiryModal(enq); setApproveRemarks(''); }}
-                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all cursor-pointer inline-flex items-center gap-1"
+                                    className="px-2.5 py-1 bg-primary-container hover:bg-slate-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all cursor-pointer inline-flex items-center gap-1"
                                     title="Approve Enquiry"
                                   >
                                     <Check className="w-3 h-3" /> Approve
@@ -1133,9 +1133,9 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                           <td className="px-6 py-4 font-medium text-slate-700">{pat.hospitalName}</td>
                           <td className="px-6 py-4">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                              pat.financialAidStatus === 'Approved' ? 'bg-green-50 text-green-700 border-green-200' :
-                              pat.financialAidStatus === 'Pending Review' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                              pat.financialAidStatus === 'Disbursed' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                              pat.financialAidStatus === 'Approved' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                              pat.financialAidStatus === 'Pending Review' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                              pat.financialAidStatus === 'Disbursed' ? 'bg-slate-50 text-slate-700 border-slate-200' :
                               'bg-slate-100 text-slate-500 border-slate-200'
                             }`}>
                               {pat.financialAidStatus}
@@ -1230,8 +1230,8 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                           </td>
                           <td className="px-6 py-4">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                              vol.status === 'Approved' ? 'bg-green-50 text-green-700 border-green-200' :
-                              vol.status === 'Pending Approval' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                              vol.status === 'Approved' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                              vol.status === 'Pending Approval' ? 'bg-slate-50 text-slate-700 border-slate-200' :
                               'bg-red-50 text-red-700 border-red-200'
                             }`}>
                               {vol.status}
@@ -1281,7 +1281,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                 </h3>
                 
                 {campaignSuccessToast && (
-                  <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl text-xs font-semibold flex items-center gap-1.5">
+                  <div className="mb-4 p-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5">
                     <CheckCircle2 className="w-4.5 h-4.5" /> Campaign Scheduled Successfully!
                   </div>
                 )}
@@ -1379,11 +1379,11 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
           ===================================================== */}
           {activeTab === 'hospitals' && (
             <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
-              <div className="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-xl text-xs flex items-start gap-2.5 leading-relaxed">
-                <AlertCircle className="w-5 h-5 shrink-0 text-amber-700" />
+              <div className="bg-slate-50 border border-slate-200 text-slate-900 p-4 rounded-xl text-xs flex items-start gap-2.5 leading-relaxed">
+                <AlertCircle className="w-5 h-5 shrink-0 text-slate-700" />
                 <div>
                   <p className="font-bold">Role-based Access Clearance Level: Regional Coordinator</p>
-                  <p className="text-amber-800/85 mt-0.5">As Admin, you can review partner applications, verify submitted accreditation documents, and recommend entries. Under CAB Trust guidelines, final tie-up approvals or rejections are restricted to the **Super Admin board console**.</p>
+                  <p className="text-slate-800/85 mt-0.5">As Admin, you can review partner applications, verify submitted accreditation documents, and recommend entries. Under CAB Trust guidelines, final tie-up approvals or rejections are restricted to the **Super Admin board console**.</p>
                 </div>
               </div>
 
@@ -1411,11 +1411,11 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                           <td className="px-6 py-4 text-slate-500">{hosp.appliedDate}</td>
                           <td className="px-6 py-4">
                             {hosp.documentVerified ? (
-                              <span className="text-green-600 font-bold flex items-center gap-1">✓ Verified</span>
+                              <span className="text-primary-container font-bold flex items-center gap-1">✓ Verified</span>
                             ) : (
                               <button
                                 onClick={() => handleVerifyDocument(hosp.id)}
-                                className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[10px] font-bold hover:bg-amber-100"
+                                className="px-2.5 py-1 bg-slate-50 text-slate-700 border border-slate-200 rounded text-[10px] font-bold hover:bg-slate-100"
                               >
                                 Check Document Uploads
                               </button>
@@ -1423,10 +1423,10 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                           </td>
                           <td className="px-6 py-4 font-medium">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                              hosp.status === 'Active Partner' ? 'bg-green-50 text-green-700 border-green-200' :
-                              hosp.status === 'Recommended to Super Admin' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                              hosp.status === 'Active Partner' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                              hosp.status === 'Recommended to Super Admin' ? 'bg-slate-50 text-slate-700 border-slate-200' :
                               hosp.status === 'Declined by Admin' ? 'bg-red-50 text-red-600 border-red-200' :
-                              'bg-amber-50 text-amber-700 border-amber-200'
+                              'bg-slate-50 text-slate-700 border-slate-200'
                             }`}>
                               {hosp.status}
                             </span>
@@ -1450,7 +1450,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                                 </button>
                               </div>
                             ) : hosp.status === 'Recommended to Super Admin' ? (
-                              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
+                              <span className="text-[10px] font-bold text-primary-container bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
                                 Recommended to Board
                               </span>
                             ) : hosp.status === 'Declined by Admin' ? (
@@ -1458,7 +1458,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                                 Declined by Admin
                               </span>
                             ) : (
-                              <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-lg border border-green-200">
+                              <span className="text-[10px] font-bold text-primary-container bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
                                 Connected Partner
                               </span>
                             )}
@@ -1544,8 +1544,8 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                           <td className="px-6 py-4 text-slate-500 font-bold">{req.expectedAttendees}</td>
                           <td className="px-6 py-4 font-medium">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                              req.status === 'Scheduled' ? 'bg-green-50 text-green-700 border-green-200' :
-                              'bg-amber-50 text-amber-700 border-amber-200'
+                              req.status === 'Scheduled' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                              'bg-slate-50 text-slate-700 border-slate-200'
                             }`}>
                               {req.status}
                             </span>
@@ -1559,7 +1559,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                                 <Calendar className="w-3 h-3" /> Convert to Camp
                               </button>
                             ) : (
-                              <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded">
+                              <span className="text-[10px] font-bold text-primary-container bg-slate-50 px-2 py-1 rounded">
                                 Active scheduled
                               </span>
                             )}
@@ -1628,7 +1628,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                           <td className="px-6 py-4 font-medium text-slate-600">{don.paymentMethod}</td>
                           <td className="px-6 py-4 text-right">
                             {don.receiptSent ? (
-                              <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">✓ Sent (80G)</span>
+                              <span className="text-[10px] font-bold text-primary-container bg-slate-50 px-2 py-0.5 rounded-full">✓ Sent (80G)</span>
                             ) : (
                               <button
                                 onClick={() => setDonations(prev => {
@@ -1751,7 +1751,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                         <span className="font-bold text-slate-900 text-sm">{f.volunteerName}</span>
                         <p className="text-slate-400 text-[10px] mt-0.5">Campaign: {f.campaignName} • {f.date}</p>
                       </div>
-                      <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-bold border border-amber-100 text-[10px]">
+                      <div className="flex items-center gap-1 bg-slate-50 text-slate-700 px-2 py-0.5 rounded-full font-bold border border-slate-100 text-[10px]">
                         ★ {f.rating} / 5 Rating
                       </div>
                     </div>
@@ -1817,7 +1817,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                 </h3>
                 
                 {notifSuccessToast && (
-                  <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl text-xs font-semibold flex items-center gap-1.5">
+                  <div className="mb-4 p-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5">
                     <CheckCircle2 className="w-4.5 h-4.5" /> Broadcast alert sent to 2,400+ volunteers!
                   </div>
                 )}
@@ -1884,7 +1884,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
               </h3>
 
               {passwordSuccess && (
-                <div className="mb-5 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl font-semibold flex items-center gap-1.5">
+                <div className="mb-5 p-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl font-semibold flex items-center gap-1.5">
                   <CheckCircle2 className="w-4.5 h-4.5" /> Settings updated successfully!
                 </div>
               )}
@@ -2097,7 +2097,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
           <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" /> Approve Patient Enquiry
+                <CheckCircle2 className="w-5 h-5 text-primary-container" /> Approve Patient Enquiry
               </h3>
               <button onClick={() => setShowApproveEnquiryModal(null)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
@@ -2143,7 +2143,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
                     toast.error('Approval Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
                   }
                 }}
-                className="px-5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-sm cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-primary-container text-white text-xs font-bold hover:bg-slate-700 shadow-sm cursor-pointer"
               >
                 Approve & Forward to Super Admin
               </button>

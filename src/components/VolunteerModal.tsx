@@ -299,7 +299,7 @@ export default function VolunteerModal({ isOpen, onClose }: VolunteerModalProps)
             </form>
           ) : (
             <div className="text-center py-8 px-4 flex flex-col items-center">
-              <div className="w-16 h-16 bg-green-50 rounded-full border-2 border-green-400 flex items-center justify-center text-green-500 mb-4 animate-pulse">
+              <div className="w-16 h-16 bg-slate-50 rounded-full border-2 border-slate-400 flex items-center justify-center text-primary mb-4 animate-pulse">
                 <CheckCircle className="w-10 h-10" />
               </div>
               

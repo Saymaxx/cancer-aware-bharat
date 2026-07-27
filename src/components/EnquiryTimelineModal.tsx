@@ -14,15 +14,15 @@ export default function EnquiryTimelineModal({ enquiry, isOpen, onClose }: Enqui
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Pending Admin Review':
-        return 'bg-amber-50 text-amber-700 border-amber-300';
+        return 'bg-slate-50 text-slate-700 border-slate-300';
       case 'Approved by Admin':
       case 'Pending Hospital Assignment':
-        return 'bg-blue-50 text-blue-700 border-blue-300';
+        return 'bg-slate-50 text-slate-700 border-slate-300';
       case 'Assigned to Hospital':
         return 'bg-indigo-50 text-indigo-700 border-indigo-300';
       case 'Accepted by Hospital':
       case 'Appointment Confirmed':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-300';
+        return 'bg-slate-50 text-slate-700 border-slate-300';
       case 'Rejected by Admin':
       case 'Declined by Hospital':
         return 'bg-red-50 text-red-700 border-red-300';
@@ -32,13 +32,13 @@ export default function EnquiryTimelineModal({ enquiry, isOpen, onClose }: Enqui
   };
 
   const getStageIcon = (stage: string) => {
-    if (stage.includes('Submitted')) return <User className="w-4 h-4 text-blue-600" />;
-    if (stage.includes('Admin Approved')) return <Shield className="w-4 h-4 text-emerald-600" />;
+    if (stage.includes('Submitted')) return <User className="w-4 h-4 text-primary-container" />;
+    if (stage.includes('Admin Approved')) return <Shield className="w-4 h-4 text-primary-container" />;
     if (stage.includes('Admin Rejected')) return <AlertCircle className="w-4 h-4 text-red-600" />;
     if (stage.includes('Assigned')) return <Building2 className="w-4 h-4 text-indigo-600" />;
-    if (stage.includes('Hospital Accepted')) return <CheckCircle className="w-4 h-4 text-emerald-600" />;
-    if (stage.includes('Hospital Declined')) return <AlertCircle className="w-4 h-4 text-amber-600" />;
-    if (stage.includes('Appointment')) return <Calendar className="w-4 h-4 text-teal-600" />;
+    if (stage.includes('Hospital Accepted')) return <CheckCircle className="w-4 h-4 text-primary-container" />;
+    if (stage.includes('Hospital Declined')) return <AlertCircle className="w-4 h-4 text-secondary" />;
+    if (stage.includes('Appointment')) return <Calendar className="w-4 h-4 text-primary-container" />;
     return <Clock className="w-4 h-4 text-slate-500" />;
   };
 
@@ -109,7 +109,7 @@ export default function EnquiryTimelineModal({ enquiry, isOpen, onClose }: Enqui
               <span className="font-bold text-slate-700 uppercase tracking-wider text-[10px] block">Hospital & Appointment Details</span>
               <p><strong className="text-slate-800">Assigned Facility:</strong> {enquiry.assignedHospitalName || enquiry.preferredHospitalName || 'Pending Assignment'}</p>
               {enquiry.appointment ? (
-                <div className="mt-1 p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900">
+                <div className="mt-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900">
                   <p className="font-bold text-xs">✅ Appointment Confirmed ({enquiry.appointment.appointmentId})</p>
                   <p>📅 Date: {enquiry.appointment.date} at {enquiry.appointment.time}</p>
                   <p>👨‍⚕️ Doctor: {enquiry.appointment.doctor}</p>

@@ -111,7 +111,7 @@ export default function AdminAuthPage({ initialRole = 'admin', lockedRole }: Adm
         <div className="max-w-2xl w-full text-center space-y-6">
           {/* Animated check */}
           <div className="relative mb-6 inline-block">
-            <div className={`w-24 h-24 rounded-full border-2 flex items-center justify-center mx-auto ${role === 'superadmin' ? 'bg-indigo-50 border-indigo-300' : 'bg-teal-50 border-teal-300'
+            <div className={`w-24 h-24 rounded-full border-2 flex items-center justify-center mx-auto ${role === 'superadmin' ? 'bg-indigo-50 border-indigo-300' : 'bg-slate-50 border-slate-300'
               }`}>
               <CheckCircle className={`w-14 h-14 ${role === 'superadmin' ? 'text-indigo-600' : 'text-primary'}`} />
             </div>
@@ -132,19 +132,19 @@ export default function AdminAuthPage({ initialRole = 'admin', lockedRole }: Adm
           </p>
 
           {/* SaaS Portal Status Log */}
-          <div className="bg-neutral-950 text-emerald-400 p-5 rounded-xl border border-neutral-800 text-left font-mono text-xs space-y-2 shadow-2xl relative overflow-hidden">
+          <div className="bg-neutral-950 text-slate-400 p-5 rounded-xl border border-neutral-800 text-left font-mono text-xs space-y-2 shadow-2xl relative overflow-hidden">
             <div className="absolute top-2 right-2 flex items-center space-x-1.5 opacity-60">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               <span className="text-[10px]">CONNECTED</span>
             </div>
             <p className="text-white/40 border-b border-neutral-800 pb-2 flex items-center gap-1.5">
               <Terminal className="w-3.5 h-3.5" /> SECURE CONSOLE LOGS
             </p>
             <div className="space-y-1">
-              <p className="flex items-center gap-2"><Server className="w-3.5 h-3.5 shrink-0 text-emerald-500" /> Host: Node-{role === 'superadmin' ? 'Alpha-0' : 'Admin-Portal'}</p>
-              <p className="flex items-center gap-2"><Database className="w-3.5 h-3.5 shrink-0 text-emerald-500" /> Database Sync: 100% (camps_schedule, volunteer_registrations)</p>
-              <p className="flex items-center gap-2"><Activity className="w-3.5 h-3.5 shrink-0 text-emerald-500" /> Session ID: <span className="text-white select-all">{sessionDetails.sessionKey}</span></p>
-              <p className="flex items-center gap-2"><RefreshCw className="w-3.5 h-3.5 shrink-0 text-emerald-500" /> Permissions: {role === 'superadmin' ? 'ROOT_ALL_ACCESS' : 'ADMIN_COORDINATION_ACCESS'}</p>
+              <p className="flex items-center gap-2"><Server className="w-3.5 h-3.5 shrink-0 text-primary" /> Host: Node-{role === 'superadmin' ? 'Alpha-0' : 'Admin-Portal'}</p>
+              <p className="flex items-center gap-2"><Database className="w-3.5 h-3.5 shrink-0 text-primary" /> Database Sync: 100% (camps_schedule, volunteer_registrations)</p>
+              <p className="flex items-center gap-2"><Activity className="w-3.5 h-3.5 shrink-0 text-primary" /> Session ID: <span className="text-white select-all">{sessionDetails.sessionKey}</span></p>
+              <p className="flex items-center gap-2"><RefreshCw className="w-3.5 h-3.5 shrink-0 text-primary" /> Permissions: {role === 'superadmin' ? 'ROOT_ALL_ACCESS' : 'ADMIN_COORDINATION_ACCESS'}</p>
             </div>
           </div>
 

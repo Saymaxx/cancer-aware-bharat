@@ -496,7 +496,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
           {/* Brand Header */}
           <div className="p-5 flex items-center justify-between border-b border-white/10">
             <div className="flex items-center space-x-3 overflow-hidden">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0 border border-emerald-400/30 text-emerald-300">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0 border border-slate-400/30 text-slate-300">
                 <Building2 className="w-5.5 h-5.5" />
               </div>
               {(!sidebarCollapsed || mobileSidebarOpen) && (
@@ -504,7 +504,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                   <span className="font-headline-lg text-base font-black text-white tracking-tight truncate block">
                     Partner Hospital
                   </span>
-                  <span className="text-[10px] text-emerald-300 font-semibold tracking-wider uppercase block">
+                  <span className="text-[10px] text-slate-300 font-semibold tracking-wider uppercase block">
                     CAB Clinical Network
                   </span>
                 </div>
@@ -530,7 +530,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                   }}
                   className={`w-full flex items-center justify-between rounded-xl p-2.5 text-[13px] font-semibold transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-white/12 text-white shadow-sm border-l-4 border-emerald-400'
+                      ? 'bg-white/12 text-white shadow-sm border-l-4 border-slate-400'
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                   }`}
                 >
@@ -539,7 +539,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                     {(!sidebarCollapsed || mobileSidebarOpen) && <span>{item.label}</span>}
                   </div>
                   {(!sidebarCollapsed || mobileSidebarOpen) && item.badge !== undefined && item.badge > 0 && (
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-400 text-[#063b42]">
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-400 text-[#063b42]">
                       {item.badge}
                     </span>
                   )}
@@ -594,10 +594,10 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
           </div>
 
           <div className="flex items-center space-x-4">
-            <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200 gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> {profile.shortName} • Active Clinical Node
+            <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-slate-50 text-slate-800 text-xs font-semibold border border-slate-200 gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" /> {profile.shortName} • Active Clinical Node
             </span>
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-600 to-[#063b42] flex items-center justify-center font-bold text-white text-xs shadow-md">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-container to-[#063b42] flex items-center justify-center font-bold text-white text-xs shadow-md">
               HOSP
             </div>
           </div>
@@ -606,7 +606,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
         {/* Global Toast */}
         {toastMessage && (
           <div className="fixed top-4 right-4 z-50 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl text-xs font-semibold flex items-center gap-2 animate-[fadeInUp_0.3s_ease-out]">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" /> {toastMessage}
+            <CheckCircle2 className="w-4 h-4 text-slate-400" /> {toastMessage}
           </div>
         )}
 
@@ -620,9 +620,9 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
             <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
               
               {/* Partner Welcome Banner */}
-              <div className="bg-gradient-to-r from-[#063b42] via-[#0d5c63] to-teal-700 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
+              <div className="bg-gradient-to-r from-[#063b42] via-[#0d5c63] to-slate-700 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
                 <div className="relative z-10 space-y-2 max-w-xl">
-                  <span className="px-3 py-1 rounded-full bg-white/10 text-emerald-200 text-xs font-semibold border border-white/10">
+                  <span className="px-3 py-1 rounded-full bg-white/10 text-slate-200 text-xs font-semibold border border-white/10">
                     Hospital Partner Console • {profile.city}
                   </span>
                   <h1 className="font-display-lg text-2xl sm:text-3xl font-black text-white">{profile.name}</h1>
@@ -634,7 +634,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                   <button onClick={() => setActiveTab('patients')} className="px-4 py-2.5 bg-white text-[#063b42] rounded-xl text-xs font-bold hover:bg-slate-100 shadow-md cursor-pointer transition-all">
                     View Assigned Patients
                   </button>
-                  <button onClick={() => setActiveTab('referrals')} className="px-4 py-2.5 bg-emerald-400 text-[#063b42] rounded-xl text-xs font-bold hover:bg-emerald-300 shadow-md cursor-pointer transition-all">
+                  <button onClick={() => setActiveTab('referrals')} className="px-4 py-2.5 bg-slate-400 text-[#063b42] rounded-xl text-xs font-bold hover:bg-slate-300 shadow-md cursor-pointer transition-all">
                     Pending Referrals ({referrals.filter(r => r.status === 'Pending Action').length})
                   </button>
                 </div>
@@ -643,14 +643,14 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               {/* 8 KPI Cards Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {[
-                  { label: 'Referred Patients', val: kpiMetrics.totalReferredPatients, icon: Users, color: 'text-teal-700 bg-teal-50 border-teal-200' },
+                  { label: 'Referred Patients', val: kpiMetrics.totalReferredPatients, icon: Users, color: 'text-slate-700 bg-slate-50 border-slate-200' },
                   { label: 'Under Treatment', val: kpiMetrics.patientsUnderTreatment, icon: Stethoscope, color: 'text-indigo-700 bg-indigo-50 border-indigo-200' },
-                  { label: 'Completed Treatments', val: kpiMetrics.completedTreatments, icon: CheckCircle2, color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+                  { label: 'Completed Treatments', val: kpiMetrics.completedTreatments, icon: CheckCircle2, color: 'text-slate-700 bg-slate-50 border-slate-200' },
                   { label: 'Awareness Camps', val: kpiMetrics.upcomingAwarenessCamps, icon: Calendar, color: 'text-purple-700 bg-purple-50 border-purple-200' },
-                  { label: 'Assigned Doctors', val: kpiMetrics.assignedDoctorsCount, icon: UserCheck, color: 'text-blue-700 bg-blue-50 border-blue-200' },
-                  { label: 'Pending Reports', val: kpiMetrics.pendingMedicalReports, icon: FileText, color: 'text-amber-700 bg-amber-50 border-amber-200' },
+                  { label: 'Assigned Doctors', val: kpiMetrics.assignedDoctorsCount, icon: UserCheck, color: 'text-slate-700 bg-slate-50 border-slate-200' },
+                  { label: 'Pending Reports', val: kpiMetrics.pendingMedicalReports, icon: FileText, color: 'text-slate-700 bg-slate-50 border-slate-200' },
                   { label: 'Aid Verifications', val: kpiMetrics.financialAidRequestsCount, icon: DollarSign, color: 'text-cyan-700 bg-cyan-50 border-cyan-200' },
-                  { label: 'Partnership Status', val: kpiMetrics.partnershipStatus, icon: ShieldCheck, color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+                  { label: 'Partnership Status', val: kpiMetrics.partnershipStatus, icon: ShieldCheck, color: 'text-slate-700 bg-slate-50 border-slate-200' },
                 ].map((kpi, i) => (
                   <div key={i} className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center space-x-3">
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border ${kpi.color}`}>
@@ -671,13 +671,13 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                 <div className="lg:col-span-7 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-teal-600" /> Monthly Treated Patients Trend
+                      <TrendingUp className="w-4 h-4 text-primary-container" /> Monthly Treated Patients Trend
                     </h3>
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">+18% Growth</span>
+                    <span className="text-[10px] font-bold text-slate-700 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">+18% Growth</span>
                   </div>
                   {patients.length === 0 ? (
                     <div className="h-44 flex flex-col items-center justify-center text-center space-y-1.5 text-slate-400">
-                      <Activity className="w-8 h-8 text-teal-600/40" />
+                      <Activity className="w-8 h-8 text-primary-container/40" />
                       <p className="text-xs font-bold text-slate-700">No Patient Treatment History</p>
                       <p className="text-[11px] text-slate-500 max-w-xs">Monthly patient treatment progress will plot here automatically as patients receive care.</p>
                     </div>
@@ -692,7 +692,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                             </span>
                             <div 
                               style={{ height: `${heightPct}%` }}
-                              className="w-full bg-gradient-to-t from-[#063b42] to-teal-500 rounded-t-lg group-hover:from-teal-600 group-hover:to-teal-400 transition-all duration-300"
+                              className="w-full bg-gradient-to-t from-[#063b42] to-primary rounded-t-lg group-hover:from-primary-container group-hover:to-slate-400 transition-all duration-300"
                             />
                             <span className="text-[10px] font-semibold text-slate-500">{m.month}</span>
                           </div>
@@ -706,13 +706,13 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                 <div className="lg:col-span-5 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                      <UserCheck className="w-4 h-4 text-teal-600" /> Incoming NGO Referrals
+                      <UserCheck className="w-4 h-4 text-primary-container" /> Incoming NGO Referrals
                     </h3>
-                    <button onClick={() => setActiveTab('referrals')} className="text-xs font-bold text-teal-700 hover:underline">View All</button>
+                    <button onClick={() => setActiveTab('referrals')} className="text-xs font-bold text-slate-700 hover:underline">View All</button>
                   </div>
                   {referrals.length === 0 ? (
                     <div className="py-8 text-center text-slate-400 space-y-1.5">
-                      <UserCheck className="w-7 h-7 mx-auto text-teal-600/40" />
+                      <UserCheck className="w-7 h-7 mx-auto text-primary-container/40" />
                       <p className="text-xs font-bold text-slate-700">No Pending Referrals</p>
                       <p className="text-[11px] text-slate-500">Incoming referrals from CAB Trust will appear here.</p>
                     </div>
@@ -724,7 +724,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                             <div className="flex items-center gap-2">
                               <p className="font-bold text-slate-900 text-xs">{ref.patientName}</p>
                               <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                                ref.priority === 'Critical' ? 'bg-red-100 text-red-700' : ref.priority === 'Urgent' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                                ref.priority === 'Critical' ? 'bg-red-100 text-red-700' : ref.priority === 'Urgent' ? 'bg-slate-100 text-slate-700' : 'bg-slate-100 text-slate-700'
                               }`}>{ref.priority}</span>
                             </div>
                             <p className="text-[11px] text-slate-500">{ref.cancerType} • {ref.recommendedDepartment}</p>
@@ -743,7 +743,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               {/* Activity Log Table */}
               <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-3">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-teal-600" /> Recent Hospital Audit Trail
+                  <Activity className="w-4 h-4 text-primary-container" /> Recent Hospital Audit Trail
                 </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
@@ -780,7 +780,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               {/* KPI Summary Row */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700">
                     <UserCheck className="w-6 h-6" />
                   </div>
                   <div>
@@ -789,7 +789,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                   </div>
                 </div>
                 <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-primary-container">
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
                   <div>
@@ -800,7 +800,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                   </div>
                 </div>
                 <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-primary-container">
                     <Stethoscope className="w-6 h-6" />
                   </div>
                   <div>
@@ -809,7 +809,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                   </div>
                 </div>
                 <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-secondary">
                     <AlertCircle className="w-6 h-6" />
                   </div>
                   <div>
@@ -845,7 +845,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                     placeholder="Search ID, patient, city..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-teal-600"
+                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-primary-container"
                   />
                 </div>
               </div>
@@ -898,7 +898,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                         }).map((enq) => (
                           <tr key={enq.id} className="hover:bg-slate-50/70 transition-colors">
                             <td className="px-6 py-4">
-                              <span className="font-mono font-bold text-teal-800 block">{enq.enquiryId}</span>
+                              <span className="font-mono font-bold text-slate-800 block">{enq.enquiryId}</span>
                               <span className="text-[10px] text-slate-400 font-mono">Ref: {enq.referenceNumber}</span>
                             </td>
                             <td className="px-6 py-4">
@@ -920,7 +920,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                                 </p>
                               )}
                               {enq.appointment && (
-                                <div className="mt-1 text-[10px] text-emerald-800 bg-emerald-50 p-1.5 rounded border border-emerald-200">
+                                <div className="mt-1 text-[10px] text-slate-800 bg-slate-50 p-1.5 rounded border border-slate-200">
                                   <p className="font-bold">📅 {enq.appointment.date} at {enq.appointment.time}</p>
                                   <p>👨‍⚕️ {enq.appointment.doctor}</p>
                                 </div>
@@ -929,8 +929,8 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                             <td className="px-6 py-4">
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                                 enq.status === 'Assigned to Hospital' ? 'bg-[#063b42]/10 text-[#063b42] border-[#063b42]/30 animate-pulse' :
-                                enq.status === 'Appointment Confirmed' || enq.status === 'Accepted by Hospital' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                enq.status === 'Declined by Hospital' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                enq.status === 'Appointment Confirmed' || enq.status === 'Accepted by Hospital' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                                enq.status === 'Declined by Hospital' ? 'bg-slate-50 text-slate-700 border-slate-200' :
                                 'bg-slate-50 text-slate-700 border-slate-200'
                               }`}>
                                 {enq.status}
@@ -947,7 +947,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                                       setAcceptDoctor('Dr. Siddharth Roy (Surgical Oncology)');
                                       setAcceptRemarks('');
                                     }}
-                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all cursor-pointer inline-flex items-center gap-1"
+                                    className="px-2.5 py-1 bg-primary-container hover:bg-slate-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all cursor-pointer inline-flex items-center gap-1"
                                   >
                                     <Check className="w-3.5 h-3.5" /> Accept Patient
                                   </button>
@@ -966,7 +966,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                                 onClick={() => setTimelineEnquiry(enq)}
                                 className="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg text-[11px] font-bold transition-colors cursor-pointer inline-flex items-center gap-1"
                               >
-                                <Clock className="w-3.5 h-3.5 text-teal-700" />
+                                <Clock className="w-3.5 h-3.5 text-slate-700" />
                                 <span>Timeline</span>
                               </button>
                             </td>
@@ -1000,7 +1000,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               {/* Patient Table or Empty State */}
               {filteredPatients.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center mx-auto border border-teal-200">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-700 flex items-center justify-center mx-auto border border-slate-200">
                     <Users className="w-6 h-6" />
                   </div>
                   <h4 className="font-bold text-slate-900 text-sm">No Patients Assigned Yet</h4>
@@ -1037,10 +1037,10 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                             <td className="p-4 text-slate-500">{pat.admissionDate}</td>
                             <td className="p-4">
                               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                                pat.treatmentStatus === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                pat.treatmentStatus === 'Completed' ? 'bg-slate-50 text-slate-700 border-slate-200' :
                                 pat.treatmentStatus === 'Under Treatment' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
                                 pat.treatmentStatus === 'Emergency' ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' :
-                                'bg-amber-50 text-amber-700 border-amber-200'
+                                'bg-slate-50 text-slate-700 border-slate-200'
                               }`}>
                                 {pat.treatmentStatus}
                               </span>
@@ -1065,17 +1065,17 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
           ===================================================== */}
           {activeTab === 'referrals' && (
             <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
-              <div className="bg-teal-50 border border-teal-200 text-teal-900 p-4 rounded-2xl text-xs flex items-start gap-3">
-                <UserCheck className="w-5 h-5 shrink-0 text-teal-600 mt-0.5" />
+              <div className="bg-slate-50 border border-slate-200 text-slate-900 p-4 rounded-2xl text-xs flex items-start gap-3">
+                <UserCheck className="w-5 h-5 shrink-0 text-primary-container mt-0.5" />
                 <div>
                   <p className="font-bold">NGO Patient Referral Channel</p>
-                  <p className="text-teal-800/85 mt-0.5">Review patient referrals sent by Cancer Aware Bharat caseworkers. Accept referrals to assign clinical intake slots or decline with justification notes.</p>
+                  <p className="text-slate-800/85 mt-0.5">Review patient referrals sent by Cancer Aware Bharat caseworkers. Accept referrals to assign clinical intake slots or decline with justification notes.</p>
                 </div>
               </div>
 
               {referrals.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center mx-auto border border-teal-200">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-700 flex items-center justify-center mx-auto border border-slate-200">
                     <UserCheck className="w-6 h-6" />
                   </div>
                   <h4 className="font-bold text-slate-900 text-sm">No Incoming NGO Referrals</h4>
@@ -1108,8 +1108,8 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                             <td className="p-4">
                               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                                 ref.priority === 'Critical' ? 'bg-red-50 text-red-700 border-red-200' :
-                                ref.priority === 'Urgent' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                'bg-blue-50 text-blue-700 border-blue-200'
+                                ref.priority === 'Urgent' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                                'bg-slate-50 text-slate-700 border-slate-200'
                               }`}>
                                 {ref.priority}
                               </span>
@@ -1117,9 +1117,9 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                             <td className="p-4 text-slate-800 font-medium">{ref.cancerType}</td>
                             <td className="p-4">
                               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                                ref.status === 'Accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                ref.status === 'Accepted' ? 'bg-slate-50 text-slate-700 border-slate-200' :
                                 ref.status === 'Declined' ? 'bg-red-50 text-red-600 border-red-200' :
-                                'bg-amber-50 text-amber-700 border-amber-200'
+                                'bg-slate-50 text-slate-700 border-slate-200'
                               }`}>
                                 {ref.status}
                               </span>
@@ -1154,7 +1154,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
               {campaigns.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center mx-auto border border-teal-200">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-700 flex items-center justify-center mx-auto border border-slate-200">
                     <Calendar className="w-6 h-6" />
                   </div>
                   <h4 className="font-bold text-slate-900 text-sm">No Active Awareness Drives</h4>
@@ -1168,12 +1168,12 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                     <div key={camp.id} className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between space-y-4">
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[10px] font-bold border border-teal-200">{camp.category}</span>
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${camp.status === 'Completed' ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'}`}>{camp.status}</span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-slate-50 text-slate-700 text-[10px] font-bold border border-slate-200">{camp.category}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${camp.status === 'Completed' ? 'bg-slate-100 text-slate-600' : 'bg-slate-50 text-slate-700'}`}>{camp.status}</span>
                         </div>
                         <h4 className="font-bold text-slate-900 text-sm">{camp.title}</h4>
-                        <p className="text-xs text-slate-500 flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-teal-600" /> {camp.date} • {camp.time}</p>
-                        <p className="text-xs text-slate-500 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-teal-600" /> {camp.venue}</p>
+                        <p className="text-xs text-slate-500 flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-primary-container" /> {camp.date} • {camp.time}</p>
+                        <p className="text-xs text-slate-500 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-primary-container" /> {camp.venue}</p>
                         <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs space-y-1">
                           <p className="text-[10px] font-bold text-slate-500 uppercase">Assigned Hospital Oncologists</p>
                           {camp.assignedDoctors.map((doc, idx) => (
@@ -1209,7 +1209,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
               {reports.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center mx-auto border border-teal-200">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-700 flex items-center justify-center mx-auto border border-slate-200">
                     <FileText className="w-6 h-6" />
                   </div>
                   <h4 className="font-bold text-slate-900 text-sm">No Medical Reports Uploaded</h4>
@@ -1273,7 +1273,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
               {doctors.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center mx-auto border border-teal-200">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-700 flex items-center justify-center mx-auto border border-slate-200">
                     <Stethoscope className="w-6 h-6" />
                   </div>
                   <h4 className="font-bold text-slate-900 text-sm">No Doctors Registered Yet</h4>
@@ -1290,10 +1290,10 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                     <div key={doc.id} className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between space-y-3">
                       <div>
                         <div className="flex justify-between items-start mb-2">
-                          <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[10px] font-bold border border-teal-200">{doc.specialty}</span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-slate-50 text-slate-700 text-[10px] font-bold border border-slate-200">{doc.specialty}</span>
                           <button onClick={() => handleToggleDoctorAvailability(doc.id)} className={`px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer border ${
-                            doc.availability === 'Available' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                            doc.availability === 'In Surgery' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-600'
+                            doc.availability === 'Available' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                            doc.availability === 'In Surgery' ? 'bg-slate-50 text-slate-700 border-slate-200' : 'bg-slate-100 text-slate-600'
                           }`}>
                             {doc.availability}
                           </button>
@@ -1363,12 +1363,12 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                             </td>
                             <td className="p-4 font-medium text-slate-700">{fa.department}</td>
                             <td className="p-4 font-bold text-slate-900">₹{fa.estimatedCost.toLocaleString()}</td>
-                            <td className="p-4 font-bold text-emerald-700">₹{fa.verifiedAmount.toLocaleString()}</td>
+                            <td className="p-4 font-bold text-slate-700">₹{fa.verifiedAmount.toLocaleString()}</td>
                             <td className="p-4">
                               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                                fa.status === 'Aid Disbursed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                fa.status === 'Cost Verified' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                'bg-amber-50 text-amber-700 border-amber-200'
+                                fa.status === 'Aid Disbursed' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                                fa.status === 'Cost Verified' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                                'bg-slate-50 text-slate-700 border-slate-200'
                               }`}>
                                 {fa.status}
                               </span>
@@ -1379,7 +1379,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                                   Verify Cost
                                 </button>
                               ) : (
-                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">Verified</span>
+                                <span className="text-[10px] font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">Verified</span>
                               )}
                             </td>
                           </tr>
@@ -1406,8 +1406,8 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                   <p className="text-xs text-slate-500 text-center py-6">No notifications yet.</p>
                 ) : (
                   hospitalNotifications.map(notif => (
-                    <div key={notif.id} className={`p-4 rounded-2xl border transition-all flex items-start gap-3.5 ${notif.read ? 'bg-white border-slate-200/80' : 'bg-emerald-50/40 border-emerald-200'}`}>
-                      <div className="w-9 h-9 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center shrink-0">
+                    <div key={notif.id} className={`p-4 rounded-2xl border transition-all flex items-start gap-3.5 ${notif.read ? 'bg-white border-slate-200/80' : 'bg-slate-50/40 border-slate-200'}`}>
+                      <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center shrink-0">
                         <Bell className="w-4 h-4" />
                       </div>
                       <div className="flex-1">
@@ -1438,7 +1438,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                   <button onClick={() => showToast('Generated PDF Clinical Performance Report')} className="px-3.5 py-2 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-bold hover:bg-red-100 flex items-center gap-1.5 cursor-pointer">
                     <Download className="w-3.5 h-3.5" /> Export PDF
                   </button>
-                  <button onClick={() => showToast('Exported Excel Dataset (.xlsx)')} className="px-3.5 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold hover:bg-emerald-100 flex items-center gap-1.5 cursor-pointer">
+                  <button onClick={() => showToast('Exported Excel Dataset (.xlsx)')} className="px-3.5 py-2 bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer">
                     <Download className="w-3.5 h-3.5" /> Export Excel
                   </button>
                 </div>
@@ -1455,7 +1455,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                         <span className="text-slate-900">{dept.count} Patients ({dept.percentage}%)</span>
                       </div>
                       <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div style={{ width: `${dept.percentage}%` }} className="h-full bg-gradient-to-r from-[#063b42] to-teal-500 rounded-full" />
+                        <div style={{ width: `${dept.percentage}%` }} className="h-full bg-gradient-to-r from-[#063b42] to-primary rounded-full" />
                       </div>
                     </div>
                   ))}
@@ -1472,12 +1472,12 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
                   <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-800 font-bold text-xl shrink-0">
+                    <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-800 font-bold text-xl shrink-0">
                       {profile.shortName}
                     </div>
                     <div>
                       <h3 className="font-headline-lg text-lg font-bold text-slate-900">{profile.name}</h3>
-                      <p className="text-xs text-teal-700 font-semibold">{profile.accreditationStatus}</p>
+                      <p className="text-xs text-slate-700 font-semibold">{profile.accreditationStatus}</p>
                       <p className="text-xs text-slate-400 font-mono mt-0.5">NABH No: {profile.nabhNo} • Reg: {profile.licenseNo}</p>
                     </div>
                   </div>
@@ -1585,7 +1585,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
             <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2"><HelpCircle className="w-4 h-4 text-teal-600" /> Raise Support Ticket to NGO Board</h3>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2"><HelpCircle className="w-4 h-4 text-primary-container" /> Raise Support Ticket to NGO Board</h3>
                   <form onSubmit={e => { e.preventDefault(); showToast('Support ticket raised. Case reference: TKT-2026-904'); setTicketSubject(''); setTicketDetails(''); }} className="space-y-3 text-xs">
                     <div>
                       <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Ticket Subject</label>
@@ -1610,7 +1610,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                 </div>
 
                 <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2"><Download className="w-4 h-4 text-teal-600" /> Download Partnership Guidelines & SOPs</h3>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2"><Download className="w-4 h-4 text-primary-container" /> Download Partnership Guidelines & SOPs</h3>
                   <div className="space-y-2 text-xs">
                     {[
                       { title: 'CAB Hospital Partnership SOP 2026.pdf', size: '2.8 MB' },
@@ -1722,7 +1722,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
             <div className="flex gap-2 pt-2">
               <button onClick={() => handleDeclineReferral(selectedReferralModal.id)} className="flex-1 py-2.5 bg-red-50 text-red-600 font-bold rounded-xl border border-red-200 hover:bg-red-100 cursor-pointer">Decline Referral</button>
-              <button onClick={() => handleAcceptReferral(selectedReferralModal.id)} className="flex-1 py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 cursor-pointer">Accept Referral</button>
+              <button onClick={() => handleAcceptReferral(selectedReferralModal.id)} className="flex-1 py-2.5 bg-primary-container text-white font-bold rounded-xl hover:bg-slate-700 cursor-pointer">Accept Referral</button>
             </div>
           </div>
         </div>
@@ -1809,7 +1809,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               </div>
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => setShowVerifyCostModal(null)} className="flex-1 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold">Cancel</button>
-                <button type="submit" className="flex-1 py-2 bg-emerald-600 text-white rounded-xl font-bold">Submit Verification</button>
+                <button type="submit" className="flex-1 py-2 bg-primary-container text-white rounded-xl font-bold">Submit Verification</button>
               </div>
             </form>
           </div>
@@ -1822,7 +1822,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
           <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" /> Accept Patient & Schedule Appointment
+                <CheckCircle2 className="w-5 h-5 text-primary-container" /> Accept Patient & Schedule Appointment
               </h3>
               <button onClick={() => setAcceptingEnquiry(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5" />
@@ -1847,7 +1847,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                     required
                     value={acceptDate}
                     onChange={e => setAcceptDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-emerald-600 outline-none"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-primary-container outline-none"
                   />
                 </div>
                 <div>
@@ -1857,7 +1857,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                   <select
                     value={acceptTime}
                     onChange={e => setAcceptTime(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-emerald-600 outline-none"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-primary-container outline-none"
                   >
                     <option value="09:30 AM">09:30 AM</option>
                     <option value="10:30 AM">10:30 AM</option>
@@ -1876,7 +1876,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                 <select
                   value={acceptDoctor}
                   onChange={e => setAcceptDoctor(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-emerald-600 outline-none"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-primary-container outline-none"
                 >
                   <option value="Dr. Siddharth Roy (Surgical Oncology)">Dr. Siddharth Roy (Surgical Oncology)</option>
                   <option value="Dr. Ananya Sen (Radiation Oncology)">Dr. Ananya Sen (Radiation Oncology)</option>
@@ -1894,7 +1894,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                   rows={2}
                   value={acceptRemarks}
                   onChange={e => setAcceptRemarks(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:border-emerald-600 outline-none"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:border-primary-container outline-none"
                   placeholder="e.g. Please bring all past biopsy reports and arrive 15 minutes before slot..."
                 />
               </div>
@@ -1926,7 +1926,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                     showToast(err instanceof ApiError ? err.message : 'Unable to reach the server.');
                   }
                 }}
-                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm cursor-pointer flex items-center gap-1.5"
+                className="px-5 py-2 bg-primary-container hover:bg-slate-700 text-white text-xs font-bold rounded-xl shadow-sm cursor-pointer flex items-center gap-1.5"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Accept & Create Appointment</span>

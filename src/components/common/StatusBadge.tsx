@@ -10,17 +10,17 @@ export default function StatusBadge({ status, size = 'sm' }: StatusBadgeProps) {
   const getBadgeStyle = (statusStr: string) => {
     switch (statusStr) {
       case 'Pending Admin Review':
-        return 'bg-amber-50 text-amber-800 border-amber-300/80';
+        return 'bg-slate-50 text-slate-800 border-slate-300/80';
       case 'Approved by Admin':
       case 'Pending Hospital Assignment':
-        return 'bg-blue-50 text-blue-800 border-blue-300/80';
+        return 'bg-slate-50 text-slate-800 border-slate-300/80';
       case 'Assigned to Hospital':
         return 'bg-indigo-50 text-indigo-800 border-indigo-300/80';
       case 'Accepted by Hospital':
-        return 'bg-teal-50 text-teal-800 border-teal-300/80';
+        return 'bg-slate-50 text-slate-800 border-slate-300/80';
       case 'Appointment Confirmed':
       case 'Completed':
-        return 'bg-emerald-50 text-emerald-800 border-emerald-300/80';
+        return 'bg-slate-50 text-slate-800 border-slate-300/80';
       case 'Rejected by Admin':
       case 'Declined by Hospital':
         return 'bg-red-50 text-red-800 border-red-300/80';

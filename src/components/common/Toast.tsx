@@ -71,26 +71,26 @@ function ToastCard({ toast, onClose }: { toast: ToastItem; onClose: () => void }
   const getIcon = () => {
     switch (toast.type) {
       case 'success':
-        return <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />;
+        return <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />;
       case 'error':
         return <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />;
       case 'warning':
-        return <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />;
+        return <AlertTriangle className="w-5 h-5 text-secondary shrink-0" />;
       default:
-        return <Info className="w-5 h-5 text-blue-500 shrink-0" />;
+        return <Info className="w-5 h-5 text-primary shrink-0" />;
     }
   };
 
   const getBorderColor = () => {
     switch (toast.type) {
       case 'success':
-        return 'border-emerald-200 bg-emerald-50/95 text-emerald-950';
+        return 'border-slate-200 bg-slate-50/95 text-primary';
       case 'error':
         return 'border-red-200 bg-red-50/95 text-red-950';
       case 'warning':
-        return 'border-amber-200 bg-amber-50/95 text-amber-950';
+        return 'border-slate-200 bg-slate-50/95 text-primary';
       default:
-        return 'border-blue-200 bg-blue-50/95 text-blue-950';
+        return 'border-slate-200 bg-slate-50/95 text-blue-950';
     }
   };
 

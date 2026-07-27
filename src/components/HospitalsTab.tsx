@@ -102,13 +102,11 @@ export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
     <div className="space-y-12">
       {/* Tab Header Section */}
       <section className="text-center max-w-3xl mx-auto space-y-4">
-        <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wider">
-          Our Network
-        </span>
-        <h1 className="font-display-lg text-primary text-3xl md:text-5xl font-black">
+        <span className="section-badge mx-auto">Our Network</span>
+        <h1 className="font-outfit text-primary text-3xl md:text-5xl font-extrabold leading-tight tracking-tight">
           Our Nationwide Oncology Partners
         </h1>
-        <p className="font-body-lg text-on-surface-variant">
+        <p className="text-on-surface-variant text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
           We integrate only with recognized clinical centers and supportive community hospitals across India to maintain standard diagnostic oncology paths.
         </p>
 
@@ -116,9 +114,9 @@ export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
           <div className="pt-2 flex items-center justify-center gap-3">
             <button
               onClick={() => navigate('/hospital/login')}
-              className="px-5 py-2.5 bg-[#063b42] text-white rounded-xl text-xs font-bold hover:bg-[#084c55] shadow-md transition-all cursor-pointer inline-flex items-center gap-2"
+              className="btn-primary !text-xs"
             >
-              <Building2 className="w-4 h-4 text-emerald-400" />
+              <Building2 className="w-4 h-4" />
               <span>Hospital Partner Login / Apply Portal</span>
             </button>
           </div>
@@ -126,16 +124,17 @@ export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
 
       {/* Network Map Section */}
       <section className="space-y-4">
-        <div className="flex justify-between items-end">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
           <div>
-            <h2 className="font-headline-lg text-primary text-xl font-bold flex items-center gap-1.5">
-              <Map className="w-5 h-5 text-primary" /> Interactive Hospital Map
+            <h2 className="font-outfit text-primary text-xl font-bold flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center"><Map className="w-4 h-4 text-primary" /></div>
+              Interactive Hospital Map
             </h2>
-            <p className="font-body-md text-xs text-on-surface-variant">Explore clinical locations and partners across the country.</p>
+            <p className="text-xs text-on-surface-variant mt-1">Explore clinical locations and partners across the country.</p>
           </div>
           <button
             onClick={() => navigate('/hospital/login')}
-            className="px-4 py-2 bg-secondary text-white rounded-xl text-xs font-bold hover:opacity-95 shadow-sm transition-opacity cursor-pointer flex items-center gap-1"
+            className="btn-accent !py-2 !px-4 !text-xs shrink-0"
           >
             Join Network <ArrowUpRight className="w-3.5 h-3.5" />
           </button>
@@ -546,7 +545,7 @@ export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
                 </form>
               ) : (
                 <div className="text-center py-6 px-4 space-y-4 flex flex-col items-center">
-                  <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center text-green-500">
+                  <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center text-primary">
                     <CheckCircle className="w-10 h-10" />
                   </div>
                   <div>

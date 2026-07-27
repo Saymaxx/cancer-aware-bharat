@@ -103,8 +103,8 @@ export default function JoinUsTab() {
 
         <div className="relative z-10 max-w-4xl space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-emerald-300 backdrop-blur-md text-xs font-bold uppercase tracking-wider border border-white/15">
-              <Users className="w-4 h-4 text-emerald-400" />
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-slate-300 backdrop-blur-md text-xs font-bold uppercase tracking-wider border border-white/15">
+              <Users className="w-4 h-4 text-slate-400" />
               <span>VOLUNTEER PORTAL / स्वयंसेवक पंजीकरण</span>
             </span>
 
@@ -149,7 +149,7 @@ export default function JoinUsTab() {
               onClick={() => navigate('/volunteer/login')}
               className="px-5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-white font-bold text-xs backdrop-blur-md flex items-center gap-2 cursor-pointer transition-all"
             >
-              <LogIn className="w-4 h-4 text-emerald-400" />
+              <LogIn className="w-4 h-4 text-slate-400" />
               <span>Already Registered? Go to Volunteer Login</span>
             </button>
           </div>
@@ -202,19 +202,19 @@ export default function JoinUsTab() {
       </section>
 
       {/* ===== IMPORTANT STATUTORY DECLARATION ===== */}
-      <section className="bg-amber-500/10 border border-amber-500/30 rounded-3xl p-6 sm:p-8 space-y-3 relative overflow-hidden shadow-sm">
+      <section className="bg-secondary/10 border border-secondary/30 rounded-3xl p-6 sm:p-8 space-y-3 relative overflow-hidden shadow-sm">
         <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-2xl bg-amber-500 text-neutral-950 flex items-center justify-center shrink-0 font-bold mt-1">
+          <div className="w-10 h-10 rounded-2xl bg-secondary text-neutral-950 flex items-center justify-center shrink-0 font-bold mt-1">
             <AlertTriangle className="w-6 h-6" />
           </div>
           <div className="space-y-2">
-            <h3 className="font-bold text-base text-amber-950 dark:text-amber-300 flex items-center gap-2">
+            <h3 className="font-bold text-base text-primary dark:text-slate-300 flex items-center gap-2">
               <span>IMPORTANT DECLARATION FOR VOLUNTEERS / वैधानिक घोषणा</span>
             </h3>
-            <p className="text-xs sm:text-sm text-amber-900/90 leading-relaxed font-semibold">
+            <p className="text-xs sm:text-sm text-slate-900/90 leading-relaxed font-semibold">
               "मिशन से जुड़ना किसी व्यक्ति को ‘डॉक्टर’, ‘चिकित्सक’ या independent medical practitioner का दर्जा अथवा चिकित्सा अभ्यास का अधिकार प्रदान नहीं करता। भूमिका, प्रशिक्षण और गतिविधियाँ निर्धारित SOP, योग्यता और लागू कानून के अधीन होंगी।"
             </p>
-            <p className="text-[11px] text-amber-800/80 leading-relaxed italic">
+            <p className="text-[11px] text-slate-800/80 leading-relaxed italic">
               Joining the mission as a volunteer does NOT grant any individual the title, status, or right to practice medicine. All volunteer roles strictly adhere to non-clinical health awareness SOPs.
             </p>
           </div>
@@ -284,7 +284,7 @@ export default function JoinUsTab() {
       {/* ===== VOLUNTEER REGISTRATION FORM ===== */}
       <section className="bg-white rounded-3xl p-6 sm:p-10 md:p-12 border border-outline-variant/30 shadow-xl space-y-8 max-w-4xl mx-auto">
         <div className="border-b border-slate-100 pb-6 text-center space-y-2">
-          <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wider border border-emerald-200">
+          <span className="px-3 py-1 rounded-full bg-slate-50 text-slate-700 text-xs font-bold uppercase tracking-wider border border-slate-200">
             VOLUNTEER APPLICATION
           </span>
           <h2 className="font-headline-lg text-2xl sm:text-3xl font-black text-slate-900">
@@ -296,17 +296,17 @@ export default function JoinUsTab() {
         </div>
 
         {isSubmitted ? (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-8 text-center space-y-4 text-emerald-950">
-            <div className="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-lg animate-bounce">
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 text-center space-y-4 text-primary">
+            <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center mx-auto shadow-lg animate-bounce">
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <h3 className="font-headline-lg text-xl sm:text-2xl font-black">
               बधाई! आपकी स्वयंसेवक अभिरुचि दर्ज कर ली गई है!
             </h3>
-            <p className="text-xs sm:text-sm text-emerald-800 max-w-md mx-auto leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-800 max-w-md mx-auto leading-relaxed">
               Cancer Aware Bharat की जिला समन्वय टीम जल्द ही आपसे संपर्क कर ओरिएंटेशन और स्वयंसेवक गाइड साझा करेगी।
             </p>
-            <div className="inline-block bg-white px-4 py-2 rounded-xl border border-emerald-300 font-mono text-xs font-bold text-slate-800 shadow-xs">
+            <div className="inline-block bg-white px-4 py-2 rounded-xl border border-slate-300 font-mono text-xs font-bold text-slate-800 shadow-xs">
               स्वयंसेवक रेफरेंस ID: <span className="text-primary">{refId}</span>
             </div>
             <div className="pt-4 flex flex-wrap justify-center gap-3">

@@ -483,7 +483,7 @@ export default function GalleryTab({
                 {/* Hover Gradient Overlay with Image Details */}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-5 text-white">
                   
-                  <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
                     <Calendar className="w-3 h-3" /> {item.date} • {item.location}
                   </span>
 
@@ -496,7 +496,7 @@ export default function GalleryTab({
                   </p>
 
                   <div className="mt-3 pt-2 border-t border-white/20 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30 truncate max-w-[170px]">
+                    <span className="text-[10px] font-bold text-slate-300 bg-primary/90 px-2 py-0.5 rounded border border-primary/30 truncate max-w-[170px]">
                       {item.impactMetrics}
                     </span>
                     <div className="w-7 h-7 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
@@ -515,11 +515,11 @@ export default function GalleryTab({
       {/* ===== 5. PLATFORM ARCHITECTURE SECTION ===== */}
       <section className="bg-slate-900 text-white rounded-3xl p-8 sm:p-12 border border-slate-800 space-y-8 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
-          <Globe className="w-64 h-64 text-emerald-400" />
+          <Globe className="w-64 h-64 text-slate-400" />
         </div>
 
         <div className="max-w-3xl space-y-3 relative z-10">
-          <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold uppercase tracking-wider border border-emerald-500/30">
+          <span className="px-3 py-1 rounded-full bg-primary/20 text-slate-300 text-xs font-bold uppercase tracking-wider border border-primary/30">
             About Cancer Aware Bharat Digital Ecosystem
           </span>
           <h2 className="font-headline-lg text-2xl sm:text-4xl font-black">
@@ -532,7 +532,7 @@ export default function GalleryTab({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3 backdrop-blur-md">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-primary/20 text-slate-400 flex items-center justify-center font-bold">
               <Shield className="w-5 h-5" />
             </div>
             <h3 className="font-bold text-sm text-white">2-Tier Audit Protocol</h3>
@@ -601,9 +601,9 @@ export default function GalleryTab({
                 {activeItemModal.description}
               </p>
 
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between">
-                <span className="text-xs font-bold text-emerald-800">Impact Milestone</span>
-                <span className="text-xs font-black text-emerald-900">{activeItemModal.impactMetrics}</span>
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800">Impact Milestone</span>
+                <span className="text-xs font-black text-slate-900">{activeItemModal.impactMetrics}</span>
               </div>
 
               <div className="flex flex-wrap gap-1.5 pt-2">
