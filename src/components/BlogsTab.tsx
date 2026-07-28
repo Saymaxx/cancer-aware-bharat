@@ -89,17 +89,17 @@ export default function BlogsTab() {
     <div className="space-y-12">
       {selectedArticle ? (
         /* Full Article Detailed Reader View */
-        <article className="max-w-3xl mx-auto space-y-6 bg-white border border-outline-variant/30 rounded-3xl p-6 md:p-12 shadow-sm">
+        <article className="max-w-3xl mx-auto space-y-6 card-premium !rounded-2xl p-6 md:p-12">
           <button
             onClick={() => setSelectedArticle(null)}
-            className="flex items-center gap-1 text-xs font-bold text-primary hover:underline cursor-pointer focus:outline-none mb-4"
+            className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline cursor-pointer focus:outline-none mb-4"
           >
             <ChevronLeft className="w-4 h-4" /> Back to Articles
           </button>
 
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/10">
+              <span className="section-badge !mb-0">
                 {selectedArticle.category}
               </span>
               <span className="text-xs text-on-surface-variant font-medium flex items-center gap-1">
@@ -107,7 +107,7 @@ export default function BlogsTab() {
               </span>
             </div>
 
-            <h1 className="font-display-lg text-primary text-2xl md:text-4xl font-black leading-tight">
+            <h1 className="font-outfit text-primary text-2xl md:text-4xl font-extrabold leading-tight tracking-tight">
               {selectedArticle.title}
             </h1>
 
@@ -150,13 +150,11 @@ export default function BlogsTab() {
         <div className="space-y-12">
           {/* Header section */}
           <section className="text-center max-w-3xl mx-auto space-y-4">
-            <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wider">
-              Educational Hub
-            </span>
-            <h1 className="font-display-lg text-primary text-3xl md:text-5xl font-black">
+            <span className="section-badge mx-auto">Educational Hub</span>
+            <h1 className="font-outfit text-primary text-3xl md:text-5xl font-extrabold leading-tight tracking-tight">
               Clinical Advice & Survivor Journeys
             </h1>
-            <p className="font-body-lg text-on-surface-variant">
+            <p className="text-on-surface-variant text-base md:text-lg leading-relaxed max-w-2xl mx-auto">
               Demystifying oncological science, guiding post-chemotherapy dietary care, and spreading messages of hope from survivors of Bharat.
             </p>
           </section>
@@ -166,33 +164,33 @@ export default function BlogsTab() {
             <div className="lg:col-span-8 space-y-6">
               
               {/* Filter controls */}
-              <div className="bg-white p-4.5 border border-outline-variant/40 rounded-2xl shadow-xs space-y-3">
+              <div className="card-premium !rounded-2xl p-5 space-y-3">
                 <div className="relative">
-                  <Search className="w-4.5 h-4.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-on-surface-variant/70" />
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-on-surface-variant/50" />
                   <input
                     type="text"
                     placeholder="Search articles, tags or topics..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 rounded-xl border border-outline-variant bg-white text-xs focus:border-primary outline-none"
+                    className="input-premium !pl-9 !py-2.5 !text-xs"
                   />
                 </div>
 
-                <div className="flex gap-1 overflow-x-auto pb-1 sm:pb-0">
+                <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0">
                   {[
                     { val: 'all', label: 'All Articles' },
-                    { val: 'Prevention', label: 'Prevention & Self-Exams' },
-                    { val: 'Nutrition', label: 'Oncology Nutrition' },
-                    { val: 'Survivors', label: 'Survivor Stories' },
-                    { val: 'Research', label: 'Clinical Tech' }
+                    { val: 'Prevention', label: 'Prevention' },
+                    { val: 'Nutrition', label: 'Nutrition' },
+                    { val: 'Survivors', label: 'Survivors' },
+                    { val: 'Research', label: 'Research' }
                   ].map(cat => (
                     <button
                       key={cat.val}
                       onClick={() => setCategoryFilter(cat.val as any)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap cursor-pointer ${
+                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer transition-all ${
                         categoryFilter === cat.val 
-                          ? 'bg-primary text-white' 
-                          : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant'
+                          ? 'gradient-primary text-white shadow-sm' 
+                          : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant'
                       }`}
                     >
                       {cat.label}
@@ -202,25 +200,25 @@ export default function BlogsTab() {
               </div>
 
               {/* Articles Grid / List */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {filteredArticles.map(art => (
                   <div 
                     key={art.id} 
                     onClick={() => setSelectedArticle(art)}
-                    className="bg-white border border-outline-variant/45 rounded-2xl overflow-hidden shadow-xs hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                    className="card-premium overflow-hidden cursor-pointer flex flex-col justify-between group"
                   >
                     <div>
-                      <div className="h-56 sm:h-60 bg-surface-container-high relative overflow-hidden">
-                        <img src={art.image} alt={art.title} className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500" />
-                        <span className="absolute top-3 left-3 bg-white/95 text-primary text-[10px] font-bold px-3 py-1 rounded-full shadow-xs border border-outline-variant/30">
+                      <div className="h-52 sm:h-56 bg-surface-container-high relative overflow-hidden">
+                        <img src={art.image} alt={art.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <span className="absolute top-3 left-3 glass text-primary text-[10px] font-bold px-3 py-1.5 rounded-lg">
                           {art.category}
                         </span>
                       </div>
                       <div className="p-5 space-y-2 text-left">
-                        <span className="text-[10px] text-on-surface-variant font-medium flex items-center gap-1">
-                          <User className="w-3 h-3 text-primary" /> {art.author} • {art.date}
+                        <span className="text-[10px] text-on-surface-variant/60 font-medium flex items-center gap-1">
+                          <User className="w-3 h-3 text-primary/50" /> {art.author} • {art.date}
                         </span>
-                        <h3 className="font-title-md text-base font-bold text-primary line-clamp-2 hover:text-primary-container">
+                        <h3 className="font-outfit text-base font-bold text-on-surface line-clamp-2 group-hover:text-primary transition-colors">
                           {art.title}
                         </h3>
                         <p className="text-xs text-on-surface-variant line-clamp-3 leading-relaxed">
@@ -229,11 +227,11 @@ export default function BlogsTab() {
                       </div>
                     </div>
 
-                    <div className="px-5 pb-5 pt-2 border-t border-outline-variant/10 flex items-center justify-between">
-                      <span className="text-[10px] text-on-surface-variant font-semibold flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-primary" /> {art.readTime}
+                    <div className="px-5 pb-5 pt-2.5 border-t border-outline-variant/10 flex items-center justify-between">
+                      <span className="text-[10px] text-on-surface-variant/60 font-medium flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-primary/50" /> {art.readTime}
                       </span>
-                      <span className="text-xs font-bold text-primary flex items-center gap-0.5 hover:underline">
+                      <span className="text-xs font-semibold text-primary flex items-center gap-0.5 group-hover:underline">
                         Read Article →
                       </span>
                     </div>
@@ -246,12 +244,12 @@ export default function BlogsTab() {
             <div className="lg:col-span-4 space-y-6">
               
               {/* Share Story Card */}
-              <div className="bg-surface-container-low border border-primary-fixed-dim/40 rounded-2xl p-6 shadow-xs space-y-4">
-                <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
-                  <Heart className="w-5.5 h-5.5 text-secondary" fill="currentColor" />
+              <div className="card-premium p-6 space-y-4">
+                <div className="w-11 h-11 rounded-xl bg-secondary/8 text-secondary flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-secondary" fill="currentColor" />
                 </div>
                 <div className="space-y-1.5 text-left">
-                  <h3 className="font-title-md text-base font-bold text-primary">Share Your Cancer Journey</h3>
+                  <h3 className="font-outfit text-base font-bold text-on-surface">Share Your Cancer Journey</h3>
                   <p className="text-xs text-on-surface-variant leading-relaxed">
                     Have you or a loved one triumphed over oncology battles? Your story can be the exact light of hope a newly-diagnosed patient in Bharat needs today.
                   </p>
@@ -259,27 +257,27 @@ export default function BlogsTab() {
                 
                 <button
                   onClick={() => setShowStoryForm(true)}
-                  className="w-full py-2 bg-primary text-white text-xs font-bold rounded-lg hover:opacity-95 shadow-sm transition-opacity cursor-pointer"
+                  className="btn-primary w-full justify-center !py-2.5 !text-xs"
                 >
                   Write Your Survivor Story
                 </button>
               </div>
 
               {/* Patient Helpline Card */}
-              <div className="bg-primary text-white rounded-2xl p-6 shadow-xs relative overflow-hidden space-y-4">
-                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+              <div className="gradient-primary text-white rounded-2xl p-6 relative overflow-hidden space-y-4 shadow-lg">
+                <div className="absolute top-0 right-0 p-4 opacity-[0.05] pointer-events-none">
                   <BookOpen className="w-32 h-32 text-white" />
                 </div>
-                <div className="space-y-1 text-left">
+                <div className="space-y-1.5 text-left relative z-10">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-secondary-container">24/7 Companion Care</p>
-                  <h3 className="font-headline-lg text-lg font-bold text-white">Need immediate educational guides?</h3>
-                  <p className="text-xs text-white/80 leading-relaxed">
+                  <h3 className="font-outfit text-lg font-bold text-white">Need immediate educational guides?</h3>
+                  <p className="text-xs text-white/75 leading-relaxed">
                     Download specialized pamphlets detailing self-exams, nutrition charts for chemotherapy, and state financial aids lists.
                   </p>
                 </div>
                 <a
                   href="mailto:resources@awarebharat.org"
-                  className="block text-center py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-lg transition-all"
+                  className="block text-center py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl transition-all border border-white/10"
                 >
                   Request Resource Kits
                 </a>
@@ -427,7 +425,7 @@ export default function BlogsTab() {
                     </form>
                   ) : (
                     <div className="text-center py-6 px-4 space-y-4 flex flex-col items-center">
-                      <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center text-green-500">
+                      <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center text-primary">
                         <CheckCircle className="w-10 h-10" />
                       </div>
                       <div>

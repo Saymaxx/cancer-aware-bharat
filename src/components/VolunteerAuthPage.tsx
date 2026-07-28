@@ -64,10 +64,10 @@ export default function VolunteerAuthPage({}: VolunteerAuthPageProps) {
     if (/[^A-Za-z0-9]/.test(password)) score++;
 
     if (score <= 1) return { level: 1, label: 'Weak', color: 'bg-red-400' };
-    if (score <= 2) return { level: 2, label: 'Fair', color: 'bg-orange-400' };
-    if (score <= 3) return { level: 3, label: 'Good', color: 'bg-yellow-400' };
-    if (score <= 4) return { level: 4, label: 'Strong', color: 'bg-green-400' };
-    return { level: 5, label: 'Excellent', color: 'bg-emerald-500' };
+    if (score <= 2) return { level: 2, label: 'Fair', color: 'bg-slate-400' };
+    if (score <= 3) return { level: 3, label: 'Good', color: 'bg-slate-400' };
+    if (score <= 4) return { level: 4, label: 'Strong', color: 'bg-slate-400' };
+    return { level: 5, label: 'Excellent', color: 'bg-primary' };
   };
 
   const switchMode = (newMode: AuthMode) => {
@@ -185,8 +185,8 @@ export default function VolunteerAuthPage({}: VolunteerAuthPageProps) {
       <div className="min-h-[80vh] flex items-center justify-center py-12 px-4">
         <div className="max-w-md w-full text-center">
           <div className="relative mb-8 inline-block">
-            <div className="w-24 h-24 bg-green-50 rounded-full border-2 border-green-300 flex items-center justify-center mx-auto">
-              <CheckCircle className="w-14 h-14 text-green-500 animate-pulse" />
+            <div className="w-24 h-24 bg-slate-50 rounded-full border-2 border-slate-300 flex items-center justify-center mx-auto">
+              <CheckCircle className="w-14 h-14 text-primary animate-pulse" />
             </div>
             <div className="absolute -top-2 -right-2 w-8 h-8 bg-secondary rounded-full flex items-center justify-center shadow-lg">
               <Sparkles className="w-4 h-4 text-white" />
@@ -579,7 +579,7 @@ export default function VolunteerAuthPage({}: VolunteerAuthPageProps) {
                           registerForm.confirmPassword && registerForm.confirmPassword !== registerForm.password
                             ? 'border-red-300 focus:border-red-400'
                             : registerForm.confirmPassword && registerForm.confirmPassword === registerForm.password
-                            ? 'border-green-300 focus:border-green-400'
+                            ? 'border-slate-300 focus:border-slate-400'
                             : 'border-outline-variant focus:border-primary'
                         }`}
                         placeholder="Re-enter password"
@@ -593,7 +593,7 @@ export default function VolunteerAuthPage({}: VolunteerAuthPageProps) {
                       </button>
                     </div>
                     {registerForm.confirmPassword && registerForm.confirmPassword === registerForm.password && (
-                      <p className="text-[10px] text-green-600 font-semibold mt-1 flex items-center space-x-1">
+                      <p className="text-[10px] text-primary-container font-semibold mt-1 flex items-center space-x-1">
                         <CheckCircle className="w-3 h-3" />
                         <span>Passwords match</span>
                       </p>

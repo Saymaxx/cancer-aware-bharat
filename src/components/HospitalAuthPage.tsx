@@ -319,16 +319,16 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
         <div className="max-w-xl w-full text-center space-y-6 bg-white p-8 sm:p-10 rounded-3xl border border-slate-200/80 shadow-2xl animate-[fadeInUp_0.4s_ease-out]">
           
           <div className="relative mb-2 inline-block">
-            <div className="w-20 h-20 bg-emerald-50 rounded-2xl border-2 border-emerald-300 flex items-center justify-center mx-auto shadow-md">
-              <CheckCircle2 className="w-11 h-11 text-emerald-600 animate-bounce" />
+            <div className="w-20 h-20 bg-slate-50 rounded-2xl border-2 border-slate-300 flex items-center justify-center mx-auto shadow-md">
+              <CheckCircle2 className="w-11 h-11 text-primary-container animate-bounce" />
             </div>
             <div className="absolute -top-2 -right-2 w-8 h-8 bg-[#063b42] rounded-full flex items-center justify-center shadow-lg">
-              <ShieldCheck className="w-4.5 h-4.5 text-emerald-400" />
+              <ShieldCheck className="w-4.5 h-4.5 text-slate-400" />
             </div>
           </div>
 
           <div>
-            <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold uppercase tracking-wider">
+            <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-[11px] font-bold uppercase tracking-wider">
               {mode === 'login' ? 'Authentication Successful' : 'Application Status: Pending Executive Review'}
             </span>
             <h2 className="font-headline-lg text-2xl sm:text-3xl font-black text-slate-900 mt-2">
@@ -345,27 +345,27 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
 
           {/* Submission Receipt Breakdown */}
           <div className="bg-slate-900 text-slate-200 p-5 rounded-2xl text-left text-xs font-mono space-y-2 border border-slate-800 shadow-inner">
-            <p className="text-emerald-400 font-bold uppercase text-[10px] tracking-wider mb-1 flex items-center gap-1.5">
+            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-wider mb-1 flex items-center gap-1.5">
               <Activity className="w-3.5 h-3.5" /> Official Application Receipt
             </p>
             <div className="grid grid-cols-2 gap-2 text-[11px]">
               <p><span className="text-slate-400">Application ID:</span> <span className="text-white font-bold">{loggedInHospital.appId || generatedAppId || 'CAB-HOSP-2026'}</span></p>
               <p><span className="text-slate-400">Submitted On:</span> <span className="text-white">{new Date().toLocaleDateString('en-IN')}</span></p>
               <p><span className="text-slate-400">Hospital Node:</span> <span className="text-white">{loggedInHospital.name}</span></p>
-              <p><span className="text-slate-400">Current Status:</span> <span className="text-amber-400 font-bold">{mode === 'login' ? 'ACTIVE_PARTNER' : 'PENDING_ADMIN_REVIEW'}</span></p>
-              <p><span className="text-slate-400">Est. Timeline:</span> <span className="text-emerald-300">2 Business Days</span></p>
+              <p><span className="text-slate-400">Current Status:</span> <span className="text-slate-400 font-bold">{mode === 'login' ? 'ACTIVE_PARTNER' : 'PENDING_ADMIN_REVIEW'}</span></p>
+              <p><span className="text-slate-400">Est. Timeline:</span> <span className="text-slate-300">2 Business Days</span></p>
               <p><span className="text-slate-400">Assigned Board:</span> <span className="text-white">CAB Delhi Executive Node</span></p>
             </div>
           </div>
 
           {/* Next Steps List */}
           {mode === 'register' && (
-            <div className="p-4 bg-teal-50/60 border border-teal-200/80 rounded-2xl text-left text-xs space-y-2">
+            <div className="p-4 bg-slate-50/60 border border-slate-200/80 rounded-2xl text-left text-xs space-y-2">
               <p className="font-bold text-[#063b42] uppercase text-[10px] tracking-wider">Next Onboarding Steps</p>
               <ul className="space-y-1.5 text-slate-700 text-[11px]">
-                <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-teal-600" /> Regional Coordinator document verification</li>
-                <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-teal-600" /> Super Admin executive board approval & credential issuance</li>
-                <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-teal-600" /> Notification with temp password sent to official email</li>
+                <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-primary-container" /> Regional Coordinator document verification</li>
+                <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-primary-container" /> Super Admin executive board approval & credential issuance</li>
+                <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-primary-container" /> Notification with temp password sent to official email</li>
               </ul>
             </div>
           )}
@@ -407,14 +407,14 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
               <div className="flex items-center justify-between border-b border-slate-200 pb-4">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-[#063b42] rounded-2xl flex items-center justify-center text-white shrink-0 shadow-md">
-                    <Building2 className="w-6 h-6 text-emerald-400" />
+                    <Building2 className="w-6 h-6 text-slate-400" />
                   </div>
                   <div>
                     <h2 className="font-headline-lg text-lg font-black text-slate-900">Cancer Aware Bharat Trust</h2>
                     <p className="text-xs text-slate-500 font-semibold">Official Hospital Partnership Application Receipt</p>
                   </div>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200 uppercase tracking-wider">
+                <span className="px-3 py-1 rounded-full bg-slate-50 text-slate-700 text-[10px] font-bold border border-slate-200 uppercase tracking-wider">
                   Pending Review
                 </span>
               </div>
@@ -431,7 +431,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                 </div>
                 <div>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Est. Board Timeline</p>
-                  <p className="font-bold text-emerald-700">2 Business Days</p>
+                  <p className="font-bold text-slate-700">2 Business Days</p>
                 </div>
               </div>
 
@@ -454,9 +454,9 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
               <div className="space-y-2">
                 <p className="font-bold text-xs text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-1">Submitted Verification Documents</p>
                 <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 font-mono">
-                  <p className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> NABH Cert: {docNabhFile ? docNabhFile.name : 'Uploaded ✓'}</p>
-                  <p className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> License: {docLicenseFile ? docLicenseFile.name : 'Uploaded ✓'}</p>
-                  <p className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Fire Clearance: {docFireFile ? docFireFile.name : 'Uploaded ✓'}</p>
+                  <p className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary-container shrink-0" /> NABH Cert: {docNabhFile ? docNabhFile.name : 'Uploaded ✓'}</p>
+                  <p className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary-container shrink-0" /> License: {docLicenseFile ? docLicenseFile.name : 'Uploaded ✓'}</p>
+                  <p className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary-container shrink-0" /> Fire Clearance: {docFireFile ? docFireFile.name : 'Uploaded ✓'}</p>
                 </div>
               </div>
 
@@ -506,7 +506,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-4 right-4 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-semibold flex items-center gap-2.5 animate-[fadeInUp_0.3s_ease-out]">
-          <CheckCircle2 className="w-4.5 h-4.5 text-emerald-400" /> {toastMessage}
+          <CheckCircle2 className="w-4.5 h-4.5 text-slate-400" /> {toastMessage}
         </div>
       )}
 
@@ -514,11 +514,11 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
       <div className="max-w-6xl mx-auto space-y-8">
 
         {/* Portal Header Bar */}
-        <div className="bg-gradient-to-r from-[#063b42] via-[#0d5c63] to-teal-700 rounded-3xl p-6 sm:p-10 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
+        <div className="bg-gradient-to-r from-[#063b42] via-[#0d5c63] to-slate-700 rounded-3xl p-6 sm:p-10 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
           <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-white/5 pointer-events-none filter blur-3xl" />
           
           <div className="relative z-10 space-y-2">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-emerald-300 text-xs font-semibold border border-white/15">
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-slate-300 text-xs font-semibold border border-white/15">
               <Building2 className="w-3.5 h-3.5" />
               <span>Cancer Aware Bharat Trust • Hospital Onboarding</span>
             </div>
@@ -657,17 +657,17 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                       <button
                         onClick={() => { if (s.step < currentStep) setCurrentStep(s.step as FormStep); }}
                         className={`flex items-center space-x-2.5 transition-all text-xs font-bold ${
-                          isCurrent ? 'text-[#063b42]' : isDone ? 'text-emerald-700' : 'text-slate-400'
+                          isCurrent ? 'text-[#063b42]' : isDone ? 'text-slate-700' : 'text-slate-400'
                         }`}
                       >
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs transition-all ${
-                          isCurrent ? 'bg-[#063b42] text-white shadow-md' : isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+                          isCurrent ? 'bg-[#063b42] text-white shadow-md' : isDone ? 'bg-slate-100 text-slate-800' : 'bg-slate-100 text-slate-500'
                         }`}>
                           {isDone ? <Check className="w-4 h-4" /> : <s.icon className="w-4.5 h-4.5" />}
                         </div>
                         <span className="hidden sm:inline">{s.label}</span>
                       </button>
-                      {i < 4 && <div className={`flex-1 h-0.5 mx-3 ${currentStep > s.step ? 'bg-emerald-500' : 'bg-slate-200'}`} />}
+                      {i < 4 && <div className={`flex-1 h-0.5 mx-3 ${currentStep > s.step ? 'bg-primary' : 'bg-slate-200'}`} />}
                     </React.Fragment>
                   );
                 })}
@@ -695,7 +695,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                   onClick={handleSaveDraft}
                   className="px-3.5 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
                 >
-                  <Save className="w-3.5 h-3.5 text-teal-600" />
+                  <Save className="w-3.5 h-3.5 text-primary-container" />
                   <span>Save Draft</span>
                   {draftSavedTime && <span className="text-[10px] text-slate-400 font-mono">({draftSavedTime})</span>}
                 </button>
@@ -878,11 +878,11 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                   <div className="space-y-5 animate-[fadeIn_0.3s_ease-out]">
                     <div className="flex gap-4">
                       <label className="flex items-center space-x-2 cursor-pointer p-3 bg-slate-50 rounded-xl border border-slate-200 flex-1">
-                        <input type="checkbox" checked={nabhAccredited} onChange={e => setNabhAccredited(e.target.checked)} className="w-4 h-4 text-teal-600 rounded" />
+                        <input type="checkbox" checked={nabhAccredited} onChange={e => setNabhAccredited(e.target.checked)} className="w-4 h-4 text-primary-container rounded" />
                         <span className="text-xs font-bold text-slate-800">NABH Accredited Hospital</span>
                       </label>
                       <label className="flex items-center space-x-2 cursor-pointer p-3 bg-slate-50 rounded-xl border border-slate-200 flex-1">
-                        <input type="checkbox" checked={nablAccredited} onChange={e => setNablAccredited(e.target.checked)} className="w-4 h-4 text-teal-600 rounded" />
+                        <input type="checkbox" checked={nablAccredited} onChange={e => setNablAccredited(e.target.checked)} className="w-4 h-4 text-primary-container rounded" />
                         <span className="text-xs font-bold text-slate-800">NABL Accredited Diagnostic Lab</span>
                       </label>
                     </div>
@@ -923,7 +923,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                               key={fac}
                               onClick={() => toggleFacility(fac)}
                               className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
-                                isSel ? 'bg-teal-50 text-teal-800 border-teal-300' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                                isSel ? 'bg-slate-50 text-slate-800 border-slate-300' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                               }`}
                             >
                               {isSel ? '✓ ' : '+ '}{fac}
@@ -938,11 +938,11 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                 {/* ================= STEP 4 ================= */}
                 {currentStep === 4 && (
                   <div className="space-y-4 animate-[fadeIn_0.3s_ease-out]">
-                    <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-2xl text-xs text-blue-900 flex items-start gap-2.5">
-                      <Info className="w-4.5 h-4.5 shrink-0 text-blue-600 mt-0.5" />
+                    <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-900 flex items-start gap-2.5">
+                      <Info className="w-4.5 h-4.5 shrink-0 text-primary-container mt-0.5" />
                       <div>
                         <p className="font-bold">Document Upload Format & Size Guidelines:</p>
-                        <p className="text-[11px] text-blue-800 mt-0.5">Click any document upload box to select files directly from your device (File Explorer / Drive). Supported formats: <strong>PDF, PNG, JPG</strong>. Maximum file size allowed: <strong>10 MB per document</strong>.</p>
+                        <p className="text-[11px] text-slate-800 mt-0.5">Click any document upload box to select files directly from your device (File Explorer / Drive). Supported formats: <strong>PDF, PNG, JPG</strong>. Maximum file size allowed: <strong>10 MB per document</strong>.</p>
                       </div>
                     </div>
 
@@ -968,11 +968,11 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                           />
 
                           {docItem.state ? (
-                            <div className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900">
+                            <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900">
                               <div className="truncate flex items-center gap-1.5 font-mono">
-                                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                                <span className="truncate font-bold text-emerald-800">{docItem.state.name}</span>
-                                <span className="text-[10px] text-emerald-600 font-sans font-semibold">({docItem.state.size})</span>
+                                <Check className="w-4 h-4 text-primary-container shrink-0" />
+                                <span className="truncate font-bold text-slate-800">{docItem.state.name}</span>
+                                <span className="text-[10px] text-primary-container font-sans font-semibold">({docItem.state.size})</span>
                               </div>
                               <button
                                 type="button"
@@ -987,7 +987,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                               htmlFor={docItem.id}
                               className="w-full py-3 px-4 border-2 border-dashed border-slate-300 rounded-xl text-xs font-bold text-slate-600 hover:border-[#063b42] hover:bg-white hover:text-[#063b42] flex items-center justify-center gap-2 cursor-pointer transition-all shadow-xs"
                             >
-                              <Upload className="w-4 h-4 text-teal-600" /> Select Document from Device
+                              <Upload className="w-4 h-4 text-primary-container" /> Select Document from Device
                             </label>
                           )}
                         </div>
@@ -1066,7 +1066,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="px-8 py-3 bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg cursor-pointer transition-all disabled:opacity-60"
+                      className="px-8 py-3 bg-primary-container text-white hover:bg-slate-700 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg cursor-pointer transition-all disabled:opacity-60"
                     >
                       {isSubmitting ? (
                         <>
@@ -1094,7 +1094,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
               {/* 1. WHY PARTNER WITH CAB TRUST */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
                 <div className="text-center max-w-xl mx-auto space-y-2">
-                  <span className="px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-[11px] font-bold uppercase tracking-wider border border-teal-200">
+                  <span className="px-3 py-1 rounded-full bg-slate-50 text-slate-700 text-[11px] font-bold uppercase tracking-wider border border-slate-200">
                     Mutual Growth & Impact
                   </span>
                   <h3 className="font-headline-lg text-xl sm:text-2xl font-black text-slate-900">
@@ -1114,8 +1114,8 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                     { icon: Users, title: 'Volunteer & CSR Network', desc: 'Engage trained medical volunteers and corporate CSR sponsorship programs.' },
                     { icon: ShieldCheck, title: 'Executive Board Representation', desc: 'Participate in quarterly clinical advisory summits with top oncologists.' },
                   ].map((b, i) => (
-                    <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-200/70 space-y-2 hover:bg-teal-50/40 hover:border-teal-200 transition-colors">
-                      <div className="w-9 h-9 rounded-xl bg-[#063b42] text-emerald-300 flex items-center justify-center shrink-0">
+                    <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-200/70 space-y-2 hover:bg-slate-50/40 hover:border-slate-200 transition-colors">
+                      <div className="w-9 h-9 rounded-xl bg-[#063b42] text-slate-300 flex items-center justify-center shrink-0">
                         <b.icon className="w-4.5 h-4.5" />
                       </div>
                       <h4 className="font-bold text-slate-900 text-xs sm:text-sm">{b.title}</h4>
@@ -1128,7 +1128,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
               {/* 2. MINIMUM ELIGIBILITY CRITERIA */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
                 <h3 className="font-headline-lg text-xl font-bold text-slate-900 flex items-center gap-2">
-                  <CheckSquare className="w-5 h-5 text-teal-600" /> Minimum Eligibility Criteria
+                  <CheckSquare className="w-5 h-5 text-primary-container" /> Minimum Eligibility Criteria
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   {[
@@ -1137,8 +1137,8 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                     { title: 'Licensed Specialist Staff', text: 'At least 2 full-time licensed oncologists (Medical, Surgical, or Radiation).' },
                     { title: 'Emergency Services', text: '24x7 Emergency ICU desk and diagnostic laboratory support.' },
                   ].map((el, idx) => (
-                    <div key={idx} className="p-4 bg-emerald-50/50 border border-emerald-200/80 rounded-2xl flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div key={idx} className="p-4 bg-slate-50/50 border border-slate-200/80 rounded-2xl flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-primary-container shrink-0 mt-0.5" />
                       <div>
                         <p className="font-bold text-slate-900">{el.title}</p>
                         <p className="text-slate-600 text-[11px] mt-0.5 leading-relaxed">{el.text}</p>
@@ -1151,7 +1151,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
               {/* 3. PARTNERSHIP TIMELINE FLOW */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
                 <h3 className="font-headline-lg text-xl font-bold text-slate-900 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-teal-600" /> Partnership Process Timeline
+                  <Clock className="w-5 h-5 text-primary-container" /> Partnership Process Timeline
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 relative">
                   {[
@@ -1175,7 +1175,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
               {/* 4. FREQUENTLY ASKED QUESTIONS */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4">
                 <h3 className="font-headline-lg text-xl font-bold text-slate-900 flex items-center gap-2">
-                  <HelpCircle className="w-5 h-5 text-teal-600" /> Frequently Asked Questions
+                  <HelpCircle className="w-5 h-5 text-primary-container" /> Frequently Asked Questions
                 </h3>
                 <div className="space-y-3">
                   {[
@@ -1190,7 +1190,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                         className="w-full p-4 text-left font-bold text-xs sm:text-sm text-slate-900 bg-slate-50/60 hover:bg-slate-100 flex justify-between items-center cursor-pointer"
                       >
                         <span>{faq.q}</span>
-                        {expandedFaq === idx ? <ChevronUp className="w-4 h-4 text-teal-600" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                        {expandedFaq === idx ? <ChevronUp className="w-4 h-4 text-primary-container" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
                       </button>
                       {expandedFaq === idx && (
                         <div className="p-4 bg-white text-xs text-slate-600 leading-relaxed border-t border-slate-100">
@@ -1211,9 +1211,9 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                   </p>
                 </div>
                 <div className="space-y-2 text-xs font-mono shrink-0">
-                  <p className="flex items-center gap-2"><Mail className="w-4 h-4 text-emerald-300" /> partnerships@awarebharat.org</p>
-                  <p className="flex items-center gap-2"><Phone className="w-4 h-4 text-emerald-300" /> +91 11 4702 2200 / +91 98111 22334</p>
-                  <p className="flex items-center gap-2"><Clock className="w-4 h-4 text-emerald-300" /> 09:00 AM - 06:00 PM IST (Mon - Sat)</p>
+                  <p className="flex items-center gap-2"><Mail className="w-4 h-4 text-slate-300" /> partnerships@awarebharat.org</p>
+                  <p className="flex items-center gap-2"><Phone className="w-4 h-4 text-slate-300" /> +91 11 4702 2200 / +91 98111 22334</p>
+                  <p className="flex items-center gap-2"><Clock className="w-4 h-4 text-slate-300" /> 09:00 AM - 06:00 PM IST (Mon - Sat)</p>
                 </div>
               </div>
 

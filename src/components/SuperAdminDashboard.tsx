@@ -738,18 +738,18 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   const severityBadge = (s: string) => {
     switch (s) {
       case 'Critical': return 'bg-red-50 text-red-700 border-red-200';
-      case 'Warning': return 'bg-amber-50 text-amber-700 border-amber-200';
-      default: return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'Warning': return 'bg-slate-50 text-slate-700 border-slate-200';
+      default: return 'bg-slate-50 text-slate-700 border-slate-200';
     }
   };
 
   const hospitalStatusBadge = (s: string) => {
     switch (s) {
-      case 'Approved': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'Recommended by Admin': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'Approved': return 'bg-slate-50 text-slate-700 border-slate-200';
+      case 'Recommended by Admin': return 'bg-slate-50 text-slate-700 border-slate-200';
       case 'Rejected': return 'bg-red-50 text-red-600 border-red-200';
       case 'Info Requested': return 'bg-purple-50 text-purple-700 border-purple-200';
-      default: return 'bg-amber-50 text-amber-700 border-amber-200';
+      default: return 'bg-slate-50 text-slate-700 border-slate-200';
     }
   };
 
@@ -830,7 +830,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
         {/* Toast */}
         {toastMessage && (
           <div className="fixed top-4 right-4 z-50 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl text-xs font-semibold flex items-center gap-2 animate-[fadeInUp_0.3s_ease-out]">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" /> {toastMessage}
+            <CheckCircle2 className="w-4 h-4 text-slate-400" /> {toastMessage}
           </div>
         )}
 
@@ -843,16 +843,16 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {[
                   { label: 'Total Patients', value: kpi.totalPatients.toLocaleString(), icon: Heart, color: 'from-rose-500 to-pink-600' },
-                  { label: 'Volunteers', value: kpi.totalVolunteers.toLocaleString(), icon: Users, color: 'from-emerald-500 to-teal-600' },
-                  { label: 'Total Users', value: kpi.totalUsers.toLocaleString(), icon: Globe, color: 'from-blue-500 to-cyan-600' },
+                  { label: 'Volunteers', value: kpi.totalVolunteers.toLocaleString(), icon: Users, color: 'from-primary to-primary-container' },
+                  { label: 'Total Users', value: kpi.totalUsers.toLocaleString(), icon: Globe, color: 'from-primary to-cyan-600' },
                   { label: 'Partner Hospitals', value: String(hospitals.filter(h => h.status === 'Approved').length + 4), icon: Building2, color: 'from-violet-500 to-purple-600' },
-                  { label: 'Pending Tie-ups', value: String(hospitals.filter(h => h.status === 'Pending Review' || h.status === 'Recommended by Admin').length), icon: AlertCircle, color: 'from-amber-500 to-orange-600' },
-                  { label: 'Active Campaigns', value: String(kpi.activeCampaigns), icon: Calendar, color: 'from-indigo-500 to-blue-600' },
-                  { label: 'Donations (INR)', value: '₹' + kpi.totalDonations.toLocaleString(), icon: DollarSign, color: 'from-emerald-500 to-green-600' },
+                  { label: 'Pending Tie-ups', value: String(hospitals.filter(h => h.status === 'Pending Review' || h.status === 'Recommended by Admin').length), icon: AlertCircle, color: 'from-secondary to-secondary' },
+                  { label: 'Active Campaigns', value: String(kpi.activeCampaigns), icon: Calendar, color: 'from-indigo-500 to-primary-container' },
+                  { label: 'Donations (INR)', value: '₹' + kpi.totalDonations.toLocaleString(), icon: DollarSign, color: 'from-primary to-primary-container' },
                   { label: 'Financial Aid Cases', value: String(kpi.financialAidCases), icon: Shield, color: 'from-pink-500 to-rose-600' },
-                  { label: 'Awareness Programs', value: String(kpi.awarenessPrograms), icon: Megaphone, color: 'from-cyan-500 to-blue-600' },
+                  { label: 'Awareness Programs', value: String(kpi.awarenessPrograms), icon: Megaphone, color: 'from-cyan-500 to-primary-container' },
                   { label: 'Admin Accounts', value: String(admins.length), icon: UserCog, color: 'from-slate-500 to-gray-600' },
-                  { label: 'System Health', value: kpi.systemHealthScore + '%', icon: Activity, color: 'from-green-500 to-emerald-600' },
+                  { label: 'System Health', value: kpi.systemHealthScore + '%', icon: Activity, color: 'from-primary to-primary-container' },
                   { label: 'Monthly Growth', value: '+' + kpi.monthlyGrowthRate + '%', icon: TrendingUp, color: 'from-purple-500 to-indigo-600' },
                 ].map((card, i) => (
                   <div key={i} className="bg-white rounded-2xl border border-slate-200/60 p-4 shadow-xs hover:shadow-md transition-all group">
@@ -897,7 +897,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                   <div className="space-y-3">
                     {INITIAL_AUDIT_LOGS.slice(0, 5).map((log) => (
                       <div key={log.id} className="flex items-start space-x-3 text-xs">
-                        <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${log.severity === 'Critical' ? 'bg-red-500' : log.severity === 'Warning' ? 'bg-amber-500' : 'bg-blue-500'}`} />
+                        <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${log.severity === 'Critical' ? 'bg-red-500' : log.severity === 'Warning' ? 'bg-secondary' : 'bg-primary'}`} />
                         <div className="flex-1">
                           <p className="font-medium text-slate-700">{log.action}</p>
                           <span className="text-[10px] text-slate-400">{log.timestamp}</span>
@@ -939,7 +939,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                   </div>
                 </div>
                 <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-primary-container">
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
                   <div>
@@ -950,7 +950,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                   </div>
                 </div>
                 <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-secondary">
                     <AlertTriangle className="w-6 h-6" />
                   </div>
                   <div>
@@ -1044,12 +1044,12 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                             </td>
                             <td className="px-6 py-4">
                               {enq.adminDecision?.remarks && (
-                                <p className="text-[11px] text-blue-700 font-medium">
+                                <p className="text-[11px] text-slate-700 font-medium">
                                   <strong>Admin:</strong> {enq.adminDecision.remarks}
                                 </p>
                               )}
                               {enq.hospitalDecision?.action === 'Decline' && (
-                                <p className="text-[11px] text-amber-700 font-medium">
+                                <p className="text-[11px] text-slate-700 font-medium">
                                   <strong>Declined:</strong> {enq.hospitalDecision.remarks}
                                 </p>
                               )}
@@ -1135,18 +1135,18 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                             <code className="text-xs font-mono bg-slate-100 text-slate-800 px-2 py-1 rounded border border-slate-200">{admin.password || 'adminpassword'}</code>
                           </td>
                           <td className="px-5 py-4">
-                            <code className="text-xs font-mono bg-amber-50 text-amber-800 px-2 py-1 rounded border border-amber-200 font-bold">{admin.passcode || '12345'}</code>
+                            <code className="text-xs font-mono bg-slate-50 text-slate-800 px-2 py-1 rounded border border-slate-200 font-bold">{admin.passcode || '12345'}</code>
                           </td>
                           <td className="px-5 py-4">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${admin.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : admin.status === 'Suspended' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${admin.status === 'Active' ? 'bg-slate-50 text-slate-700 border-slate-200' : admin.status === 'Suspended' ? 'bg-slate-50 text-slate-700 border-slate-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
                               {admin.status}
                             </span>
                           </td>
                           <td className="px-5 py-4 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <button onClick={() => setCreatedAdminCredentials(admin)} className="p-1.5 hover:bg-slate-100 rounded-lg text-teal-600 cursor-pointer" title="View Credentials Card"><Key className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => setCreatedAdminCredentials(admin)} className="p-1.5 hover:bg-slate-100 rounded-lg text-primary-container cursor-pointer" title="View Credentials Card"><Key className="w-3.5 h-3.5" /></button>
                               <button onClick={() => openAdminForm(admin)} className="p-1.5 hover:bg-slate-100 rounded-lg text-indigo-600 cursor-pointer" title="Edit"><Edit2 className="w-3.5 h-3.5" /></button>
-                              <button onClick={() => toggleAdminStatus(admin.id)} className="p-1.5 hover:bg-slate-100 rounded-lg text-amber-600 cursor-pointer" title={admin.status === 'Active' ? 'Suspend' : 'Activate'}>
+                              <button onClick={() => toggleAdminStatus(admin.id)} className="p-1.5 hover:bg-slate-100 rounded-lg text-secondary cursor-pointer" title={admin.status === 'Active' ? 'Suspend' : 'Activate'}>
                                 {admin.status === 'Active' ? <UserMinus className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
                               </button>
                               <button onClick={() => deleteAdmin(admin.id)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 cursor-pointer" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
@@ -1261,7 +1261,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                 >
                   <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-5 animate-[scaleUp_0.2s_ease-out]">
                     <div className="text-center space-y-2">
-                      <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200 shadow-sm">
+                      <div className="w-14 h-14 rounded-2xl bg-slate-50 text-primary-container flex items-center justify-center mx-auto border border-slate-200 shadow-sm">
                         <ShieldCheck className="w-8 h-8" />
                       </div>
                       <h3 id="admin-credentials-modal-title" className="text-lg font-black text-slate-900">Admin Account Credentials</h3>
@@ -1287,7 +1287,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                       </div>
                       <div className="flex justify-between items-center py-1">
                         <span className="text-slate-500 font-semibold">Security Passcode:</span>
-                        <code className="font-bold text-amber-900 font-mono select-all bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{createdAdminCredentials.passcode || '12345'}</code>
+                        <code className="font-bold text-slate-900 font-mono select-all bg-slate-50 px-2 py-0.5 rounded border border-slate-200">{createdAdminCredentials.passcode || '12345'}</code>
                       </div>
                     </div>
 
@@ -1347,7 +1347,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${hospitalStatusBadge(hosp.status)}`}>{hosp.status}</span>
-                          {hosp.nabhAccredited && <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">✓ NABH Accredited</span>}
+                          {hosp.nabhAccredited && <span className="px-2 py-0.5 rounded-full bg-slate-50 text-slate-700 text-[10px] font-bold border border-slate-200">✓ NABH Accredited</span>}
                         </div>
                         <h3 className="text-base font-bold text-slate-900">{hosp.name}</h3>
                         <p className="text-xs text-slate-500 mt-0.5">{hosp.address}</p>
@@ -1368,7 +1368,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Submitted Documents</p>
                           <div className="flex flex-wrap gap-2">
                             {hosp.documents.map((doc, di) => (
-                              <span key={di} className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold flex items-center gap-1 ${doc.verified ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                              <span key={di} className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold flex items-center gap-1 ${doc.verified ? 'bg-slate-50 text-slate-700 border border-slate-200' : 'bg-slate-50 text-slate-700 border border-slate-200'}`}>
                                 {doc.verified ? <Check className="w-3 h-3" /> : <Clock className="w-3 h-3" />} {doc.name}
                               </span>
                             ))}
@@ -1377,19 +1377,19 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
                         {/* Admin recommendation */}
                         {hosp.recommendedBy && (
-                          <div className="mt-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
-                            <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">Regional Admin Recommendation</p>
-                            <p className="text-xs text-blue-800 font-semibold">Submitted by: {hosp.recommendedBy}</p>
-                            <p className="text-xs text-blue-700 mt-1 leading-relaxed">{hosp.recommendationNotes}</p>
+                          <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <p className="text-[10px] font-bold text-primary-container uppercase tracking-wider mb-1">Regional Admin Recommendation</p>
+                            <p className="text-xs text-slate-800 font-semibold">Submitted by: {hosp.recommendedBy}</p>
+                            <p className="text-xs text-slate-700 mt-1 leading-relaxed">{hosp.recommendationNotes}</p>
                           </div>
                         )}
 
                         {/* Generated credentials display */}
                         {hosp.generatedCredentials && (
-                          <div className="mt-3 p-3 bg-emerald-50 rounded-xl border border-emerald-200">
-                            <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-1">Hospital Tie-up Active — Login Credentials Generated</p>
-                            <p className="text-xs text-emerald-800 font-mono">Email: {hosp.generatedCredentials.email}</p>
-                            <p className="text-xs text-emerald-800 font-mono">Temp Password: {hosp.generatedCredentials.tempPassword}</p>
+                          <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <p className="text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">Hospital Tie-up Active — Login Credentials Generated</p>
+                            <p className="text-xs text-slate-800 font-mono">Email: {hosp.generatedCredentials.email}</p>
+                            <p className="text-xs text-slate-800 font-mono">Temp Password: {hosp.generatedCredentials.tempPassword}</p>
                           </div>
                         )}
 
@@ -1405,7 +1405,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                       {/* Super Admin Executive Approval Actions */}
                       {(hosp.status === 'Pending Review' || hosp.status === 'Recommended by Admin' || hosp.status === 'Info Requested') && (
                         <div className="flex flex-col gap-2 shrink-0 lg:w-48">
-                          <button onClick={() => approveHospital(hosp.id)} className="w-full py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 cursor-pointer flex items-center justify-center gap-1.5 shadow-sm">
+                          <button onClick={() => approveHospital(hosp.id)} className="w-full py-2 bg-primary-container text-white rounded-xl text-xs font-bold hover:bg-slate-700 cursor-pointer flex items-center justify-center gap-1.5 shadow-sm">
                             <Check className="w-3.5 h-3.5" /> Approve & Activate
                           </button>
                           <button onClick={() => setShowRejectDialog(hosp.id)} className="w-full py-2 bg-red-50 text-red-600 border border-red-200 rounded-xl text-xs font-bold hover:bg-red-100 cursor-pointer flex items-center justify-center gap-1.5">
@@ -1451,12 +1451,12 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                   aria-labelledby="hospital-approved-modal-title"
                 >
                   <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 text-center" onClick={e => e.stopPropagation()}>
-                    <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3 border-2 border-emerald-200">
-                      <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 border-2 border-slate-200">
+                      <CheckCircle2 className="w-8 h-8 text-primary-container" />
                     </div>
                     <h3 id="hospital-approved-modal-title" className="text-base font-bold text-slate-900 mb-1">Hospital Approved!</h3>
                     <p className="text-xs text-slate-500 mb-4">Login credentials have been auto-generated. Share them securely with the hospital.</p>
-                    <div className="bg-slate-900 text-emerald-400 p-4 rounded-xl font-mono text-xs text-left space-y-1.5 mb-4">
+                    <div className="bg-slate-900 text-slate-400 p-4 rounded-xl font-mono text-xs text-left space-y-1.5 mb-4">
                       <p>Email: <span className="text-white">{showApprovalResult.email}</span></p>
                       <p>Temp Password: <span className="text-white">{showApprovalResult.password}</span></p>
                     </div>
@@ -1473,9 +1473,9 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
                   { label: 'Total Patients', value: (patients.length + 1415).toLocaleString(), color: 'text-rose-700 bg-rose-50 border-rose-200' },
-                  { label: 'Under Treatment', value: String(patients.filter(p => p.status === 'Under Treatment').length + 380), color: 'text-amber-700 bg-amber-50 border-amber-200' },
-                  { label: 'Recovered / Remission', value: String(patients.filter(p => p.status === 'Recovered').length + 890), color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
-                  { label: 'Financial Aid Pending', value: String(patients.filter(p => p.financialAidStatus === 'Pending Review').length), color: 'text-blue-700 bg-blue-50 border-blue-200' },
+                  { label: 'Under Treatment', value: String(patients.filter(p => p.status === 'Under Treatment').length + 380), color: 'text-slate-700 bg-slate-50 border-slate-200' },
+                  { label: 'Recovered / Remission', value: String(patients.filter(p => p.status === 'Recovered').length + 890), color: 'text-slate-700 bg-slate-50 border-slate-200' },
+                  { label: 'Financial Aid Pending', value: String(patients.filter(p => p.financialAidStatus === 'Pending Review').length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
                 ].map((s, i) => (
                   <div key={i} className={`${s.color} rounded-2xl border p-4 text-center`}>
                     <p className="text-2xl font-black">{s.value}</p>
@@ -1527,7 +1527,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                           <td className="px-5 py-4 font-semibold text-slate-800">{p.diagnosis}</td>
                           <td className="px-5 py-4 font-medium text-slate-600">{p.hospitalName}</td>
                           <td className="px-5 py-4">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${p.financialAidStatus === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : p.financialAidStatus === 'Pending Review' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${p.financialAidStatus === 'Approved' ? 'bg-slate-50 text-slate-700 border-slate-200' : p.financialAidStatus === 'Pending Review' ? 'bg-slate-50 text-slate-700 border-slate-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
                               {p.financialAidStatus} {p.financialAidAmount ? `(₹${p.financialAidAmount.toLocaleString()})` : ''}
                             </span>
                           </td>
@@ -1546,9 +1546,9 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
             <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { label: 'Total Volunteers', value: (volunteers.length + 2390).toLocaleString(), color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
-                  { label: 'Approved & Active', value: String(volunteers.filter(v => v.status === 'Approved').length + 2300), color: 'text-blue-700 bg-blue-50 border-blue-200' },
-                  { label: 'Pending Verification', value: String(volunteers.filter(v => v.status === 'Pending Approval').length), color: 'text-amber-700 bg-amber-50 border-amber-200' },
+                  { label: 'Total Volunteers', value: (volunteers.length + 2390).toLocaleString(), color: 'text-slate-700 bg-slate-50 border-slate-200' },
+                  { label: 'Approved & Active', value: String(volunteers.filter(v => v.status === 'Approved').length + 2300), color: 'text-slate-700 bg-slate-50 border-slate-200' },
+                  { label: 'Pending Verification', value: String(volunteers.filter(v => v.status === 'Pending Approval').length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
                   { label: 'Total Hours Logged', value: '4,460h', color: 'text-purple-700 bg-purple-50 border-purple-200' },
                 ].map((s, i) => (
                   <div key={i} className={`${s.color} rounded-2xl border p-4 text-center`}>
@@ -1605,7 +1605,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                           <td className="px-5 py-4 font-semibold text-slate-800">{v.domain}</td>
                           <td className="px-5 py-4 font-bold text-purple-700">{v.hoursLogged} hrs</td>
                           <td className="px-5 py-4 text-right">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${v.status === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${v.status === 'Approved' ? 'bg-slate-50 text-slate-700 border-slate-200' : 'bg-slate-50 text-slate-700 border-slate-200'}`}>
                               {v.status}
                             </span>
                           </td>
@@ -1625,7 +1625,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                 {[
                   { label: 'Active Campaigns', value: String(campaigns.length), color: 'text-indigo-700 bg-indigo-50 border-indigo-200' },
                   { label: 'Total Drives This Year', value: '18', color: 'text-purple-700 bg-purple-50 border-purple-200' },
-                  { label: 'People Screened', value: '4,200+', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+                  { label: 'People Screened', value: '4,200+', color: 'text-slate-700 bg-slate-50 border-slate-200' },
                 ].map((s, i) => (
                   <div key={i} className={`${s.color} rounded-2xl border p-4 text-center`}>
                     <p className="text-2xl font-black">{s.value}</p>
@@ -1678,10 +1678,10 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
             <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { label: 'Total Donations', value: '₹' + donations.reduce((acc, curr) => acc + curr.amount, 650000).toLocaleString(), color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
-                  { label: 'Individual Donors', value: String(donations.filter(d => d.donorType === 'Individual').length + 140), color: 'text-blue-700 bg-blue-50 border-blue-200' },
+                  { label: 'Total Donations', value: '₹' + donations.reduce((acc, curr) => acc + curr.amount, 650000).toLocaleString(), color: 'text-slate-700 bg-slate-50 border-slate-200' },
+                  { label: 'Individual Donors', value: String(donations.filter(d => d.donorType === 'Individual').length + 140), color: 'text-slate-700 bg-slate-50 border-slate-200' },
                   { label: 'Corporate Sponsors', value: String(donations.filter(d => d.donorType === 'Corporate').length + 6), color: 'text-purple-700 bg-purple-50 border-purple-200' },
-                  { label: '80G Tax Receipts Sent', value: String(donations.filter(d => d.receiptSent).length), color: 'text-amber-700 bg-amber-50 border-amber-200' },
+                  { label: '80G Tax Receipts Sent', value: String(donations.filter(d => d.receiptSent).length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
                 ].map((s, i) => (
                   <div key={i} className={`${s.color} rounded-2xl border p-4 text-center`}>
                     <p className="text-2xl font-black">{s.value}</p>
@@ -1721,11 +1721,11 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                             <p className="font-bold text-slate-900">{d.donorName}</p>
                             <p className="text-[10px] text-slate-400">{d.donorType}</p>
                           </td>
-                          <td className="px-5 py-4 font-bold text-emerald-700">₹{d.amount.toLocaleString()}</td>
+                          <td className="px-5 py-4 font-bold text-slate-700">₹{d.amount.toLocaleString()}</td>
                           <td className="px-5 py-4 text-slate-600">{d.date}</td>
                           <td className="px-5 py-4 font-medium text-slate-700">{d.paymentMethod}</td>
                           <td className="px-5 py-4 text-right">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${d.receiptSent ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${d.receiptSent ? 'bg-slate-50 text-slate-700 border-slate-200' : 'bg-slate-50 text-slate-700 border-slate-200'}`}>
                               {d.receiptSent ? '✓ Dispatched (80G)' : 'Pending'}
                             </span>
                           </td>
@@ -1840,7 +1840,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                       <span className="text-[10px] text-slate-400">Last: {report.lastGenerated}</span>
                       <div className="flex gap-1.5">
                         <button onClick={() => showToast(`${report.title} — PDF exported!`)} className="px-2.5 py-1 rounded-lg bg-red-50 text-red-600 text-[10px] font-bold border border-red-200 hover:bg-red-100 cursor-pointer flex items-center gap-0.5"><Download className="w-3 h-3" /> PDF</button>
-                        <button onClick={() => showToast(`${report.title} — Excel exported!`)} className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-200 hover:bg-emerald-100 cursor-pointer flex items-center gap-0.5"><Download className="w-3 h-3" /> Excel</button>
+                        <button onClick={() => showToast(`${report.title} — Excel exported!`)} className="px-2.5 py-1 rounded-lg bg-slate-50 text-primary-container text-[10px] font-bold border border-slate-200 hover:bg-slate-100 cursor-pointer flex items-center gap-0.5"><Download className="w-3 h-3" /> Excel</button>
                       </div>
                     </div>
                   </div>
@@ -1854,7 +1854,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
             <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
               {/* Donation Trends */}
               <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-xs">
-                <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2"><DollarSign className="w-4 h-4 text-emerald-600" /> Monthly Donation Trends (INR)</h3>
+                <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2"><DollarSign className="w-4 h-4 text-primary-container" /> Monthly Donation Trends (INR)</h3>
                 <div className="flex items-end justify-between gap-3 h-48 pt-4">
                   {MONTHLY_DONATION_TREND.map((m, i) => {
                     const max = Math.max(...MONTHLY_DONATION_TREND.map(x => x.amount));
@@ -1863,7 +1863,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                       <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
                         <span className="text-[9px] font-bold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">₹{(m.amount / 1000).toFixed(0)}K</span>
                         <div className="w-full relative rounded-t-lg overflow-hidden bg-slate-100" style={{ height: '100%' }}>
-                          <div className="absolute bottom-0 w-full rounded-t-lg bg-gradient-to-t from-emerald-600 to-teal-400 transition-all duration-700 group-hover:from-green-600 group-hover:to-emerald-400" style={{ height: `${pct}%` }} />
+                          <div className="absolute bottom-0 w-full rounded-t-lg bg-gradient-to-t from-primary-container to-slate-400 transition-all duration-700 group-hover:from-primary-container group-hover:to-slate-400" style={{ height: `${pct}%` }} />
                         </div>
                         <span className="text-[10px] font-semibold text-slate-500">{m.month}</span>
                       </div>
@@ -1874,7 +1874,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
               {/* Volunteer Hours */}
               <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-xs">
-                <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2"><Users className="w-4 h-4 text-blue-600" /> Monthly Volunteer Hours</h3>
+                <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2"><Users className="w-4 h-4 text-primary-container" /> Monthly Volunteer Hours</h3>
                 <div className="flex items-end justify-between gap-3 h-44 pt-4">
                   {MONTHLY_VOLUNTEER_HOURS.map((m, i) => {
                     const max = Math.max(...MONTHLY_VOLUNTEER_HOURS.map(x => x.hours));
@@ -1883,7 +1883,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                       <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
                         <span className="text-[9px] font-bold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">{m.hours}h</span>
                         <div className="w-full relative rounded-t-lg overflow-hidden bg-slate-100" style={{ height: '100%' }}>
-                          <div className="absolute bottom-0 w-full rounded-t-lg bg-gradient-to-t from-blue-600 to-cyan-400 transition-all duration-700 group-hover:from-indigo-600 group-hover:to-blue-400" style={{ height: `${pct}%` }} />
+                          <div className="absolute bottom-0 w-full rounded-t-lg bg-gradient-to-t from-primary-container to-cyan-400 transition-all duration-700 group-hover:from-indigo-600 group-hover:to-slate-400" style={{ height: `${pct}%` }} />
                         </div>
                         <span className="text-[10px] font-semibold text-slate-500">{m.month}</span>
                       </div>
@@ -2152,7 +2152,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
                           <td className="px-5 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${b.type === 'Full' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>{b.type}</span></td>
                           <td className="px-5 py-3 font-semibold text-slate-700">{b.size}</td>
                           <td className="px-5 py-3 text-slate-500">{b.duration}</td>
-                          <td className="px-5 py-3"><span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${b.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}>{b.status}</span></td>
+                          <td className="px-5 py-3"><span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${b.status === 'Completed' ? 'bg-slate-50 text-slate-700 border-slate-200' : 'bg-red-50 text-red-600 border-red-200'}`}>{b.status}</span></td>
                           <td className="px-5 py-3 text-slate-500">{b.initiatedBy}</td>
                         </tr>
                       ))}
@@ -2168,12 +2168,12 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
             <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
               {/* Active Sessions */}
               <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-xs">
-                <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2"><Wifi className="w-4 h-4 text-emerald-600" /> Active Sessions ({INITIAL_ACTIVE_SESSIONS.length})</h3>
+                <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2"><Wifi className="w-4 h-4 text-primary-container" /> Active Sessions ({INITIAL_ACTIVE_SESSIONS.length})</h3>
                 <div className="space-y-3">
                   {INITIAL_ACTIVE_SESSIONS.map(s => (
                     <div key={s.id} className="p-4 border border-slate-200/60 rounded-xl flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full ${s.status === 'Active' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
+                        <div className={`w-3 h-3 rounded-full ${s.status === 'Active' ? 'bg-primary animate-pulse' : 'bg-slate-400'}`} />
                         <div>
                           <p className="text-xs font-bold text-slate-900">{s.user} <span className="text-slate-400 font-normal">({s.role})</span></p>
                           <p className="text-[10px] text-slate-500 mt-0.5">{s.device} • {s.browser} • {s.location}</p>
@@ -2303,10 +2303,10 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
               <p>📍 <strong>Location:</strong> {assigningEnquiry.city}{assigningEnquiry.state ? `, ${assigningEnquiry.state}` : ''} | 📞 <strong>Phone:</strong> {assigningEnquiry.phone}</p>
               <p>🩺 <strong>Inquiry Stream:</strong> {assigningEnquiry.reason} | <strong>Diagnosis:</strong> {assigningEnquiry.cancerType || 'General Screening'}</p>
               {assigningEnquiry.adminDecision?.remarks && (
-                <p className="text-blue-800"><strong>Admin Remarks:</strong> {assigningEnquiry.adminDecision.remarks}</p>
+                <p className="text-slate-800"><strong>Admin Remarks:</strong> {assigningEnquiry.adminDecision.remarks}</p>
               )}
               {assigningEnquiry.hospitalDecision?.action === 'Decline' && (
-                <p className="text-amber-800"><strong>Previous Hospital Decline Reason:</strong> {assigningEnquiry.hospitalDecision.remarks}</p>
+                <p className="text-slate-800"><strong>Previous Hospital Decline Reason:</strong> {assigningEnquiry.hospitalDecision.remarks}</p>
               )}
             </div>
 

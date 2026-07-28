@@ -5,6 +5,8 @@ import { queryClient } from './api/queryClient';
 import { getHospitalSession, getStaffSession, getVolunteerSession, logout } from './api/client';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import TeamPortal from './components/TeamPortal';
+import CancerAwareness from './components/CancerAwareness';
 
 // Common Polish Components
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -14,7 +16,7 @@ import { ToastProvider } from './components/common/Toast';
 // essentially every page, so lazy-loading these would add Suspense
 // overhead without shrinking the bundle that actually matters.
 import VolunteerModal from './components/VolunteerModal';
-import EnquiryModal from './components/EnquiryModal';
+import ChatAssistant from './components/ChatAssistant';
 import SitemapModal from './components/SitemapModal';
 
 // Lazy Loaded Route-Level Pages (Code Splitting & Performance).
@@ -42,10 +44,16 @@ const HospitalDashboard = lazy(() => import('./components/HospitalDashboard'));
 // Loading Fallback Spinner for Suspense
 function PageLoadingFallback() {
   return (
-    <div className="min-h-[400px] w-full flex items-center justify-center p-12">
-      <div className="flex flex-col items-center space-y-3">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs font-bold text-slate-500 animate-pulse">Loading Cancer Aware Bharat Portal...</p>
+    <div className="min-h-[500px] w-full flex items-center justify-center p-12">
+      <div className="flex flex-col items-center space-y-4">
+        <div className="relative">
+          <div className="w-12 h-12 border-[3px] border-primary/10 rounded-full" />
+          <div className="absolute inset-0 w-12 h-12 border-[3px] border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+        <div className="text-center space-y-1">
+          <p className="text-sm font-semibold text-primary animate-pulse">Loading...</p>
+          <p className="text-xs text-on-surface-variant/60">Cancer Aware Bharat Portal</p>
+        </div>
       </div>
     </div>
   );
@@ -90,8 +98,19 @@ function PublicLayout({
   return (
     <>
       {/* Top Banner Alert */}
-      <div className="bg-primary text-white text-xs py-2 px-4 text-center font-semibold leading-relaxed border-b border-primary-container">
-        📢 <strong className="text-secondary-container">Campaign Alert:</strong> Free Early Detection & Screening Camps active across New Delhi & Pune. Register for prioritized callback.
+      <div className="gradient-primary text-white text-xs py-2.5 px-4 text-center font-medium leading-relaxed">
+        <span className="inline-flex items-center gap-2 flex-wrap justify-center">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse shrink-0" />
+          <span className="opacity-90">
+            <strong className="font-semibold text-white">Campaign Alert:</strong> Free Early Detection & Screening Camps active across New Delhi & Pune.
+          </span>
+          <button
+            onClick={onOpenEnquiry}
+            className="underline underline-offset-2 font-semibold hover:opacity-80 transition-opacity cursor-pointer"
+          >
+            Register Now →
+          </button>
+        </span>
       </div>
 
       {/* Main Sticky Navbar */}
@@ -120,8 +139,10 @@ function PublicLayout({
         <div className="fixed bottom-6 right-6 z-40 hidden sm:block">
           <button
             onClick={onOpenEnquiry}
-            className="bg-secondary text-white hover:opacity-95 font-bold text-sm px-6 py-3.5 rounded-full shadow-[0px_8px_24px_rgba(144,66,119,0.35)] transition-all transform hover:scale-105 active:scale-95 cursor-pointer"
+            className="group relative bg-primary text-white hover:bg-primary-container font-semibold text-sm px-6 py-3.5 rounded-2xl shadow-[0_8px_32px_rgba(0,67,73,0.25)] transition-all duration-300 transform hover:scale-105 hover:shadow-[0_12px_40px_rgba(0,67,73,0.35)] active:scale-95 cursor-pointer flex items-center gap-2"
           >
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-slate-400 rounded-full animate-ping" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-slate-400 rounded-full" />
             Get Patient Support
           </button>
         </div>
@@ -157,12 +178,12 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-on-background flex flex-col justify-between selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen bg-background text-on-background flex flex-col justify-between">
       <Routes>
         {/* ===== Public Pages (with Navbar/Footer layout) ===== */}
         <Route path="/" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
+            <main className="flex-grow">
               <HomeTab
                 onOpenVolunteer={() => setVolunteerOpen(true)}
                 onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
@@ -172,7 +193,7 @@ function AppContent() {
         } />
         <Route path="/about" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
+            <main className="flex-grow section-container py-10 md:py-14">
               <AboutTab
                 onOpenVolunteer={() => setVolunteerOpen(true)}
               />
@@ -181,7 +202,7 @@ function AppContent() {
         } />
         <Route path="/hospitals" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
+            <main className="flex-grow section-container py-10 md:py-14">
               <HospitalsTab
                 onOpenEnquiry={handleOpenEnquiryForHospital}
               />
@@ -190,7 +211,7 @@ function AppContent() {
         } />
         <Route path="/events" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
+            <main className="flex-grow section-container py-10 md:py-14">
               <EventsTab
                 onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
               />
@@ -199,14 +220,14 @@ function AppContent() {
         } />
         <Route path="/blogs" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
+            <main className="flex-grow section-container py-10 md:py-14">
               <BlogsTab />
             </main>
           </PublicLayout>
         } />
         <Route path="/gallery" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
+            <main className="flex-grow section-container py-10 md:py-14">
               <GalleryTab
                 onOpenVolunteer={() => setVolunteerOpen(true)}
                 onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
@@ -216,7 +237,7 @@ function AppContent() {
         } />
         <Route path="/mission" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
+            <main className="flex-grow section-container py-10 md:py-14">
               <MissionTab
                 onOpenVolunteer={() => setVolunteerOpen(true)}
                 onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
@@ -226,18 +247,32 @@ function AppContent() {
         } />
         <Route path="/join-us" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
+            <main className="flex-grow section-container py-10 md:py-14">
               <JoinUsTab />
             </main>
           </PublicLayout>
         } />
         <Route path="/doctors" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow max-w-[1200px] w-full mx-auto px-6 md:px-12 py-8">
+            <main className="flex-grow section-container py-10 md:py-14">
               <DoctorsTab
                 onOpenEnquiry={(hName) => handleOpenEnquiryForHospital(hName)}
                 onOpenVolunteer={() => setVolunteerOpen(true)}
               />
+            </main>
+          </PublicLayout>
+        } />
+        <Route path="/cancer-awareness" element={
+          <PublicLayout {...publicLayoutProps}>
+            <main className="flex-grow w-full">
+              <CancerAwareness />
+            </main>
+          </PublicLayout>
+        } />
+        <Route path="/our-team" element={
+          <PublicLayout {...publicLayoutProps}>
+            <main className="flex-grow w-full">
+              <TeamPortal />
             </main>
           </PublicLayout>
         } />
@@ -350,10 +385,9 @@ function AppContent() {
         onClose={() => setVolunteerOpen(false)}
       />
 
-      <EnquiryModal
+      <ChatAssistant
         isOpen={enquiryOpen}
         onClose={handleCloseEnquiry}
-        selectedHospitalId={selectedHospitalId}
       />
 
       <SitemapModal

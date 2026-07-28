@@ -22,7 +22,7 @@ export default function MissionTab({ onOpenVolunteer, onOpenEnquiry }: MissionTa
       titleEn: 'Cancer Warning Signs Awareness',
       descHi: 'समुदाय स्तर पर स्तन, मुख (oral), गर्भाशय ग्रीवा और अन्य कैंसर के शुरुआती लक्षणों के प्रति व्यापक जनजागरूकता फैलाना।',
       descEn: 'Spreading wide awareness on early warning signs of breast, oral, cervical and organ cancers at the village level.',
-      color: 'text-amber-500 bg-amber-500/10 border-amber-500/20'
+      color: 'text-secondary bg-secondary/10 border-secondary/20'
     },
     {
       icon: HeartPulse,
@@ -46,7 +46,7 @@ export default function MissionTab({ onOpenVolunteer, onOpenEnquiry }: MissionTa
       titleEn: 'Clear Referral Pathways Development',
       descHi: 'गंभीर या संदिग्ध मरीजों को प्राथमिक केंद्र से सही ऑन्कोलॉजी अस्पताल तक पहुँचाने के लिए स्पष्ट और पारदर्शी रेफरल नेटवर्क तैयार करना।',
       descEn: 'Developing clear, transparent referral channels connecting rural screening nodes with accredited oncology hospitals.',
-      color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20'
+      color: 'text-primary bg-primary/10 border-primary/20'
     },
     {
       icon: Tent,
@@ -101,7 +101,7 @@ export default function MissionTab({ onOpenVolunteer, onOpenEnquiry }: MissionTa
     <div className="space-y-12 animate-[fadeIn_0.3s_ease-out]">
       
       {/* ===== HERO SECTION ===== */}
-      <section className="relative rounded-3xl min-h-[480px] sm:min-h-[520px] flex flex-col justify-between p-6 sm:p-10 md:p-14 border border-outline-variant/30 overflow-hidden shadow-2xl bg-neutral-950 text-white">
+      <section className="relative rounded-2xl min-h-[480px] sm:min-h-[520px] flex flex-col justify-between p-6 sm:p-10 md:p-14 overflow-hidden shadow-2xl bg-neutral-950 text-white">
         
         {/* Glowing Ambient Radial Background Gradient */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full filter blur-[120px] pointer-events-none" />
@@ -111,8 +111,8 @@ export default function MissionTab({ onOpenVolunteer, onOpenEnquiry }: MissionTa
           
           {/* Badge & Language Toggle */}
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-emerald-300 backdrop-blur-md text-xs font-bold uppercase tracking-wider border border-white/15">
-              <Sparkles className="w-4 h-4 text-emerald-400" />
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-slate-300 backdrop-blur-md text-xs font-bold uppercase tracking-wider border border-white/15">
+              <Sparkles className="w-4 h-4 text-slate-400" />
               <span>OUR MISSION / हमारा मिशन</span>
             </span>
 
@@ -136,7 +136,7 @@ export default function MissionTab({ onOpenVolunteer, onOpenEnquiry }: MissionTa
             </div>
           </div>
 
-          <h1 className="font-headline-lg text-3xl sm:text-5xl md:text-6xl font-black leading-tight tracking-tight drop-shadow-md">
+          <h1 className="font-outfit text-3xl sm:text-5xl md:text-6xl font-extrabold leading-tight tracking-tight drop-shadow-md">
             {activeTab === 'hindi' ? (
               <>समुदाय-आधारित स्वास्थ्य क्रांति व <span className="text-secondary-container">जिम्मेदार रेफरल सहायता।</span></>
             ) : (
@@ -268,7 +268,7 @@ export default function MissionTab({ onOpenVolunteer, onOpenEnquiry }: MissionTa
       {/* ===== REFERRAL PATHWAY WORKFLOW (रेफरल प्रक्रिया) ===== */}
       <section className="bg-gradient-to-br from-slate-900 via-neutral-900 to-slate-950 text-white rounded-3xl p-8 sm:p-12 border border-slate-800 space-y-8 shadow-2xl relative overflow-hidden">
         <div className="max-w-2xl space-y-3">
-          <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold uppercase tracking-wider border border-emerald-500/30">
+          <span className="px-3 py-1 rounded-full bg-primary/20 text-slate-300 text-xs font-bold uppercase tracking-wider border border-primary/30">
             RESPONSIBLE REFERRAL PATHWAYS
           </span>
           <h2 className="font-headline-lg text-2xl sm:text-4xl font-black">
@@ -282,7 +282,7 @@ export default function MissionTab({ onOpenVolunteer, onOpenEnquiry }: MissionTa
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {referralSteps.map((s, idx) => (
             <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-3 backdrop-blur-md relative">
-              <span className="text-2xl font-black text-emerald-400 font-mono">{s.step}</span>
+              <span className="text-2xl font-black text-slate-400 font-mono">{s.step}</span>
               <h3 className="font-bold text-sm text-white">
                 {activeTab === 'hindi' ? s.titleHi : s.titleEn}
               </h3>
@@ -328,7 +328,7 @@ export default function MissionTab({ onOpenVolunteer, onOpenEnquiry }: MissionTa
               { title: 'Community Caseworkers in Every Block', desc: 'Trained local youth guiding patients end-to-end' }
             ].map((v, i) => (
               <div key={i} className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-5 h-5 text-primary-container shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-bold text-xs text-slate-800">{v.title}</h4>
                   <p className="text-[11px] text-slate-500">{v.desc}</p>

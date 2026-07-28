@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Heart, ShieldAlert, Award, ChevronRight, ChevronLeft, Activity, HelpCircle, CheckCircle2, Microscope, HeartHandshake, BookOpen } from 'lucide-react';
+import {
+  Calendar, Heart, ShieldAlert, Award, ChevronRight, ChevronLeft, Activity, HelpCircle,
+  CheckCircle2, Microscope, HeartHandshake, BookOpen, ArrowRight, Shield, Users, MapPin,
+  Phone, Stethoscope, Star, Quote, ChevronDown, Mail, Sparkles,
+  Sun, Apple, Cigarette, Dumbbell, Syringe, Search as SearchIcon,
+  ClipboardCheck, UserCheck, Compass, HeartPulse, Droplet, Play,
+  Facebook, Instagram, Linkedin, Twitter, Plus
+} from 'lucide-react';
 import { INITIAL_EVENTS } from '../data';
 import { Event } from '../types';
+import TeamShowcase from './TeamShowcase';
 
 const CAROUSEL_SLIDES = [
   {
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD67aBEzQ4mH7MDO2L157RQifaSnmDCt3cgR1mBA8TH9TrWOEVtfrO-LXwPvszbWFRhSqm0iXQWTAIIR9OboD39r61QZ-YZCeSRPwF1OR5sTAR1C41FQ_vE_bR33rhXQiCFAzEIlwPlVTKJ6O7A3QiRFi1YXJOgUb-9v9v0-kIPjAR44d5XSt4nKwVOsMj6FbMMzo3uXulQG9eN-sMU5SFguVUub1iTlqnnpe1xgdE_2zA6nvpvZSMfIw',
+    image: '/events/event-1.jpeg',
     tag: 'Live Campaign Highlight',
     badge: 'Bridging Medical Expertise & Empathy | चिकित्सा और संवेदना',
     titleHi: 'कैंसर की पहचान देर से नहीं,',
@@ -15,7 +23,7 @@ const CAROUSEL_SLIDES = [
     title: 'Free Early Screening Detection Camp — Lions Club Grounds'
   },
   {
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB1880QY6OfofO_mmX-rcXHaAug2vtajUZh8wdyvyqOs-NaTEQrISBKKhz9xeQgcTlC5jGjaEbX6dXF-hpCOnnp3qkIBX9FtSLLJSYipUBmqlfLRKOe1YyNGL9eU7xm3UJGGfwfa0hzgZtRm0RApDf0USsey-4LTvHj50vopmZyMZ9I2a3YBFRnEtIlpunCn73x9iJUPbEU_ZqtR-eWf4p9Huxa_-3qA6JOYgrtyM5h8eOk8CROTwZOjg',
+    image: '/events/event-2.jpeg',
     tag: 'Community Outreach',
     badge: 'Life Saving Blood Support | रक्तदान - महादान',
     titleHi: 'रक्तदान से बचेगी जान,',
@@ -24,7 +32,7 @@ const CAROUSEL_SLIDES = [
     title: 'Mega Blood Donation Drive — City Hospital Community Hall'
   },
   {
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDFFddb5pzA21ANryP1YyFAiRmDv3cYKLcxSom4PCWLLeWaQ8A9CbdNUwr3WkjBBYOn3LnlsIkQeMOH0pdfIrZhvJPAvTw17EErc46zNEX8ktzX2GaIp4MBMvS_10RSOBY7NyFOgnXVvwb9nDgasMYo7nvtJOitIe-_wl00F8YY3Oq7ScymOSyvjIIKe7LNrvezd0HA_o2odBXvMSfPkLqst0_XXIqta3AqnH3LrGtn46PXutTIuwRPYg',
+    image: '/events/event-4.jpeg',
     tag: 'Support Workshops',
     badge: 'Holistic Recovery | स्वास्थ्य एवं पोषण',
     titleHi: 'इलाज के बाद सही पोषण और',
@@ -33,7 +41,7 @@ const CAROUSEL_SLIDES = [
     title: 'Nutrition Post-Treatment & Holistic Recovery Workshop'
   },
   {
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC4FXV2Dd6jmMTFi2iPnEYwnPBnlna3noopCsiVkX8csJqIRzvs_8sM9KXJFNvLLTFXIupQaBHhKKejejKGV3TdbCbIdGl2qvvFBX7JBhylg5jOL_48iNOY691vu4z79TCldatGuGOO22TJEWAMmwMSbdf2XBARbtJ-nW1ValYq3fbh1tYvwsyrZdSJCcL5V36MLpED3n83SZK-pvi-1bMJ65sV8d9s5Ln1DMJ6SyGFjzfh3-ZktqCxYw',
+    image: '/events/event-5.jpeg',
     tag: 'Educational Resources',
     badge: 'Preventive Awareness | जागरूकता ही बचाव है',
     titleHi: 'सही जानकारी और शुरुआती',
@@ -43,45 +51,102 @@ const CAROUSEL_SLIDES = [
   }
 ];
 
-function AnimatedCounter({ value }: { value: string }) {
+/* ─────────── Animated Counter (Intersection Observer) ─────────── */
+function AnimatedCounter({ value, className = '' }: { value: string; className?: string }) {
   const numericStr = value.replace(/,/g, '').match(/\d+/)?.[0] || '0';
   const target = parseInt(numericStr, 10);
   const nonNumericParts = value.replace(/,/g, '').split(numericStr);
   const prefix = nonNumericParts[0] || '';
   const suffix = nonNumericParts[1] || '';
-
   const [count, setCount] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
 
-  React.useEffect(() => {
-    let startTimestamp: number | null = null;
-    const duration = 1500; // 1.5 seconds
-
-    const step = (timestamp: number) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-
-      // Easing function: easeOutQuad
-      const easedProgress = progress * (2 - progress);
-      const currentCount = Math.floor(easedProgress * target);
-
-      setCount(currentCount);
-
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      }
-    };
-
-    window.requestAnimationFrame(step);
-  }, [target]);
-
-  const formattedCount = count.toLocaleString();
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          let startTimestamp: number | null = null;
+          const duration = 1800;
+          const step = (timestamp: number) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const easedProgress = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.floor(easedProgress * target));
+            if (progress < 1) window.requestAnimationFrame(step);
+          };
+          window.requestAnimationFrame(step);
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [target, hasAnimated]);
 
   return (
-    <span>
-      {prefix}{formattedCount}{suffix}
+    <span ref={ref} className={className}>
+      {prefix}{count.toLocaleString()}{suffix}
     </span>
   );
 }
+
+/* ─────────── Section Reveal on Scroll ─────────── */
+function RevealSection({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => setVisible(true), delay);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [delay]);
+
+  return (
+    <div
+      ref={ref}
+      className={`transition-all duration-700 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ─────────── FAQ Item ─────────── */
+function FAQItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boolean; onToggle: () => void }) {
+  return (
+    <div className={`border rounded-2xl transition-all duration-300 ${isOpen ? 'border-primary/20 bg-primary/[0.02] shadow-sm' : 'border-outline-variant/25 hover:border-outline-variant/40'}`}>
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between p-5 text-left cursor-pointer"
+        aria-expanded={isOpen}
+      >
+        <span className={`font-semibold text-sm md:text-[15px] pr-4 transition-colors ${isOpen ? 'text-primary' : 'text-on-surface'}`}>{q}</span>
+        <ChevronDown className={`w-4.5 h-4.5 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-primary' : 'text-on-surface-variant'}`} />
+      </button>
+      <div className={`overflow-hidden transition-all duration-350 ${isOpen ? 'max-h-[300px]' : 'max-h-0'}`}>
+        <p className="px-5 pb-5 text-sm text-on-surface-variant leading-relaxed">{a}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   HOME TAB COMPONENT
+   ═══════════════════════════════════════════ */
 
 interface HomeTabProps {
   onOpenVolunteer: () => void;
@@ -90,6 +155,7 @@ interface HomeTabProps {
 
 export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps) {
   const navigate = useNavigate();
+
   // Risk assessment state
   const [quizStep, setQuizStep] = useState(0);
   const [gender, setGender] = useState('');
@@ -100,493 +166,905 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
 
   // Carousel state
   const [activeSlide, setActiveSlide] = useState(0);
+  const [textVisible, setTextVisible] = useState(true);
 
-  React.useEffect(() => {
+  // Testimonial carousel
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  // Newsletter
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
+
+  useEffect(() => {
     const slideInterval = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % CAROUSEL_SLIDES.length);
-    }, 3000);
+      setTextVisible(false);
+      
+      setTimeout(() => {
+        setActiveSlide((prev) => (prev + 1) % CAROUSEL_SLIDES.length);
+        setTextVisible(true);
+      }, 500); // Wait for text to fade out before switching image
+      
+    }, 5500); // 5.5s total cycle (5s visible, 0.5s transition out)
+    
     return () => clearInterval(slideInterval);
-  }, [activeSlide]);
+  }, []);
 
-  const nextSlide = () => {
-    setActiveSlide((prev) => (prev + 1) % CAROUSEL_SLIDES.length);
-  };
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const prevSlide = () => {
-    setActiveSlide((prev) => (prev - 1 + CAROUSEL_SLIDES.length) % CAROUSEL_SLIDES.length);
-  };
+  const toggleHabit = (habit: string) => setHabits(prev => prev.includes(habit) ? prev.filter(h => h !== habit) : [...prev, habit]);
+  const toggleSymptom = (symptom: string) => setSymptoms(prev => prev.includes(symptom) ? prev.filter(s => s !== symptom) : [...prev, symptom]);
+  const resetQuiz = () => { setQuizStep(0); setGender(''); setAgeRange(''); setHabits([]); setSymptoms([]); setQuizSubmitted(false); };
 
-  const toggleHabit = (habit: string) => {
-    setHabits(prev => prev.includes(habit) ? prev.filter(h => h !== habit) : [...prev, habit]);
-  };
+  const testimonials = [
+    { name: 'Sunita Devi', role: 'Patient, Gaya, Bihar', quote: 'Cancer Aware Bharat helped me get diagnosed early. Their volunteers guided me to the right hospital and even helped with government assistance paperwork. I am forever grateful.', rating: 5 },
+    { name: 'Rajesh Sharma', role: 'Volunteer, New Delhi', quote: 'Being a volunteer here has been the most fulfilling experience. Seeing the relief on a patient\'s face when they finally get the right guidance — that feeling is priceless.', rating: 5 },
+    { name: 'Dr. Meena Gupta', role: 'Oncologist, Apex Oncology', quote: 'The screening camps organized by Cancer Aware Bharat are top-notch. They identify patients who would have otherwise gone undiagnosed for months. This saves lives.', rating: 5 },
+  ];
 
-  const toggleSymptom = (symptom: string) => {
-    setSymptoms(prev => prev.includes(symptom) ? prev.filter(s => s !== symptom) : [...prev, symptom]);
-  };
-
-  const resetQuiz = () => {
-    setQuizStep(0);
-    setGender('');
-    setAgeRange('');
-    setHabits([]);
-    setSymptoms([]);
-    setQuizSubmitted(false);
-  };
+  const faqs = [
+    { q: 'Are the screening camps really free?', a: 'Yes, all our screening camps are completely free of cost. We partner with hospitals and receive grants to cover all diagnostic expenses including mammography, oral examination, and basic blood work.' },
+    { q: 'How do I register for a screening camp near me?', a: 'You can register through our Patient Enquiry form on this website, call our helpline, or visit the Events page to find camps in your area. Our volunteers will guide you through the process.' },
+    { q: 'Can I volunteer if I don\'t have a medical background?', a: 'Absolutely! We welcome volunteers from all backgrounds. You can help with patient coordination, data entry, community outreach, and awareness campaigns. We provide all necessary training.' },
+    { q: 'How does the patient navigation service work?', a: 'Once you submit an enquiry, our trained caseworkers assess your needs, connect you with the right hospital, help arrange appointments, and guide you through government assistance schemes if applicable.' },
+    { q: 'Which states does Cancer Aware Bharat operate in?', a: 'We currently operate across Delhi, Maharashtra, West Bengal, Karnataka, Bihar, and Madhya Pradesh, with plans to expand to all major states by 2027.' },
+    { q: 'How can hospitals partner with Cancer Aware Bharat?', a: 'Hospitals can apply through our Hospital Partner Portal on this website. We look for institutions committed to accessible oncology care and patient-first practices.' },
+  ];
 
   return (
-    <div className="space-y-12">
-      {/* Hero Banner Section with Background Slides */}
-      <section className="relative rounded-3xl min-h-[560px] md:min-h-[590px] lg:min-h-[620px] flex flex-col justify-between p-6 sm:p-8 md:p-12 lg:p-14 border border-outline-variant/30 overflow-hidden shadow-2xl bg-neutral-950">
+    <div className="space-y-0">
 
-        {/* Background Slide Elements */}
-        <div className="absolute inset-0 z-0">
+      {/* ═══════════════════════════════════════════
+          SECTION 1: HERO BANNER
+          ═══════════════════════════════════════════ */}
+      <section className="relative min-h-[600px] md:min-h-[650px] lg:min-h-[700px] flex flex-col justify-center overflow-hidden bg-neutral-950">
+        {/* Background Slides */}
+        <div className="absolute inset-0 z-0 bg-neutral-950">
           {CAROUSEL_SLIDES.map((slide, idx) => (
             <div
               key={idx}
-              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === activeSlide ? 'opacity-100' : 'opacity-0'
-                }`}
+              className={`absolute inset-0 transition-opacity duration-[1500ms] ease-in-out ${idx === activeSlide ? 'opacity-100' : 'opacity-0'}`}
             >
               <img
                 src={slide.image}
                 alt={slide.title}
-                className="w-full h-full object-cover transform scale-105 transition-transform duration-[6000ms]"
+                className="w-full h-full object-cover brightness-110 contrast-105 saturate-105"
                 referrerPolicy="no-referrer"
+                loading={idx === 0 ? 'eager' : 'lazy'}
               />
-              {/* Complex Responsive Overlay Gradient to guarantee beautiful contrast for text */}
-              <div className="absolute inset-0 bg-gradient-to-r from-neutral-950 via-neutral-950/85 to-transparent md:bg-gradient-to-r md:from-neutral-950/90 md:via-neutral-950/70 md:to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/95 via-transparent to-neutral-950/40" />
-              <div className="absolute inset-0 bg-neutral-950/35" />
+              {/* Subtle premium deep navy overlay matching the theme */}
+              <div className="absolute inset-0 bg-[#163A5F]/45 mix-blend-multiply" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#163A5F]/45 via-[#163A5F]/15 to-transparent" />
             </div>
           ))}
         </div>
 
-        {/* Foreground Content Layout - Top/Center portion */}
-        <div className="relative z-10 w-full mt-auto mb-10 md:mb-12">
-          <div key={activeSlide} className="max-w-3xl space-y-5 text-left transition-all duration-500 animate-[fadeIn_0.5s_ease-out]">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white backdrop-blur-md text-xs font-semibold uppercase tracking-wider border border-white/10">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              {CAROUSEL_SLIDES[activeSlide].badge}
+        {/* Hero Content */}
+        <div className="relative z-10 w-full pl-[8vw] lg:pl-[10vw] pr-4 sm:pr-8 pt-10">
+          <div className="max-w-3xl">
+            <div className={`space-y-6 transition-all duration-500 ease-out transform ${textVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
+              {/* Headline */}
+              <h1 className="font-outfit text-white text-[34px] md:text-[44px] lg:text-[56px] font-[800] leading-[1.05] tracking-tight max-w-[700px]">
+                {CAROUSEL_SLIDES[activeSlide].titleHi}{' '}
+                <span className="text-secondary-container">{CAROUSEL_SLIDES[activeSlide].highlight}</span>
+              </h1>
+
+              {/* Description */}
+              <p className="text-slate-200/90 max-w-[600px] text-[18px] leading-[1.6]">
+                {CAROUSEL_SLIDES[activeSlide].descHi}
+              </p>
+
+              {/* CTAs */}
+              <div className="flex flex-wrap gap-3 pt-7">
+                <button
+                  onClick={() => navigate('/events')}
+                  className="px-6 py-3 rounded-xl bg-white text-primary font-semibold text-sm hover:bg-white/90 shadow-lg flex items-center gap-2 cursor-pointer transition-all duration-300 hover:shadow-xl hover:translate-y-[-1px]"
+                >
+                  Find Free Screening Camps <ChevronRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => navigate('/join-us')}
+                  className="px-6 py-3 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-sm hover:bg-white/20 backdrop-blur-sm transition-all duration-300 cursor-pointer"
+                >
+                  Join Our Mission
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Bar */}
+          <div className={`mt-10 glass-dark rounded-full px-[24px] min-h-[56px] py-2 md:py-0 inline-flex items-center flex-wrap gap-[16px] text-white max-w-[700px] w-fit transition-all duration-500 ease-out transform ${textVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
+            <span className="shrink-0 px-3 py-1 rounded-full bg-primary/15 text-slate-300 text-[10px] font-bold uppercase tracking-wider border border-primary/20">
+              {CAROUSEL_SLIDES[activeSlide].tag}
             </span>
-
-            <h1 className="font-display-lg text-white text-3xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tight drop-shadow-md">
-              {CAROUSEL_SLIDES[activeSlide].titleHi} <span className="text-secondary-container">{CAROUSEL_SLIDES[activeSlide].highlight}</span>
-            </h1>
-
-            <p className="font-body-lg text-slate-100 max-w-2xl text-sm md:text-base leading-relaxed drop-shadow-sm">
-              {CAROUSEL_SLIDES[activeSlide].descHi}
+            <p className="text-xs md:text-sm font-medium text-slate-200">
+              {CAROUSEL_SLIDES[activeSlide].title}
             </p>
+          </div>
+        </div>
+      </section>
 
-            <div className="flex flex-wrap gap-4 pt-2">
-              <button
-                onClick={() => navigate('/events')}
-                className="px-6 py-3 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-primary/90 hover:scale-[1.02] shadow-lg shadow-black/35 flex items-center gap-2 cursor-pointer transition-all duration-300"
-              >
-                Find Free Screening Camps <ChevronRight className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => navigate('/join-us')}
-                className="px-6 py-3 rounded-xl bg-white/15 border border-white/20 text-white font-semibold text-sm hover:bg-white/25 hover:border-white/40 backdrop-blur-md transition-all duration-300 cursor-pointer hover:scale-[1.02]"
-              >
-                Join Our Mission
-              </button>
+      {/* ═══════════════════════════════════════════
+          SECTION 2: IMPACT STATISTICS
+          ═══════════════════════════════════════════ */}
+      <section className="relative z-10 -mt-1 bg-white border-b border-outline-variant/10">
+        <div className="section-container py-10 md:py-14">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {[
+              { label: 'Free Screenings', val: '14250+', icon: Microscope, desc: 'Across 6 states', color: 'text-primary bg-primary/8' },
+              { label: 'Hospital Partners', val: '4', icon: HeartPulse, desc: 'Apex, CareWell & more', color: 'text-primary-container bg-slate-50' },
+              { label: 'Awareness Camps', val: '180+', icon: MapPin, desc: 'Active community outreach', color: 'text-secondary bg-slate-50' },
+              { label: 'Navigation Cases', val: '1240+', icon: Compass, desc: 'Complete therapy navigation', color: 'text-secondary bg-secondary/8' }
+            ].map((st, i) => (
+              <RevealSection key={i} delay={i * 100}>
+                <div className="text-center p-5 md:p-6">
+                  <div className={`w-12 h-12 rounded-2xl ${st.color} flex items-center justify-center mx-auto mb-4`}>
+                    <st.icon className="w-5.5 h-5.5" />
+                  </div>
+                  <p className="font-outfit text-secondary text-3xl md:text-4xl font-extrabold tracking-tight">
+                    <AnimatedCounter value={st.val} />
+                  </p>
+                  <p className="text-sm font-semibold text-primary mt-1.5">{st.label}</p>
+                  <p className="text-xs text-on-surface-variant mt-0.5">{st.desc}</p>
+                </div>
+              </RevealSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════
+          SECTION 3: CORE PROGRAMS / PILLARS
+          ═══════════════════════════════════════════ */}
+      <section className="gradient-light py-16 md:py-20">
+        <div className="section-container">
+          <RevealSection>
+            <div className="section-header">
+              <span className="section-badge">Our Core Programs</span>
+              <h2 className="section-title text-2xl md:text-3xl">हमारे मुख्य उद्देश्य और स्तंभ</h2>
+              <p className="section-subtitle">
+                आधुनिक नैदानिक मार्गदर्शन और ग्रामीण जमीनी प्रयासों का समन्वय करके कैंसर देखभाल को सर्वसुलभ बनाना।
+              </p>
+            </div>
+          </RevealSection>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: Microscope, color: 'text-primary', bg: 'bg-primary/8',
+                title: 'निःशुल्क शुरुआती जांच शिविर (Early Screening Camps)',
+                desc: 'हम विशेषज्ञ ऑन्कोलॉजिस्ट के साथ सुसज्जित मोबाइल क्लीनिक संचालित करते हैं, जो ग्रामीणों के घर तक निःशुल्क मैमोग्राफी, मुख (oral) कैंसर और प्रिवेंटिव PAP जांच पहुँचाते हैं।'
+              },
+              {
+                icon: HeartHandshake, color: 'text-secondary', bg: 'bg-secondary/8',
+                title: 'संवेदनशील मरीज सहायता व रेफरल (Empathetic Navigation)',
+                desc: 'कैंसर की आशंका या निदान के समय मरीज और परिवार घबरा जाते हैं। हमारे प्रशिक्षित क्षेत्रीय स्वयंसेवक मरीजों को सही मार्गदर्शन, सेकंड ओपिनियन और सरकारी सहायता प्राप्त कराने में निरंतर मदद करते हैं।'
+              },
+              {
+                icon: BookOpen, color: 'text-secondary', bg: 'bg-slate-50',
+                title: 'स्वास्थ्य शिक्षा व रोकथाम (Clinical Education & Prevention)',
+                desc: 'कैंसर के शुरुआती चेतावनी संकेतों के बारे में जागरूकता फैलाना, स्व-जांच विधियाँ सिखाना और उपचार के बाद तेजी से स्वास्थ्य सुधार हेतु सही पोषण ढांचा प्रदान करना।'
+              }
+            ].map((item, i) => (
+              <RevealSection key={i} delay={i * 120}>
+                <div className="card-premium p-6 md:p-7 h-full">
+                  <div className={`w-12 h-12 rounded-2xl ${item.bg} ${item.color} flex items-center justify-center mb-5`}>
+                    <item.icon className="w-5.5 h-5.5" />
+                  </div>
+                  <h3 className="font-outfit text-primary text-base md:text-lg font-bold mb-3 leading-snug">{item.title}</h3>
+                  <p className="text-sm text-on-surface-variant leading-relaxed">{item.desc}</p>
+                </div>
+              </RevealSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════
+          SECTION 4: WHY CHOOSE US
+          ═══════════════════════════════════════════ */}
+      <section className="bg-white py-16 md:py-20">
+        <div className="section-container">
+          <RevealSection>
+            <div className="section-header">
+              <span className="section-badge">Why Cancer Aware Bharat</span>
+              <h2 className="section-title text-2xl md:text-3xl">What Sets Us Apart</h2>
+              <p className="section-subtitle">
+                Trusted by thousands of families for compassionate, accessible, and expert cancer care navigation.
+              </p>
+            </div>
+          </RevealSection>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { icon: Shield, title: 'Trusted Network', desc: 'Partnered with NABH-accredited oncology centers across India', color: 'text-primary bg-primary/8' },
+              { icon: Stethoscope, title: 'Expert Guidance', desc: 'Access to oncologists, nutritionists, and trained caseworkers', color: 'text-primary-container bg-slate-50' },
+              { icon: MapPin, title: 'Pan-India Reach', desc: 'Operating across 6+ states with plans for nationwide coverage', color: 'text-secondary bg-slate-50' },
+              { icon: Heart, title: 'Zero Cost Support', desc: 'All screening camps and navigation services are completely free', color: 'text-rose-500 bg-rose-50' },
+            ].map((item, i) => (
+              <RevealSection key={i} delay={i * 100}>
+                <div className="card-subtle p-6 h-full text-center">
+                  <div className={`w-14 h-14 rounded-2xl ${item.color} flex items-center justify-center mx-auto mb-4`}>
+                    <item.icon className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-outfit font-bold text-on-surface text-[15px] mb-2">{item.title}</h3>
+                  <p className="text-sm text-on-surface-variant leading-relaxed">{item.desc}</p>
+                </div>
+              </RevealSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════
+          SECTION 5: SCREENING RISK ASSESSMENT
+          ═══════════════════════════════════════════ */}
+      <section className="gradient-light py-16 md:py-20">
+        <div className="section-container">
+          <div className="card-premium !rounded-3xl overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-12">
+              {/* Left Info Panel */}
+              <div className="lg:col-span-5 gradient-primary text-white p-7 md:p-10 flex flex-col justify-between relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                  <Activity className="w-40 h-40" />
+                </div>
+                <div className="space-y-4 relative z-10">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 text-white/90 text-[10px] font-bold uppercase tracking-wider border border-white/10">
+                    <Sparkles className="w-3 h-3" /> Interactive Assessment
+                  </span>
+                  <h3 className="font-outfit text-xl md:text-2xl font-bold leading-snug">Cancer Screening Guidance Tool</h3>
+                  <p className="text-sm text-white/80 leading-relaxed">
+                    Answer 4 simple anonymous questions to understand which cancer screening guidelines apply to you or your family member based on medical standards in India.
+                  </p>
+                </div>
+                <div className="p-4 bg-white/10 rounded-xl text-xs text-white/70 mt-6 border border-white/5">
+                  ⚠️ <strong className="text-white/90">Disclaimer:</strong> This tool is purely for screening educational guidance. It is NOT a clinical diagnosis. Always consult with a registered oncologist.
+                </div>
+              </div>
+
+              {/* Right Quiz Panel */}
+              <div className="lg:col-span-7 p-6 md:p-8 lg:p-10 flex flex-col justify-between min-h-[380px]">
+                {!quizSubmitted ? (
+                  <>
+                    {/* Progress Bar */}
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between text-xs text-on-surface-variant mb-2">
+                        <span className="font-semibold">Step {quizStep + 1} of 4</span>
+                        <span>{Math.round(((quizStep + 1) / 4) * 100)}% Complete</span>
+                      </div>
+                      <div className="h-1.5 bg-outline-variant/20 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
+                          style={{ width: `${((quizStep + 1) / 4) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {quizStep === 0 && (
+                      <div className="space-y-4 flex-1">
+                        <p className="font-semibold text-sm text-primary">Select Gender Assigned at Birth</p>
+                        <div className="grid grid-cols-3 gap-3">
+                          {['Female', 'Male', 'Prefer not to say'].map(g => (
+                            <button
+                              key={g}
+                              onClick={() => setGender(g)}
+                              className={`p-4 rounded-xl border text-sm font-semibold transition-all cursor-pointer ${gender === g
+                                ? 'bg-primary text-white border-primary shadow-md'
+                                : 'bg-white border-outline-variant/30 hover:border-primary/30 hover:bg-primary/[0.02]'
+                              }`}
+                            >
+                              {g}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {quizStep === 1 && (
+                      <div className="space-y-4 flex-1">
+                        <p className="font-semibold text-sm text-primary">Select Patient Age Bracket</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {['Under 20', '20 - 39', '40 - 54', '55+'].map(age => (
+                            <button
+                              key={age}
+                              onClick={() => setAgeRange(age)}
+                              className={`p-3.5 rounded-xl border text-sm font-semibold transition-all cursor-pointer ${ageRange === age
+                                ? 'bg-primary text-white border-primary shadow-md'
+                                : 'bg-white border-outline-variant/30 hover:border-primary/30 hover:bg-primary/[0.02]'
+                              }`}
+                            >
+                              {age}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {quizStep === 2 && (
+                      <div className="space-y-4 flex-1">
+                        <p className="font-semibold text-sm text-primary">Lifestyle risk factors (Select all that apply)</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {[
+                            { id: 'smoke', label: 'Tobacco smoking / vaping' },
+                            { id: 'chew', label: 'Chewing betel nut (supari) or tobacco' },
+                            { id: 'alcohol', label: 'Regular alcohol consumption' },
+                            { id: 'family', label: 'Family history of cancer (first-degree)' }
+                          ].map(h => (
+                            <button
+                              key={h.id}
+                              onClick={() => toggleHabit(h.id)}
+                              className={`p-3.5 rounded-xl border text-sm text-left font-medium transition-all flex justify-between items-center cursor-pointer ${habits.includes(h.id)
+                                ? 'bg-primary text-white border-primary shadow-md'
+                                : 'bg-white border-outline-variant/30 hover:border-primary/30 hover:bg-primary/[0.02]'
+                              }`}
+                            >
+                              <span>{h.label}</span>
+                              {habits.includes(h.id) && <CheckCircle2 className="w-4 h-4 text-white shrink-0" />}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {quizStep === 3 && (
+                      <div className="space-y-4 flex-1">
+                        <p className="font-semibold text-sm text-primary">Any warning symptoms? (Select all that apply)</p>
+                        <div className="grid grid-cols-1 gap-2.5">
+                          {[
+                            { id: 'lump', label: 'A new painless lump in breast, neck, or underarms' },
+                            { id: 'cough', label: 'Persistent dry cough or hoarseness for > 3 weeks' },
+                            { id: 'ulcer', label: 'An ulcer/patch in the mouth that doesn\'t heal' },
+                            { id: 'weight', label: 'Unexplained extreme weight loss (>5 kg in 1 month)' },
+                            { id: 'none', label: 'No symptoms, seeking general wellness guidelines' }
+                          ].map(s => (
+                            <button
+                              key={s.id}
+                              onClick={() => toggleSymptom(s.id)}
+                              className={`p-3.5 rounded-xl border text-sm text-left font-medium transition-all flex justify-between items-center cursor-pointer ${symptoms.includes(s.id)
+                                ? 'bg-primary text-white border-primary shadow-md'
+                                : 'bg-white border-outline-variant/30 hover:border-primary/30 hover:bg-primary/[0.02]'
+                              }`}
+                            >
+                              <span>{s.label}</span>
+                              {symptoms.includes(s.id) && <CheckCircle2 className="w-4 h-4 text-white shrink-0" />}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Controls */}
+                    <div className="flex justify-between items-center pt-5 border-t border-outline-variant/15 mt-4">
+                      <div className="flex space-x-1.5">
+                        {[0, 1, 2, 3].map(stepNum => (
+                          <span key={stepNum} className={`w-8 h-1 rounded-full transition-all ${stepNum <= quizStep ? 'bg-primary' : 'bg-outline-variant/25'}`} />
+                        ))}
+                      </div>
+                      <div className="flex space-x-2.5">
+                        {quizStep > 0 && (
+                          <button onClick={() => setQuizStep(prev => prev - 1)} className="btn-secondary !py-2 !px-4 !text-xs !rounded-lg">Back</button>
+                        )}
+                        {quizStep < 3 ? (
+                          <button
+                            onClick={() => setQuizStep(prev => prev + 1)}
+                            disabled={(quizStep === 0 && !gender) || (quizStep === 1 && !ageRange)}
+                            className="btn-primary !py-2 !px-5 !text-xs !rounded-lg disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                          >
+                            Next <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <button onClick={() => setQuizSubmitted(true)} className="btn-accent !py-2 !px-5 !text-xs !rounded-lg">
+                            Calculate Guidelines
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* Results Screen */
+                  <div className="space-y-4 flex flex-col justify-between h-full">
+                    <div>
+                      <h4 className="font-outfit text-lg text-primary font-bold mb-1">Your Screening Guidance</h4>
+                      <p className="text-xs text-on-surface-variant border-b border-outline-variant/15 pb-3 mb-3">
+                        Demographics: {gender} • Age {ageRange} • Habits: {habits.length > 0 ? habits.length : 'None selected'}
+                      </p>
+                      <div className="space-y-3">
+                        {symptoms.length > 0 && !symptoms.includes('none') ? (
+                          <div className="p-4 bg-red-50 border border-red-100 text-red-800 rounded-xl text-sm space-y-1">
+                            <p className="font-bold flex items-center gap-1.5"><ShieldAlert className="w-4 h-4 text-red-600" /> Clinical Review Recommended</p>
+                            <p className="text-xs leading-relaxed">You reported experiencing a warning sign. Consult an oncologist for a clinical exam within 2 weeks. Do not worry, but prompt checking is vital.</p>
+                          </div>
+                        ) : (
+                          <div className="p-4 bg-slate-50 border border-slate-100 text-slate-800 rounded-xl text-sm space-y-1">
+                            <p className="font-bold flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-primary-container" /> Healthy Status (Asymptomatic)</p>
+                            <p className="text-xs leading-relaxed">Great! Regular preventive screening is still recommended.</p>
+                          </div>
+                        )}
+                        <div className="p-4 bg-surface-container-low rounded-xl text-xs space-y-2">
+                          <p className="font-bold text-primary text-sm">Standard Screening Protocols for you:</p>
+                          <ul className="list-disc pl-4 space-y-1.5 text-on-surface-variant">
+                            {gender === 'Female' && (ageRange === '40 - 54' || ageRange === '55+') && (
+                              <li><strong>Mammography:</strong> Annual mammogram for women starting age 40-45 to check for early breast cancer.</li>
+                            )}
+                            {gender === 'Female' && (
+                              <li><strong>PAP Smear & HPV DNA:</strong> Every woman aged 21-65 should undergo a cervical PAP exam or HPV screen every 3-5 years.</li>
+                            )}
+                            {(habits.includes('smoke') || habits.includes('chew')) && (
+                              <li><strong>Oral Examination:</strong> Since you indicated tobacco/betel nut habits, an annual oral cavity examination by a dental specialist is recommended.</li>
+                            )}
+                            {habits.includes('smoke') && ageRange === '55+' && (
+                              <li><strong>Low-Dose CT:</strong> For long-term smokers over 50, an annual low-dose chest CT screen is recommended.</li>
+                            )}
+                            <li><strong>Breast Self-Exam:</strong> Conduct monthly self-exams 5 days after your period.</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2.5 pt-4 border-t border-outline-variant/15">
+                      <button onClick={resetQuiz} className="btn-secondary !py-2.5 !text-xs !rounded-lg flex-shrink-0">Retake Assessment</button>
+                      <button onClick={onOpenEnquiry} className="btn-primary !py-2.5 !text-xs !rounded-lg flex-grow justify-center">Book Free Cancer Screening Now</button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Elegant Horizontal Bottom Active Slide Spotlight Bar */}
-        <div className="relative z-10 w-full mt-auto">
-          <div className="bg-black/45 backdrop-blur-md border border-white/10 rounded-2xl p-4 md:p-5 text-white shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 flex-1">
-              <span className="shrink-0 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/30 self-start md:self-auto">
-                {CAROUSEL_SLIDES[activeSlide].tag}
-              </span>
-              <p className="font-title-md text-xs md:text-sm font-semibold leading-snug text-slate-100 max-w-3xl">
-                {CAROUSEL_SLIDES[activeSlide].title}
-              </p>
+      {/* ═══════════════════════════════════════════
+          SECTION 6: CANCER TYPES
+          ═══════════════════════════════════════════ */}
+      <section className="bg-white py-16 md:py-20">
+        <div className="section-container">
+          <RevealSection>
+            <div className="section-header">
+              <span className="section-badge">Cancer Awareness</span>
+              <h2 className="section-title text-2xl md:text-3xl">Types of Cancer We Address</h2>
+              <p className="section-subtitle">Early detection can save lives. Learn about the most common cancers in India.</p>
             </div>
+          </RevealSection>
 
-            <div className="flex items-center justify-between md:justify-end gap-6 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-white/10">
-              {/* Dots indicator */}
-              <div className="flex gap-1.5">
-                {CAROUSEL_SLIDES.map((_, idx) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            {[
+              { name: 'Oral Cancer', hindi: 'मुख कैंसर', icon: '🦷', stat: '#1 in Indian Men', color: 'from-slate-50 to-slate-50 border-slate-100', accent: 'text-slate-700' },
+              { name: 'Breast Cancer', hindi: 'स्तन कैंसर', icon: '🎗️', stat: '#1 in Indian Women', color: 'from-pink-50 to-rose-50 border-pink-100', accent: 'text-rose-700' },
+              { name: 'Cervical Cancer', hindi: 'गर्भाशय कैंसर', icon: '🔬', stat: 'HPV Preventable', color: 'from-purple-50 to-violet-50 border-purple-100', accent: 'text-purple-700' },
+              { name: 'Lung Cancer', hindi: 'फेफड़ों का कैंसर', icon: '🫁', stat: 'Tobacco Linked', color: 'from-sky-50 to-slate-50 border-sky-100', accent: 'text-sky-700' },
+              { name: 'Blood Cancer', hindi: 'रक्त कैंसर', icon: '🩸', stat: 'Early Signs Matter', color: 'from-red-50 to-rose-50 border-red-100', accent: 'text-red-700' },
+            ].map((cancer, i) => (
+              <RevealSection key={i} delay={i * 80}>
+                <div className={`rounded-2xl border bg-gradient-to-br ${cancer.color} p-5 text-center hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-default group`}>
+                  <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{cancer.icon}</div>
+                  <h3 className={`font-outfit font-bold text-sm ${cancer.accent}`}>{cancer.name}</h3>
+                  <p className="text-[11px] text-on-surface-variant mt-0.5">{cancer.hindi}</p>
+                  <span className="inline-block mt-3 px-2.5 py-1 rounded-full bg-white/70 text-[10px] font-semibold text-on-surface-variant">{cancer.stat}</span>
+                </div>
+              </RevealSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
+
+      {/* ═══════════════════════════════════════════
+          SECTION 8: HOW WE WORK (TIMELINE)
+          ═══════════════════════════════════════════ */}
+      <section className="bg-white py-16 md:py-20">
+        <div className="section-container">
+          <RevealSection>
+            <div className="section-header">
+              <span className="section-badge">How We Work</span>
+              <h2 className="section-title text-2xl md:text-3xl">Your Journey With Us</h2>
+              <p className="section-subtitle">From your first enquiry to complete support — here's how we help.</p>
+            </div>
+          </RevealSection>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+            {/* Connection line (desktop) */}
+            <div className="hidden lg:block absolute top-[3.5rem] left-[12%] right-[12%] h-[2px] bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20" />
+
+            {[
+              { step: '01', icon: ClipboardCheck, title: 'Register', desc: 'Submit a patient enquiry or register for a screening camp through our portal', color: 'bg-primary text-white' },
+              { step: '02', icon: SearchIcon, title: 'Screen', desc: 'Attend a free screening camp or get connected with a specialist for evaluation', color: 'bg-primary-container text-white' },
+              { step: '03', icon: UserCheck, title: 'Navigate', desc: 'Our trained caseworkers guide you to the right hospital and government assistance', color: 'bg-secondary text-white' },
+              { step: '04', icon: HeartHandshake, title: 'Support', desc: 'Continuous follow-up, emotional support, and complete therapy navigation until recovery', color: 'bg-secondary text-white' },
+            ].map((item, i) => (
+              <RevealSection key={i} delay={i * 150}>
+                <div className="text-center relative">
+                  <div className={`w-16 h-16 rounded-2xl ${item.color} flex items-center justify-center mx-auto mb-4 shadow-lg relative z-10`}>
+                    <item.icon className="w-7 h-7" />
+                  </div>
+                  <span className="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest">Step {item.step}</span>
+                  <h3 className="font-outfit font-bold text-on-surface text-base mt-1 mb-2">{item.title}</h3>
+                  <p className="text-sm text-on-surface-variant leading-relaxed max-w-[250px] mx-auto">{item.desc}</p>
+                </div>
+              </RevealSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════
+          SECTION 9: ACTIVE SCREENING CAMPS
+          ═══════════════════════════════════════════ */}
+      <section className="gradient-light py-16 md:py-20">
+        <div className="section-container">
+          <RevealSection>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
+              <div>
+                <span className="section-badge mb-3">Upcoming Events</span>
+                <h2 className="section-title text-2xl md:text-3xl">Active Screening Camps</h2>
+                <p className="text-sm text-on-surface-variant mt-1">Don't postpone your check-ups. Register in 30 seconds.</p>
+              </div>
+              <button
+                onClick={() => navigate('/events')}
+                className="btn-secondary !py-2 !px-4 !text-xs shrink-0"
+              >
+                All Events & Camps <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </RevealSection>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {INITIAL_EVENTS.slice(0, 2).map((camp, i) => (
+              <RevealSection key={camp.id} delay={i * 120}>
+                <div className="card-premium overflow-hidden flex flex-col h-full">
+                  <div className="h-48 relative bg-surface-container-highest overflow-hidden">
+                    <img src={camp.image} alt={camp.title} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+                    <div className="absolute top-3 left-3">
+                      <span className="glass text-primary text-[10px] font-bold px-3 py-1.5 rounded-full shadow-sm">{camp.type}</span>
+                    </div>
+                  </div>
+                  <div className="p-5 md:p-6 flex flex-col flex-1">
+                    <h3 className="font-outfit text-base font-bold text-on-surface mb-2 line-clamp-1">{camp.title}</h3>
+                    <p className="text-xs font-semibold text-primary flex items-center gap-1.5 mb-2">
+                      <Calendar className="w-3.5 h-3.5" /> {camp.date} • {camp.time}
+                    </p>
+                    <p className="text-xs text-on-surface-variant line-clamp-2 leading-relaxed flex-1">{camp.description}</p>
+
+                    {/* Capacity Bar */}
+                    <div className="mt-4 pt-4 border-t border-outline-variant/10">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] text-on-surface-variant">
+                          <strong className="text-primary">{camp.capacity - camp.registeredCount}</strong> slots remaining
+                        </span>
+                        <span className="text-[10px] text-on-surface-variant/60">{camp.registeredCount}/{camp.capacity}</span>
+                      </div>
+                      <div className="h-1.5 bg-outline-variant/15 rounded-full overflow-hidden mb-3">
+                        <div
+                          className="h-full bg-primary/70 rounded-full transition-all"
+                          style={{ width: `${(camp.registeredCount / camp.capacity) * 100}%` }}
+                        />
+                      </div>
+                      <button onClick={onOpenEnquiry} className="btn-primary !py-2 !px-4 !text-xs !rounded-lg w-full justify-center">
+                        Register Now <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </RevealSection>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════
+          SECTION 10: TESTIMONIALS
+          ═══════════════════════════════════════════ */}
+      <section className="bg-white py-16 md:py-20">
+        <div className="section-container">
+          <RevealSection>
+            <div className="section-header">
+              <span className="section-badge">Testimonials</span>
+              <h2 className="section-title text-2xl md:text-3xl">What People Say</h2>
+              <p className="section-subtitle">Real stories from patients, volunteers, and healthcare partners.</p>
+            </div>
+          </RevealSection>
+
+          <div className="max-w-3xl mx-auto">
+            <div className="card-premium p-8 md:p-10 text-center relative">
+              <Quote className="w-10 h-10 text-primary/10 mx-auto mb-4" />
+              <div key={activeTestimonial} className="animate-fade-in">
+                <p className="text-base md:text-lg text-on-surface leading-relaxed italic mb-6">
+                  "{testimonials[activeTestimonial].quote}"
+                </p>
+                <div className="flex items-center gap-1 justify-center mb-3">
+                  {[...Array(testimonials[activeTestimonial].rating)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-secondary text-secondary" />
+                  ))}
+                </div>
+                <p className="font-outfit font-bold text-on-surface text-sm">{testimonials[activeTestimonial].name}</p>
+                <p className="text-xs text-on-surface-variant mt-0.5">{testimonials[activeTestimonial].role}</p>
+              </div>
+
+              {/* Dots */}
+              <div className="flex justify-center gap-2 mt-6">
+                {testimonials.map((_, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setActiveSlide(idx)}
-                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${idx === activeSlide ? 'w-5 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'
-                      }`}
-                    aria-label={`Go to slide ${idx + 1}`}
+                    onClick={() => setActiveTestimonial(idx)}
+                    className={`w-2 h-2 rounded-full transition-all cursor-pointer ${idx === activeTestimonial ? 'bg-primary w-6' : 'bg-outline-variant/30 hover:bg-outline-variant/60'}`}
+                    aria-label={`Testimonial ${idx + 1}`}
                   />
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-slate-400 font-medium tracking-wider uppercase mr-1">
-                  {activeSlide + 1} / {CAROUSEL_SLIDES.length}
-                </span>
-                <button
-                  onClick={prevSlide}
-                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all cursor-pointer text-white"
-                  aria-label="Previous Slide"
-                >
-                  <ChevronLeft className="w-4.5 h-4.5" />
-                </button>
-                <button
-                  onClick={nextSlide}
-                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all cursor-pointer text-white"
-                  aria-label="Next Slide"
-                >
-                  <ChevronRight className="w-4.5 h-4.5" />
-                </button>
+      {/* ═══════════════════════════════════════════
+          SECTION 10.1: PARTNERSHIPS (CONTINUOUS STRIP)
+          ═══════════════════════════════════════════ */}
+      <style>{`
+        .torn-left {
+          -webkit-mask-image: url("data:image/svg+xml,%3Csvg width='100' height='100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,0 L100,0 L100,95 C92,90 84,100 76,93 C68,88 60,98 52,94 C44,88 36,100 28,95 C20,89 12,99 4,94 C0,91 0,95 0,95 Z' fill='black'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg width='100' height='100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,0 L100,0 L100,95 C92,90 84,100 76,93 C68,88 60,98 52,94 C44,88 36,100 28,95 C20,89 12,99 4,94 C0,91 0,95 0,95 Z' fill='black'/%3E%3C/svg%3E");
+          -webkit-mask-size: 100% 100%;
+          mask-size: 100% 100%;
+        }
+        .torn-right {
+          -webkit-mask-image: url("data:image/svg+xml,%3Csvg width='100' height='100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,100 L100,100 L100,5 C92,10 84,0 76,7 C68,12 60,2 52,6 C44,12 36,0 28,5 C20,11 12,1 4,6 C0,9 0,5 0,5 Z' fill='black'/%3E%3C/svg%3E");
+          mask-image: url("data:image/svg+xml,%3Csvg width='100' height='100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,100 L100,100 L100,5 C92,10 84,0 76,7 C68,12 60,2 52,6 C44,12 36,0 28,5 C20,11 12,1 4,6 C0,9 0,5 0,5 Z' fill='black'/%3E%3C/svg%3E");
+          -webkit-mask-size: 100% 100%;
+          mask-size: 100% 100%;
+        }
+        @media (min-width: 1024px) {
+          .torn-left {
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg width='100' height='100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,0 L95,0 C87,10 100,20 92,30 C85,40 98,50 91,60 C86,70 100,80 93,90 C89,96 95,100 95,100 L0,100 Z' fill='black'/%3E%3C/svg%3E");
+            mask-image: url("data:image/svg+xml,%3Csvg width='100' height='100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,0 L95,0 C87,10 100,20 92,30 C85,40 98,50 91,60 C86,70 100,80 93,90 C89,96 95,100 95,100 L0,100 Z' fill='black'/%3E%3C/svg%3E");
+          }
+          .torn-right {
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg width='100' height='100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M100,0 L5,0 C13,10 0,20 8,30 C15,40 2,50 9,60 C14,70 0,80 7,90 C11,96 5,100 5,100 L100,100 Z' fill='black'/%3E%3C/svg%3E");
+            mask-image: url("data:image/svg+xml,%3Csvg width='100' height='100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M100,0 L5,0 C13,10 0,20 8,30 C15,40 2,50 9,60 C14,70 0,80 7,90 C11,96 5,100 5,100 L100,100 Z' fill='black'/%3E%3C/svg%3E");
+          }
+        }
+      `}</style>
+      <section className="w-full bg-neutral-900 overflow-hidden">
+        <div className="flex flex-col lg:flex-row w-full min-h-[500px] lg:h-[540px]">
+          
+          {/* Left Panel: Volunteer */}
+          <div className="torn-left relative flex-1 group min-h-[400px] z-10 -mb-8 lg:mb-0 lg:-mr-8">
+            <img src="/events/event-1.jpeg" alt="Volunteer" className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" />
+            <div className="absolute inset-0 bg-black/60 transition-colors duration-500" />
+            <div className="absolute inset-0 p-8 md:p-12 lg:pr-16 flex flex-col justify-center items-start text-left z-10">
+              <span className="inline-block px-3 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-[12px] md:text-[13px] font-bold uppercase tracking-widest text-white mb-4 border border-white/20">
+                Join Our Mission
+              </span>
+              <h3 className="font-outfit text-3xl md:text-[40px] font-bold text-white leading-[1.1] mb-4 tracking-tight">
+                Become A Volunteer
+              </h3>
+              <p className="text-white/80 text-[16px] md:text-[18px] font-light leading-relaxed mb-8 max-w-sm">
+                Join Cancer Aware Bharat as a volunteer and help spread cancer awareness, support screening camps, and make a meaningful impact in communities across India.
+              </p>
+              <button 
+                onClick={() => navigate('/volunteer/login')}
+                className="bg-[#0B6B62] text-white text-[15px] md:text-[16px] font-semibold h-[48px] md:h-[50px] rounded-full px-7 flex items-center justify-center gap-2 hover:bg-[#0d857a] hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer group/btn"
+              >
+                Become a Volunteer <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          </div>
+
+          {/* Center Panel: Image with Play Button */}
+          <div className="relative flex-1 group min-h-[400px] z-0">
+            <img src="/dr-ajay-kumar.jpg" alt="Cancer Awareness" className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" />
+            
+            {/* Play Button */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <div className="w-[90px] h-[90px] lg:w-[100px] lg:h-[100px] rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center group-hover:bg-white/20 group-hover:scale-105 group-hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] transition-all duration-500 shadow-2xl animate-[pulse_3s_ease-in-out_infinite]">
+                <Play className="w-8 h-8 lg:w-10 lg:h-10 text-white fill-white ml-2 transition-transform duration-300 group-hover:scale-110" />
               </div>
             </div>
           </div>
+
+          {/* Right Panel: Hospital Partner */}
+          <div className="torn-right relative flex-1 group min-h-[400px] z-10 -mt-8 lg:mt-0 lg:-ml-8">
+            <img src="/events/event-4.jpeg" alt="Partner" className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" />
+            <div className="absolute inset-0 bg-black/60 transition-colors duration-500" />
+            <div className="absolute inset-0 p-8 md:p-12 lg:pl-16 flex flex-col justify-center items-start text-left z-10">
+              <span className="inline-block px-3 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-[12px] md:text-[13px] font-bold uppercase tracking-widest text-white mb-4 border border-white/20">
+                Partner With Us
+              </span>
+              <h3 className="font-outfit text-3xl md:text-[40px] font-bold text-white leading-[1.1] mb-4 tracking-tight">
+                Become A Health Centre Partner
+              </h3>
+              <p className="text-white/80 text-[16px] md:text-[18px] font-light leading-relaxed mb-8 max-w-sm">
+                Join our nationwide network of hospitals, clinics, diagnostic centres, and healthcare institutions working together to improve cancer awareness, early detection, and patient support.
+              </p>
+              <button 
+                onClick={() => navigate('/hospital/login')}
+                className="bg-[#0B6B62] text-white text-[15px] md:text-[16px] font-semibold h-[48px] md:h-[50px] rounded-full px-7 flex items-center justify-center gap-2 hover:bg-[#0d857a] hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer group/btn"
+              >
+                Partner as Health Centre <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          </div>
+
         </div>
       </section>
 
-      {/* Real Impact Live Stats */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Free Screenings', val: '14,250+', desc: 'Across 6 states' },
-          { label: 'Hospital Partners', val: '4 Centers', desc: 'Apex, CareWell & more' },
-          { label: 'Rural Awareness', val: '180+ Camps', desc: 'Active community mobilization' },
-          { label: 'Navigation Cases', val: '1,240+', desc: 'Complete therapy navigation' }
-        ].map((st, i) => (
-          <div key={i} className="bg-white rounded-2xl p-5 border border-outline-variant/30 text-center shadow-xs">
-            <p className="font-headline-lg text-primary text-3xl font-black">
-              <AnimatedCounter value={st.val} />
-            </p>
-            <p className="font-label-sm text-xs font-bold text-on-surface mt-1">{st.label}</p>
-            <p className="font-caption text-[11px] text-on-surface-variant mt-0.5">{st.desc}</p>
-          </div>
-        ))}
-      </section>
+      <TeamShowcase />
 
-      {/* Pillars of Purpose / Core Programs */}
-      <section className="space-y-6">
-        <div className="text-center max-w-2xl mx-auto space-y-2">
-          <h2 className="font-headline-lg text-primary text-2xl md:text-3xl font-extrabold">हमारे मुख्य उद्देश्य और स्तंभ</h2>
-          <p className="font-body-md text-on-surface-variant text-sm">
-            आधुनिक नैदानिक मार्गदर्शन और ग्रामीण जमीनी प्रयासों का समन्वय करके कैंसर देखभाल को सर्वसुलभ बनाना।
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white border border-outline-variant/40 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
-              <Microscope className="w-5.5 h-5.5" />
+      {/* ═══════════════════════════════════════════
+          SECTION 10.2: TYPES OF CANCER WE ADDRESS
+          ═══════════════════════════════════════════ */}
+      <section className="gradient-light py-16 md:py-20">
+        <div className="section-container">
+          <RevealSection>
+            <div className="section-header">
+              <span className="section-badge">Cancer Awareness</span>
+              <h2 className="section-title text-2xl md:text-3xl">Types of Cancer We Address</h2>
+              <p className="section-subtitle max-w-2xl mx-auto">
+                Early detection can save lives. Learn about the most common cancers affecting people across India.
+              </p>
             </div>
-            <h3 className="font-title-md text-primary mb-2">निःशुल्क शुरुआती जांच शिविर (Early Screening Camps)</h3>
-            <p className="font-body-md text-sm text-on-surface-variant leading-relaxed">
-              हम विशेषज्ञ ऑन्कोलॉजिस्ट के साथ सुसज्जित मोबाइल क्लीनिक संचालित करते हैं, जो ग्रामीणों के घर तक निःशुल्क मैमोग्राफी, मुख (oral) कैंसर और प्रिवेंटिव PAP जांच पहुँचाते हैं।
-            </p>
-          </div>
+          </RevealSection>
 
-          <div className="bg-white border border-outline-variant/40 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
-            <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center mb-4">
-              <HeartHandshake className="w-5.5 h-5.5" />
-            </div>
-            <h3 className="font-title-md text-primary mb-2">संवेदनशील मरीज सहायता व रेफरल (Empathetic Navigation)</h3>
-            <p className="font-body-md text-sm text-on-surface-variant leading-relaxed">
-              कैंसर की आशंका या निदान के समय मरीज और परिवार घबरा जाते हैं। हमारे प्रशिक्षित क्षेत्रीय स्वयंसेवक मरीजों को सही मार्गदर्शन, सेकंड ओपिनियन और सरकारी सहायता प्राप्त कराने में निरंतर मदद करते हैं।
-            </p>
-          </div>
-
-          <div className="bg-white border border-outline-variant/40 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-4">
-              <BookOpen className="w-5.5 h-5.5" />
-            </div>
-            <h3 className="font-title-md text-primary mb-2">स्वास्थ्य शिक्षा व रोकथाम (Clinical Education & Prevention)</h3>
-            <p className="font-body-md text-sm text-on-surface-variant leading-relaxed">
-              कैंसर के शुरुआती चेतावनी संकेतों के बारे में जागरूकता फैलाना, स्व-जांच विधियाँ सिखाना और उपचार के बाद तेजी से स्वास्थ्य सुधार हेतु सही पोषण ढांचा प्रदान करना।
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Interactive Screening Risk Assessment Widget */}
-      <section className="bg-surface-container-low border border-primary-fixed-dim/40 rounded-3xl p-6 md:p-10 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-          <Activity className="w-48 h-48 text-primary" />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-5 space-y-4">
-            <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary rounded-full">Interactive Assessment</span>
-            <h3 className="font-headline-lg text-primary text-xl md:text-2xl font-bold">Cancer Screening Guidance Tool</h3>
-            <p className="font-body-md text-sm text-on-surface-variant leading-relaxed">
-              Answer 4 simple anonymous questions to understand which cancer screening guidelines (oral, mammogram, chest scan) apply to you or your family member based on medical standards in India.
-            </p>
-            <div className="p-3 bg-white/80 rounded-xl border border-outline-variant/20 text-xs text-on-surface-variant">
-              ⚠️ <strong>Disclaimer:</strong> This tool is purely for screening educational guidance. It is NOT a clinical diagnosis. Always consult with a registered oncologist.
-            </div>
-          </div>
-
-          <div className="lg:col-span-7 bg-white p-6 rounded-2xl border border-outline-variant/30 shadow-sm min-h-[300px] flex flex-col justify-between">
-            {!quizSubmitted ? (
-              <>
-                {/* Step 1: Gender */}
-                {quizStep === 0 && (
-                  <div className="space-y-4">
-                    <p className="font-title-md text-sm text-primary font-bold">Step 1: Select Gender Assigned at Birth</p>
-                    <div className="grid grid-cols-3 gap-3">
-                      {['Female', 'Male', 'Prefer not to say'].map(g => (
-                        <button
-                          key={g}
-                          onClick={() => setGender(g)}
-                          className={`p-4 rounded-xl border text-sm font-semibold transition-all cursor-pointer ${gender === g
-                              ? 'bg-primary text-white border-primary shadow-sm'
-                              : 'bg-surface-container-lowest border-outline-variant hover:bg-surface-container-low'
-                            }`}
-                        >
-                          {g}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 2: Age range */}
-                {quizStep === 1 && (
-                  <div className="space-y-4">
-                    <p className="font-title-md text-sm text-primary font-bold">Step 2: Select Patient Age Bracket</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {['Under 20', '20 - 39', '40 - 54', '55+'].map(age => (
-                        <button
-                          key={age}
-                          onClick={() => setAgeRange(age)}
-                          className={`p-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${ageRange === age
-                              ? 'bg-primary text-white border-primary shadow-sm'
-                              : 'bg-surface-container-lowest border-outline-variant hover:bg-surface-container-low'
-                            }`}
-                        >
-                          {age}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 3: Habits */}
-                {quizStep === 2 && (
-                  <div className="space-y-4">
-                    <p className="font-title-md text-sm text-primary font-bold">Step 3: Lifestyle risk factors (Select all that apply)</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {[
-                        { id: 'smoke', label: 'Tobacco smoking / vaping' },
-                        { id: 'chew', label: 'Chewing betel nut (supari) or tobacco' },
-                        { id: 'alcohol', label: 'Regular alcohol consumption' },
-                        { id: 'family', label: 'Family history of cancer (first-degree)' }
-                      ].map(h => {
-                        const hasHabit = habits.includes(h.id);
-                        return (
-                          <button
-                            key={h.id}
-                            onClick={() => toggleHabit(h.id)}
-                            className={`p-3 rounded-xl border text-xs text-left font-semibold transition-all flex justify-between items-center cursor-pointer ${hasHabit
-                                ? 'bg-primary text-white border-primary shadow-sm'
-                                : 'bg-surface-container-lowest border-outline-variant hover:bg-surface-container-low'
-                              }`}
-                          >
-                            <span>{h.label}</span>
-                            {hasHabit && <CheckCircle2 className="w-4 h-4 text-white" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 4: Symptoms */}
-                {quizStep === 3 && (
-                  <div className="space-y-4">
-                    <p className="font-title-md text-sm text-primary font-bold">Step 4: Any warning symptoms? (Select all that apply)</p>
-                    <div className="grid grid-cols-1 gap-2">
-                      {[
-                        { id: 'lump', label: 'A new painless lump in breast, neck, or underarms' },
-                        { id: 'cough', label: 'Persistent dry cough or hoarseness for > 3 weeks' },
-                        { id: 'ulcer', label: 'An ulcer/patch in the mouth that doesn\'t heal' },
-                        { id: 'weight', label: 'Unexplained extreme weight loss (>5 kg in 1 month)' },
-                        { id: 'none', label: 'No symptoms, seeking general wellness guidelines' }
-                      ].map(s => {
-                        const hasSymp = symptoms.includes(s.id);
-                        return (
-                          <button
-                            key={s.id}
-                            onClick={() => toggleSymptom(s.id)}
-                            className={`p-3 rounded-xl border text-xs text-left font-semibold transition-all flex justify-between items-center cursor-pointer ${hasSymp
-                                ? 'bg-primary text-white border-primary shadow-sm'
-                                : 'bg-surface-container-lowest border-outline-variant hover:bg-surface-container-low'
-                              }`}
-                          >
-                            <span>{s.label}</span>
-                            {hasSymp && <CheckCircle2 className="w-4 h-4 text-white" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Controls */}
-                <div className="flex justify-between items-center pt-6 border-t border-outline-variant/20 mt-4">
-                  <div className="flex space-x-1">
-                    {[0, 1, 2, 3].map(stepNum => (
-                      <span
-                        key={stepNum}
-                        className={`w-4 h-1.5 rounded-full ${stepNum === quizStep ? 'bg-primary' : 'bg-outline-variant/40'}`}
-                      />
-                    ))}
-                  </div>
-                  <div className="flex space-x-2">
-                    {quizStep > 0 && (
-                      <button
-                        onClick={() => setQuizStep(prev => prev - 1)}
-                        className="px-4 py-1.5 rounded-lg border border-outline text-xs font-semibold hover:bg-surface-container-low cursor-pointer"
-                      >
-                        Back
-                      </button>
-                    )}
-                    {quizStep < 3 ? (
-                      <button
-                        onClick={() => setQuizStep(prev => prev + 1)}
-                        disabled={(quizStep === 0 && !gender) || (quizStep === 1 && !ageRange)}
-                        className="px-4 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                      >
-                        Next
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setQuizSubmitted(true)}
-                        className="px-5 py-1.5 rounded-lg bg-secondary text-white text-xs font-bold hover:opacity-95 shadow cursor-pointer"
-                      >
-                        Calculate Guidelines
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </>
-            ) : (
-              /* Results Screen */
-              <div className="space-y-4 flex flex-col justify-between h-full">
-                <div>
-                  <h4 className="font-headline-lg text-lg text-primary font-bold mb-1">Your Screening Guidance</h4>
-                  <p className="text-xs text-on-surface-variant border-b border-outline-variant/20 pb-3 mb-3">
-                    Demographics: {gender} • Age {ageRange} • Habits: {habits.length > 0 ? habits.length : 'None selected'}
-                  </p>
-
-                  <div className="space-y-3">
-                    {/* General Check */}
-                    {symptoms.length > 0 && !symptoms.includes('none') ? (
-                      <div className="p-3 bg-red-50 border border-red-200 text-red-800 rounded-lg text-xs space-y-1">
-                        <p className="font-bold flex items-center gap-1">
-                          <ShieldAlert className="w-4 h-4 text-red-600" /> Clinical Review Recommended
-                        </p>
-                        <p className="leading-relaxed">
-                          You reported experiencing a warning sign (such as a painless lump, persistent cough, or non-healing mouth ulcer). You should consult an oncologist for a clinical exam within 2 weeks. Do not worry, but prompt checking is vital.
-                        </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+            {[
+              {
+                icon: Stethoscope, color: 'text-secondary', bg: 'bg-slate-50',
+                title: 'Oral Cancer', titleHi: 'मुख कैंसर', badge: '#1 in Indian Men'
+              },
+              {
+                icon: HeartPulse, color: 'text-rose-500', bg: 'bg-rose-50',
+                title: 'Breast Cancer', titleHi: 'स्तन कैंसर', badge: '#1 in Indian Women'
+              },
+              {
+                icon: Microscope, color: 'text-purple-500', bg: 'bg-purple-50',
+                title: 'Cervical Cancer', titleHi: 'गर्भाशय कैंसर', badge: 'HPV Preventable'
+              },
+              {
+                icon: Activity, color: 'text-primary', bg: 'bg-slate-50',
+                title: 'Lung Cancer', titleHi: 'फेफड़ों का कैंसर', badge: 'Tobacco Linked'
+              },
+              {
+                icon: Droplet, color: 'text-red-600', bg: 'bg-red-50',
+                title: 'Blood Cancer', titleHi: 'रक्त कैंसर', badge: 'Early Signs Matter'
+              }
+            ].map((cancer, i) => (
+              <RevealSection key={i} delay={i * 100}>
+                <div className="card-premium h-full flex flex-col justify-between p-6 group hover:-translate-y-2 transition-all duration-300 border border-outline-variant/30 hover:border-primary/30">
+                  <div>
+                    <div className="flex items-center justify-between mb-5">
+                      <div className={`w-12 h-12 rounded-2xl ${cancer.bg} ${cancer.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                        <cancer.icon className="w-6 h-6" />
                       </div>
-                    ) : (
-                      <div className="p-3 bg-green-50 border border-green-200 text-green-800 rounded-lg text-xs space-y-1">
-                        <p className="font-bold flex items-center gap-1">
-                          <CheckCircle2 className="w-4 h-4 text-green-600" /> Healthy Status (Asymptomatic)
-                        </p>
-                        <p className="leading-relaxed">
-                          Great! Regular preventive screening is still recommended. Preventative oncology is about checking before symptoms appear.
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Specific advice based on Age/Gender */}
-                    <div className="p-3 bg-surface-container-low rounded-lg text-xs space-y-2">
-                      <p className="font-bold text-primary">Standard Screening Protocols for you:</p>
-                      <ul className="list-disc pl-4 space-y-1.5 text-on-surface-variant">
-                        {gender === 'Female' && (ageRange === '40 - 54' || ageRange === '55+') && (
-                          <li><strong>Mammography:</strong> Standard clinical guidelines suggest an annual mammogram for women starting age 40 to 45 to check for early breast cancer.</li>
-                        )}
-                        {gender === 'Female' && (
-                          <li><strong>PAP Smear & HPV DNA:</strong> Every woman aged 21-65 should undergo a cervical PAP exam or HPV screen every 3-5 years.</li>
-                        )}
-                        {(habits.includes('smoke') || habits.includes('chew')) && (
-                          <li><strong>Oral Examination:</strong> Since you indicated tobacco/betel nut habits, an annual oral cavity examination by a dental specialist or surgeon is recommended to verify no pre-cancerous lesions.</li>
-                        )}
-                        {habits.includes('smoke') && ageRange === '55+' && (
-                          <li><strong>Low-Dose CT:</strong> For long-term smokers over 50, an annual low-dose chest CT screen is recommended.</li>
-                        )}
-                        <li><strong>Breast Self-Exam:</strong> Conduct monthly self-exams 5 days after your period.</li>
-                      </ul>
                     </div>
-                  </div>
-                </div>
+                    
+                    <span className="inline-block px-2.5 py-1 mb-3 rounded-lg bg-surface-container-high text-on-surface-variant text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                      {cancer.badge}
+                    </span>
 
-                <div className="flex space-x-2 pt-4 border-t border-outline-variant/20">
-                  <button
-                    onClick={resetQuiz}
-                    className="px-4 py-2 rounded-lg border border-outline text-xs font-semibold text-on-surface-variant hover:bg-surface-container"
-                  >
-                    Retake Assessment
-                  </button>
-                  <button
-                    onClick={onOpenEnquiry}
-                    className="flex-grow px-4 py-2 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 shadow-sm"
-                  >
-                    Book Free Cancer Screening Now
+                    <h3 className="font-outfit text-primary text-lg font-bold leading-tight mb-1">
+                      {cancer.title}
+                    </h3>
+                    <p className="text-xs text-on-surface-variant font-medium mb-6">
+                      {cancer.titleHi}
+                    </p>
+                  </div>
+                  
+                  <button className="text-left text-xs font-bold text-secondary flex items-center gap-1 group-hover:text-primary transition-colors">
+                    Learn More <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
-              </div>
-            )}
+              </RevealSection>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Urgent Camps Section */}
-      <section className="space-y-4">
-        <div className="flex justify-between items-end">
-          <div>
-            <h2 className="font-headline-lg text-primary text-2xl font-extrabold">Active Screening Camps</h2>
-            <p className="font-body-md text-sm text-on-surface-variant">Don\'t postpone your check-ups. Register in 30 seconds.</p>
+      {/* ═══════════════════════════════════════════
+          SECTION 11: FAQ
+          ═══════════════════════════════════════════ */}
+      <section className="gradient-section py-16 md:py-20">
+        <div className="section-container">
+          <RevealSection>
+            <div className="section-header">
+              <span className="section-badge"><HelpCircle className="w-3 h-3" /> FAQ</span>
+              <h2 className="section-title text-2xl md:text-3xl">Frequently Asked Questions</h2>
+              <p className="section-subtitle">Get answers to common questions about our services and programs.</p>
+            </div>
+          </RevealSection>
+
+          <div className="max-w-2xl mx-auto space-y-3">
+            {faqs.map((faq, i) => (
+              <RevealSection key={i} delay={i * 60}>
+                <FAQItem
+                  q={faq.q}
+                  a={faq.a}
+                  isOpen={openFaq === i}
+                  onToggle={() => setOpenFaq(openFaq === i ? null : i)}
+                />
+              </RevealSection>
+            ))}
           </div>
-          <button
-            onClick={() => navigate('/events')}
-            className="text-sm font-bold text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
-          >
-            All Events & Camps <ChevronRight className="w-4 h-4" />
-          </button>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════
+          SECTION 12: NEWSLETTER
+          ═══════════════════════════════════════════ */}
+      <section className="bg-white py-16 md:py-20">
+        <div className="section-container">
+          <RevealSection>
+            <div className="max-w-2xl mx-auto text-center">
+              <span className="section-badge mx-auto"><Mail className="w-3 h-3" /> Newsletter</span>
+              <h2 className="section-title text-2xl md:text-3xl mt-3">Stay Updated</h2>
+              <p className="section-subtitle mt-2 mb-8">
+                Get cancer awareness tips, event updates, and health guides delivered to your inbox.
+              </p>
+
+              {!newsletterSubmitted ? (
+                <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                  <input
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={newsletterEmail}
+                    onChange={(e) => setNewsletterEmail(e.target.value)}
+                    className="input-premium flex-1"
+                  />
+                  <button
+                    onClick={() => {
+                      if (newsletterEmail.includes('@')) setNewsletterSubmitted(true);
+                    }}
+                    className="btn-primary !rounded-xl shrink-0"
+                  >
+                    <Mail className="w-4 h-4" /> Subscribe
+                  </button>
+                </div>
+              ) : (
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-slate-800 text-sm font-medium inline-flex items-center gap-2 animate-scale-in">
+                  <CheckCircle2 className="w-5 h-5 text-primary-container" />
+                  Thank you! You'll receive our updates soon.
+                </div>
+              )}
+
+              <p className="text-xs text-on-surface-variant/60 mt-3">No spam, unsubscribe anytime. We respect your privacy.</p>
+            </div>
+          </RevealSection>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════
+          SECTION 13: FULL-WIDTH CTA
+          ═══════════════════════════════════════════ */}
+      <section className="gradient-hero py-16 md:py-24 relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 opacity-5 pointer-events-none">
+          <div className="absolute top-10 left-10 w-40 h-40 border border-white rounded-full" />
+          <div className="absolute bottom-10 right-10 w-60 h-60 border border-white rounded-full" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 border border-white rounded-full" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {INITIAL_EVENTS.slice(0, 2).map(camp => (
-            <div key={camp.id} className="bg-white border border-outline-variant/40 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between">
-              <div>
-                <div className="h-44 relative bg-surface-container-highest">
-                  <img src={camp.image} alt={camp.title} className="w-full h-full object-cover" />
-                  <span className="absolute top-3 left-3 bg-white/95 text-primary text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm border border-outline-variant/30">
-                    {camp.type}
-                  </span>
-                </div>
-                <div className="p-5 space-y-2">
-                  <h3 className="font-title-md text-base font-bold text-primary line-clamp-1">{camp.title}</h3>
-                  <p className="text-xs font-semibold text-secondary flex items-center gap-1">
-                    <Calendar className="w-4 h-4" /> {camp.date} • {camp.time}
-                  </p>
-                  <p className="text-xs text-on-surface-variant line-clamp-2 leading-relaxed">
-                    {camp.description}
-                  </p>
-                </div>
-              </div>
-
-              <div className="px-5 pb-5 pt-2 border-t border-outline-variant/10 flex items-center justify-between">
-                <span className="text-xs text-on-surface-variant font-medium">
-                  Slots remaining: <strong className="text-primary">{camp.capacity - camp.registeredCount}</strong> / {camp.capacity}
-                </span>
-                <button
-                  onClick={onOpenEnquiry}
-                  className="px-4 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 shadow-sm transition-opacity"
-                >
-                  Register Now
-                </button>
-              </div>
+        <div className="section-container relative z-10 text-center">
+          <RevealSection>
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white/90 text-xs font-semibold tracking-wide border border-white/10 mb-6">
+              <Heart className="w-3.5 h-3.5 fill-white" /> Make a Difference Today
+            </span>
+            <h2 className="font-outfit text-white text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight max-w-3xl mx-auto mb-5">
+              Join Our Mission to <span className="text-secondary-container">Fight Cancer</span> Across India
+            </h2>
+            <p className="text-white/70 text-sm md:text-base max-w-xl mx-auto mb-8 leading-relaxed">
+              Whether you're a healthcare professional, a caring individual, or an organization — together we can ensure no patient faces cancer alone.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <button onClick={onOpenVolunteer} className="px-7 py-3.5 rounded-xl bg-white text-primary font-semibold text-sm hover:bg-white/90 shadow-lg transition-all cursor-pointer hover:translate-y-[-2px] hover:shadow-xl flex items-center gap-2">
+                <Heart className="w-4 h-4" /> Become a Volunteer
+              </button>
+              <button onClick={onOpenEnquiry} className="px-7 py-3.5 rounded-xl bg-white/10 border border-white/20 text-white font-semibold text-sm hover:bg-white/20 backdrop-blur-sm transition-all cursor-pointer flex items-center gap-2">
+                <Phone className="w-4 h-4" /> Patient Enquiry
+              </button>
             </div>
-          ))}
+          </RevealSection>
         </div>
       </section>
     </div>

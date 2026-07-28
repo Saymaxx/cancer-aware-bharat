@@ -189,7 +189,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
                 </div>
               )}
 
-              <div className="bg-teal-50/70 p-3.5 rounded-xl border border-teal-200/80 text-xs text-teal-900 leading-relaxed">
+              <div className="bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/80 text-xs text-slate-900 leading-relaxed">
                 <strong>Need expert medical navigation?</strong> Submit your details below to request a prioritized appointment slot, free screening camp admission, or clinical second opinion. All inquiries enter our 2-tier approval workflow immediately.
               </div>
 
@@ -446,7 +446,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
             </form>
           ) : (
             <div className="text-center py-6 px-4 flex flex-col items-center">
-              <div className="w-16 h-16 bg-emerald-50 rounded-full border-2 border-emerald-400 flex items-center justify-center text-emerald-500 mb-4 animate-bounce">
+              <div className="w-16 h-16 bg-slate-50 rounded-full border-2 border-slate-400 flex items-center justify-center text-primary mb-4 animate-bounce">
                 <CheckCircle className="w-10 h-10" />
               </div>
               
@@ -475,7 +475,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
                     </div>
                     <div>
                       <span className="text-slate-500 block">Current Status:</span>
-                      <span className="font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded inline-block text-[11px] mt-0.5">
+                      <span className="font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded inline-block text-[11px] mt-0.5">
                         {createdEnquiry.status}
                       </span>
                     </div>
