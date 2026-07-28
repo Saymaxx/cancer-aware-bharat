@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.core.limiter import limiter
@@ -16,11 +16,16 @@ router = APIRouter(prefix="/hospitals", tags=["hospitals"])
 @limiter.limit("60/minute")
 def list_hospitals(
     request: Request,
+    response: Response,
     db: DbSession,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=500, ge=1, le=1000),
 ):
     """Public directory - powers the frontend hospital map/list."""
+    # Public, unauthenticated, and slow-changing -- safe to let a browser or
+    # CDN cache briefly, unlike every other response (see main.py's
+    # no-store default).
+    response.headers["Cache-Control"] = "public, max-age=60"
     return (
         db.query(Hospital)
         .filter(Hospital.is_active.is_(True))
@@ -33,12 +38,13 @@ def list_hospitals(
 
 @router.get("/{hospital_id}", response_model=HospitalOut)
 @limiter.limit("60/minute")
-def get_hospital(request: Request, hospital_id: UUID, db: DbSession):
+def get_hospital(request: Request, response: Response, hospital_id: UUID, db: DbSession):
     # Matches list_hospitals' filter: a deactivated hospital shouldn't be
     # individually fetchable by a public/unauthenticated caller either.
     hospital = db.query(Hospital).filter(Hospital.id == hospital_id, Hospital.is_active.is_(True)).first()
     if hospital is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Hospital not found")
+    response.headers["Cache-Control"] = "public, max-age=60"
     return hospital
 
 

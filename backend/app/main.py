@@ -70,6 +70,14 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     if request.url.path not in _DOCS_PATHS:
         response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+    # No API response was ever given a caching directive at all, so an
+    # intermediate proxy or the browser's own HTTP cache was free to decide
+    # for itself -- including caching a patient-data response tied to one
+    # session's Authorization header for a different visitor to reuse. This
+    # sets a safe default everywhere; the handful of genuinely public,
+    # non-personalized list/detail endpoints (hospitals/events/blogs) opt
+    # into a short public max-age explicitly, overriding this default.
+    response.headers.setdefault("Cache-Control", "no-store")
     return response
 
 _ROUTERS = (auth.router, enquiries.router, hospitals.router, notifications.router, volunteers.router, events.router, blogs.router)

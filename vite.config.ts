@@ -21,8 +21,20 @@ export default defineConfig(() => {
     },
     build: {
       rollupOptions: {
-        // Removed manualChunks due to circular chunking (vendor -> vendor-react -> vendor)
-        // causing undefined 'createContext' at runtime.
+        output: {
+          // A single vendor chunk, not split further by package. The
+          // previous attempt split react into its own vendor-react chunk
+          // alongside a catch-all vendor chunk, which created a circular
+          // reference between the two (vendor -> vendor-react -> vendor)
+          // that surfaced as `createContext` being undefined at runtime.
+          // One undivided vendor chunk still gets the real caching win
+          // (vendor code changes far less often than app code, so it stays
+          // cached across app-only redeploys) without any inter-vendor-
+          // chunk ordering to get wrong.
+          manualChunks(id) {
+            if (id.includes('node_modules')) return 'vendor';
+          },
+        },
       },
     },
   };
