@@ -74,6 +74,22 @@ class TestReportUpload:
         )
         assert resp.status_code == 400
 
+    def test_upload_report_rejects_oversize_file(self, client):
+        from app.routers.enquiries import MAX_REPORT_BYTES
+
+        enquiry = submit_sample_enquiry(client, phone="+91 90000 77777")
+        # One byte over the 10 MB cap -- still starts with a valid PDF magic
+        # number so this exercises the size check specifically, not the
+        # magic-byte check above it.
+        oversize_contents = b"%PDF-1.4" + b"0" * (MAX_REPORT_BYTES - 7)
+        resp = client.post(
+            f"/enquiries/{enquiry['id']}/reports",
+            data={"phone": "+91 90000 77777"},
+            files={"file": ("big.pdf", oversize_contents, "application/pdf")},
+        )
+        assert resp.status_code == 400
+        assert "10 MB" in resp.json()["detail"]
+
 
 class TestReportDownload:
     def _upload_sample_report(self, client, phone: str) -> dict:
