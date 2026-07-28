@@ -617,40 +617,6 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════
-          SECTION 6: CANCER TYPES
-          ═══════════════════════════════════════════ */}
-      <section className="bg-white py-16 md:py-20">
-        <div className="section-container">
-          <RevealSection>
-            <div className="section-header">
-              <span className="section-badge">Cancer Awareness</span>
-              <h2 className="section-title text-2xl md:text-3xl">Types of Cancer We Address</h2>
-              <p className="section-subtitle">Early detection can save lives. Learn about the most common cancers in India.</p>
-            </div>
-          </RevealSection>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            {[
-              { name: 'Oral Cancer', hindi: 'मुख कैंसर', icon: '🦷', stat: '#1 in Indian Men', color: 'from-slate-50 to-slate-50 border-slate-100', accent: 'text-slate-700' },
-              { name: 'Breast Cancer', hindi: 'स्तन कैंसर', icon: '🎗️', stat: '#1 in Indian Women', color: 'from-pink-50 to-rose-50 border-pink-100', accent: 'text-rose-700' },
-              { name: 'Cervical Cancer', hindi: 'गर्भाशय कैंसर', icon: '🔬', stat: 'HPV Preventable', color: 'from-purple-50 to-violet-50 border-purple-100', accent: 'text-purple-700' },
-              { name: 'Lung Cancer', hindi: 'फेफड़ों का कैंसर', icon: '🫁', stat: 'Tobacco Linked', color: 'from-sky-50 to-slate-50 border-sky-100', accent: 'text-sky-700' },
-              { name: 'Blood Cancer', hindi: 'रक्त कैंसर', icon: '🩸', stat: 'Early Signs Matter', color: 'from-red-50 to-rose-50 border-red-100', accent: 'text-red-700' },
-            ].map((cancer, i) => (
-              <RevealSection key={i} delay={i * 80}>
-                <div className={`rounded-2xl border bg-gradient-to-br ${cancer.color} p-5 text-center hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-default group`}>
-                  <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{cancer.icon}</div>
-                  <h3 className={`font-outfit font-bold text-sm ${cancer.accent}`}>{cancer.name}</h3>
-                  <p className="text-[11px] text-on-surface-variant mt-0.5">{cancer.hindi}</p>
-                  <span className="inline-block mt-3 px-2.5 py-1 rounded-full bg-white/70 text-[10px] font-semibold text-on-surface-variant">{cancer.stat}</span>
-                </div>
-              </RevealSection>
-            ))}
-          </div>
-        </div>
-      </section>
-
 
 
       {/* ═══════════════════════════════════════════
@@ -833,20 +799,20 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
           {/* Left Panel: Volunteer */}
           <div className="torn-left relative flex-1 group min-h-[400px] z-10 -mb-8 lg:mb-0 lg:-mr-8">
             <img src="/events/event-1.jpeg" alt="Volunteer" className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" />
-            <div className="absolute inset-0 bg-black/60 transition-colors duration-500" />
+            <div className="absolute inset-0 bg-black/45 transition-colors duration-500" />
             <div className="absolute inset-0 p-8 md:p-12 lg:pr-16 flex flex-col justify-center items-start text-left z-10">
-              <span className="inline-block px-3 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-[12px] md:text-[13px] font-bold uppercase tracking-widest text-white mb-4 border border-white/20">
+              <span className="inline-block text-[12px] md:text-[13px] font-medium uppercase tracking-[0.15em] text-secondary mb-2">
                 Join Our Mission
               </span>
-              <h3 className="font-outfit text-3xl md:text-[40px] font-bold text-white leading-[1.1] mb-4 tracking-tight">
+              <h3 className="font-outfit text-[28px] md:text-[36px] lg:text-[42px] font-[700] text-white leading-[1.15] mb-3 tracking-tight max-w-[420px]">
                 Become A Volunteer
               </h3>
-              <p className="text-white/80 text-[16px] md:text-[18px] font-light leading-relaxed mb-8 max-w-sm">
+              <p className="text-white/90 text-[15px] md:text-[17px] font-normal leading-[1.7] mb-6 max-w-[420px]">
                 Join Cancer Aware Bharat as a volunteer and help spread cancer awareness, support screening camps, and make a meaningful impact in communities across India.
               </p>
               <button 
                 onClick={() => navigate('/volunteer/login')}
-                className="bg-[#0B6B62] text-white text-[15px] md:text-[16px] font-semibold h-[48px] md:h-[50px] rounded-full px-7 flex items-center justify-center gap-2 hover:bg-[#0d857a] hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer group/btn"
+                className="bg-primary text-white text-[15px] md:text-[16px] font-medium h-[48px] md:h-[52px] rounded-full px-7 md:px-8 flex items-center justify-center gap-2 hover:bg-primary-container hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer group/btn"
               >
                 Become a Volunteer <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
               </button>
@@ -868,20 +834,20 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
           {/* Right Panel: Hospital Partner */}
           <div className="torn-right relative flex-1 group min-h-[400px] z-10 -mt-8 lg:mt-0 lg:-ml-8">
             <img src="/events/event-4.jpeg" alt="Partner" className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-105" />
-            <div className="absolute inset-0 bg-black/60 transition-colors duration-500" />
+            <div className="absolute inset-0 bg-black/45 transition-colors duration-500" />
             <div className="absolute inset-0 p-8 md:p-12 lg:pl-16 flex flex-col justify-center items-start text-left z-10">
-              <span className="inline-block px-3 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-[12px] md:text-[13px] font-bold uppercase tracking-widest text-white mb-4 border border-white/20">
+              <span className="inline-block text-[12px] md:text-[13px] font-medium uppercase tracking-[0.15em] text-secondary mb-2">
                 Partner With Us
               </span>
-              <h3 className="font-outfit text-3xl md:text-[40px] font-bold text-white leading-[1.1] mb-4 tracking-tight">
+              <h3 className="font-outfit text-[28px] md:text-[36px] lg:text-[42px] font-[700] text-white leading-[1.15] mb-3 tracking-tight max-w-[420px]">
                 Become A Health Centre Partner
               </h3>
-              <p className="text-white/80 text-[16px] md:text-[18px] font-light leading-relaxed mb-8 max-w-sm">
+              <p className="text-white/90 text-[15px] md:text-[17px] font-normal leading-[1.7] mb-6 max-w-[420px]">
                 Join our nationwide network of hospitals, clinics, diagnostic centres, and healthcare institutions working together to improve cancer awareness, early detection, and patient support.
               </p>
               <button 
                 onClick={() => navigate('/hospital/login')}
-                className="bg-[#0B6B62] text-white text-[15px] md:text-[16px] font-semibold h-[48px] md:h-[50px] rounded-full px-7 flex items-center justify-center gap-2 hover:bg-[#0d857a] hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer group/btn"
+                className="bg-primary text-white text-[15px] md:text-[16px] font-medium h-[48px] md:h-[52px] rounded-full px-7 md:px-8 flex items-center justify-center gap-2 hover:bg-primary-container hover:-translate-y-1 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer group/btn"
               >
                 Partner as Health Centre <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
               </button>
