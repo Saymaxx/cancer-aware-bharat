@@ -306,7 +306,7 @@ export default function Navbar({
                   {/* Contact Us */}
                   <button
                     onClick={() => {
-                      setDropdownOpen(false);
+                      setActiveDropdown(null);
                       onOpenEnquiry();
                     }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-secondary/[0.04] hover:text-secondary transition-colors text-left group"
