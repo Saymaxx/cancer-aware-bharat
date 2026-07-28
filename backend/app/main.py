@@ -47,13 +47,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(enquiries.router)
-app.include_router(hospitals.router)
-app.include_router(notifications.router)
-app.include_router(volunteers.router)
-app.include_router(events.router)
-app.include_router(blogs.router)
+# Docs/ReDoc load their JS/CSS from a CDN by default, so a strict CSP there
+# would break them -- everything else in this app is a pure JSON API with
+# no HTML/JS of its own to execute, so `default-src 'none'` is safe and
+# meaningfully closes off any XSS-in-a-response-body concern.
+_DOCS_PATHS = {"/docs", "/redoc"}
+
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    if request.url.path not in _DOCS_PATHS:
+        response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+    return response
+
+_ROUTERS = (auth.router, enquiries.router, hospitals.router, notifications.router, volunteers.router, events.router, blogs.router)
+
+for _router in _ROUTERS:
+    app.include_router(_router)
+
+# /v1 introduced now, before any future breaking change forces the issue --
+# every route above stays reachable at its original unprefixed path too, so
+# no existing deployment, bookmarked API doc link, or external consumer
+# breaks. /v1 is the new canonical path going forward; the frontend already
+# calls it (see src/api/client.ts). The unprefixed routes can be retired in
+# a later phase once nothing depends on them anymore.
+for _router in _ROUTERS:
+    app.include_router(_router, prefix="/v1")
 
 
 @app.get("/health")

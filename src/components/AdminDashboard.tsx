@@ -14,6 +14,10 @@ import { PatientEnquiry, BlogArticle } from '../types';
 import { INITIAL_BLOGS } from '../data';
 import { useToast } from './common/Toast';
 import StatusBadge from './common/StatusBadge';
+import DashboardSidebar from './common/DashboardSidebar';
+import { useSidebarState } from '../hooks/useSidebarState';
+import { useEscapeKey } from '../hooks/useEscapeKey';
+import { csvCell, downloadCsv } from '../utils/csvExport';
 
 import {
   INITIAL_KPI_METRICS, INITIAL_PATIENTS, INITIAL_ADMIN_VOLUNTEERS,
@@ -24,9 +28,7 @@ import {
 
 export default function AdminDashboard({ onPageChange, onLogout }: { onPageChange?: (page: string) => void; onLogout: () => void }) {
   const toast = useToast();
-  // Sidebar collapsed state
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const { sidebarCollapsed, mobileSidebarOpen, setMobileSidebarOpen, toggleSidebar } = useSidebarState();
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
   // Real-time Patient Enquiries & Notifications from the backend API
@@ -215,20 +217,13 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     setShowPatientModal(true);
   };
 
-  // Close open modals on ESC key press
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setShowPatientModal(false);
-        setShowApproveEnquiryModal(null);
-        setShowRejectEnquiryModal(null);
-        setShowAdminDeclineModal(null);
-        setTimelineEnquiry(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  useEscapeKey(() => {
+    setShowPatientModal(false);
+    setShowApproveEnquiryModal(null);
+    setShowRejectEnquiryModal(null);
+    setShowAdminDeclineModal(null);
+    setTimelineEnquiry(null);
+  });
 
   const handleExportEnquiriesCSV = () => {
     if (enquiries.length === 0) {
@@ -239,24 +234,17 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     const rows = enquiries.map(e => [
       e.enquiryId,
       e.referenceNumber,
-      `"${(e.patientName || '').replace(/"/g, '""')}"`,
+      csvCell(e.patientName),
       e.age,
       e.gender,
       e.phone,
-      `"${(e.city || '').replace(/"/g, '""')}"`,
-      `"${(e.reason || '').replace(/"/g, '""')}"`,
+      csvCell(e.city),
+      csvCell(e.reason),
       e.priority,
-      `"${(e.status || '').replace(/"/g, '""')}"`,
+      csvCell(e.status),
       e.date
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Cancer_Aware_Bharat_Enquiries_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(headers, rows, 'Cancer_Aware_Bharat_Enquiries');
     toast.success('Export Complete', 'Enquiries CSV downloaded successfully.');
   };
 
@@ -520,22 +508,15 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     const headers = ['Patient Code', 'Full Name', 'Age', 'Gender', 'Primary Diagnosis', 'Clinic Partner', 'Financial Aid Status', 'Aid Amount'];
     const rows = patients.map(p => [
       p.id,
-      `"${(p.name || '').replace(/"/g, '""')}"`,
+      csvCell(p.name),
       p.age,
       p.gender,
-      `"${(p.diagnosis || '').replace(/"/g, '""')}"`,
-      `"${(p.hospitalName || '').replace(/"/g, '""')}"`,
+      csvCell(p.diagnosis),
+      csvCell(p.hospitalName),
       p.financialAidStatus,
       p.financialAidAmount || 0
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Cancer_Aware_Bharat_Patients_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(headers, rows, 'Cancer_Aware_Bharat_Patients');
     toast.success('Export Complete', 'Patients CSV downloaded successfully.');
   };
 
@@ -547,23 +528,16 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     const headers = ['Volunteer ID', 'Full Name', 'Email', 'Phone', 'Domain', 'Registered Date', 'Hours Logged', 'Attendance Rate', 'Status'];
     const rows = volunteers.map(v => [
       v.id,
-      `"${(v.name || '').replace(/"/g, '""')}"`,
+      csvCell(v.name),
       v.email,
       v.phone,
-      `"${(v.domain || '').replace(/"/g, '""')}"`,
+      csvCell(v.domain),
       v.registeredDate,
       v.hoursLogged,
       v.attendanceRate + '%',
       v.status
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Cancer_Aware_Bharat_Volunteers_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(headers, rows, 'Cancer_Aware_Bharat_Volunteers');
     toast.success('Export Complete', 'Volunteers CSV downloaded successfully.');
   };
 
@@ -575,21 +549,14 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     const headers = ['Receipt ID', 'Donor Entity', 'Entity Type', 'Inflow Amount (INR)', 'Audit Date', 'Inflow Channel', 'Tax Exemption Status'];
     const rows = donations.map(d => [
       d.id,
-      `"${(d.donorName || '').replace(/"/g, '""')}"`,
+      csvCell(d.donorName),
       d.donorType,
       d.amount,
       d.date,
       d.paymentMethod,
       d.receiptSent ? 'Sent (80G)' : 'Pending'
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Cancer_Aware_Bharat_Donations_Ledger_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(headers, rows, 'Cancer_Aware_Bharat_Donations_Ledger');
     toast.success('Export Complete', 'Donations ledger CSV downloaded successfully.');
   };
 
@@ -652,77 +619,25 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
 
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-800">
-      
-      {/* Mobile Backdrop Overlay */}
-      {mobileSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden"
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
 
-      {/* =====================================================
-          SIDEBAR NAVIGATION
-      ===================================================== */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 bg-[#004349] text-white transition-all duration-300 flex flex-col justify-between select-none ${
-        mobileSidebarOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full lg:translate-x-0'
-      } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'}`}>
-        <div>
-          {/* Sidebar Brand Logo */}
-          <div className="p-5 flex items-center justify-between border-b border-white/10">
-            <div className="flex items-center space-x-3 overflow-hidden">
-              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/20">
-                <Shield className="w-5 h-5 text-secondary-container" />
-              </div>
-              {(!sidebarCollapsed || mobileSidebarOpen) && (
-                <span className="font-headline-lg text-lg font-black text-white tracking-tight truncate">
-                  CAB Admin Portal
-                </span>
-              )}
-            </div>
-            <button 
-              onClick={() => setMobileSidebarOpen(false)}
-              className="lg:hidden text-white/70 hover:text-white p-1 rounded-lg"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="p-3 space-y-1.5 max-h-[calc(100vh-160px)] overflow-y-auto">
-            {sidebarItems.map((item) => {
-              const IconComp = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveTab(item.id);
-                    setSearchTerm('');
-                    setMobileSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between rounded-xl p-3 text-sm font-semibold transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-white/10 text-white shadow-sm border-l-4 border-secondary-container'
-                      : 'text-white/60 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <div className="flex items-center">
-                    <IconComp className={`w-5 h-5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3.5'}`} />
-                    {(!sidebarCollapsed || mobileSidebarOpen) && <span>{item.label}</span>}
-                  </div>
-                  {(!sidebarCollapsed || mobileSidebarOpen) && (item as any).badge !== undefined && (item as any).badge > 0 && (
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-secondary-container text-[#004349]">
-                      {(item as any).badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-      </aside>
+      <DashboardSidebar
+        items={sidebarItems}
+        activeTab={activeTab}
+        onSelect={(id) => {
+          setActiveTab(id);
+          setSearchTerm('');
+          setMobileSidebarOpen(false);
+        }}
+        sidebarCollapsed={sidebarCollapsed}
+        mobileSidebarOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
+        bgClass="bg-[#004349]"
+        brandIcon={Shield}
+        brandIconWrapperClass="bg-white/10 backdrop-blur-md border border-white/20"
+        brandLabel="CAB Admin Portal"
+        activeAccentBorderClass="border-secondary-container"
+        badgeClass="bg-secondary-container text-[#004349]"
+      />
 
       {/* =====================================================
           MAIN DASHBOARD WORKSPACE
@@ -732,15 +647,10 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
         <header className="bg-white border-b border-outline-variant/30 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
           <div className="flex items-center space-x-3 sm:space-x-4">
             <button
-              onClick={() => {
-                if (window.innerWidth < 1024) {
-                  setMobileSidebarOpen(!mobileSidebarOpen);
-                } else {
-                  setSidebarCollapsed(!sidebarCollapsed);
-                }
-              }}
+              onClick={toggleSidebar}
               className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer focus:outline-none"
               title="Toggle Menu"
+              aria-label="Toggle menu"
             >
               <Menu className="w-5 h-5 lg:hidden" />
               <Terminal className="w-5 h-5 hidden lg:block" />
@@ -1472,9 +1382,14 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
 
               {/* DECLINE APPLICATION MODAL */}
               {showAdminDeclineModal && (
-                <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+                <div
+                  className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="decline-application-modal-title"
+                >
                   <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4 text-xs">
-                    <h3 className="font-bold text-slate-900 text-sm">Decline Hospital Tie-up Application</h3>
+                    <h3 id="decline-application-modal-title" className="font-bold text-slate-900 text-sm">Decline Hospital Tie-up Application</h3>
                     <p className="text-slate-600">Provide feedback notes explaining why this hospital partnership application is being declined by the Regional Coordinator desk.</p>
                     
                     <div>
@@ -1961,15 +1876,21 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
           MODAL: ADD / EDIT PATIENT RECORD
       ===================================================== */}
       {showPatientModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="patient-record-modal-title"
+        >
           <div className="bg-white w-full max-w-xl rounded-2xl shadow-xl overflow-hidden border border-outline-variant/20 text-xs">
             <div className="bg-primary text-white px-6 py-4 flex justify-between items-center">
-              <h3 className="font-headline-lg text-sm font-bold flex items-center gap-1.5">
+              <h3 id="patient-record-modal-title" className="font-headline-lg text-sm font-bold flex items-center gap-1.5">
                 <Heart className="w-4 h-4 text-secondary-container animate-pulse" />
                 {editingPatient ? 'Edit Patient Record' : 'Add Patient Intake'}
               </h3>
               <button
                 onClick={() => setShowPatientModal(false)}
+                aria-label="Close"
                 className="text-white/80 hover:text-white p-1 hover:bg-white/10 rounded-full transition-colors"
               >
                 <X className="w-4.5 h-4.5" />
@@ -2093,13 +2014,18 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
 
       {/* Admin Approve Enquiry Modal */}
       {showApproveEnquiryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="approve-enquiry-modal-title"
+        >
           <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+              <h3 id="approve-enquiry-modal-title" className="font-bold text-slate-900 text-base flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" /> Approve Patient Enquiry
               </h3>
-              <button onClick={() => setShowApproveEnquiryModal(null)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setShowApproveEnquiryModal(null)} aria-label="Close" className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -2154,13 +2080,18 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
 
       {/* Admin Reject Enquiry Modal */}
       {showRejectEnquiryModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="reject-enquiry-modal-title"
+        >
           <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+              <h3 id="reject-enquiry-modal-title" className="font-bold text-slate-900 text-base flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-red-600" /> Reject Patient Enquiry
               </h3>
-              <button onClick={() => setShowRejectEnquiryModal(null)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setShowRejectEnquiryModal(null)} aria-label="Close" className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -2219,6 +2150,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
         enquiry={timelineEnquiry}
         isOpen={!!timelineEnquiry}
         onClose={() => setTimelineEnquiry(null)}
+        apiToken={apiToken}
       />
 
     </div>

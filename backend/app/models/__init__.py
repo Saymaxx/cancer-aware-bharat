@@ -5,6 +5,7 @@ from app.models.blog import BlogArticle
 from app.models.volunteer import Volunteer
 from app.models.enquiry import PatientEnquiry, TimelineEvent, AppointmentDetails, UploadedReport
 from app.models.notification import Notification
+from app.models.revoked_token import RevokedToken
 
 __all__ = [
     "User",
@@ -18,4 +19,5 @@ __all__ = [
     "AppointmentDetails",
     "UploadedReport",
     "Notification",
+    "RevokedToken",
 ]

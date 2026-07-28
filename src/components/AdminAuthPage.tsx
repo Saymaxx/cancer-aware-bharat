@@ -19,13 +19,15 @@ export default function AdminAuthPage({ initialRole = 'admin', lockedRole }: Adm
   const [errorMessage, setErrorMessage] = useState('');
   const [animateIn, setAnimateIn] = useState(true);
 
-  // Forms state
-  const [adminEmail, setAdminEmail] = useState('admin@awarebharat.local');
-  const [adminPassword, setAdminPassword] = useState('ChangeMe123!');
+  // Forms state -- previously pre-filled with the real seed-account
+  // credentials, which meant anyone who found /admin or /superadmin got a
+  // working login handed to them by default. Empty by design now.
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [adminPasscode, setAdminPasscode] = useState('12345');
 
-  const [superEmail, setSuperEmail] = useState('superadmin@awarebharat.local');
-  const [superPassword, setSuperPassword] = useState('ChangeMe123!');
+  const [superEmail, setSuperEmail] = useState('');
+  const [superPassword, setSuperPassword] = useState('');
   const [superMfaToken, setSuperMfaToken] = useState('999999');
 
   const switchRole = (newRole: AuthRole) => {

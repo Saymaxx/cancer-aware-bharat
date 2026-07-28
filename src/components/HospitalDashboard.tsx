@@ -10,11 +10,13 @@ import {
   Sparkles, CheckSquare, Layers, Lock, ShieldAlert, Globe, Menu
 } from 'lucide-react';
 import { useApiEnquiries, useApiNotifications } from '../api/hooks';
-import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, ApiError, getHospitalSession } from '../api/client';
+import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, ApiError, getHospitalSession } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
 import StatusBadge from './common/StatusBadge';
+import DashboardSidebar, { SidebarFooterButton } from './common/DashboardSidebar';
+import { useSidebarState } from '../hooks/useSidebarState';
 
 import {
   INITIAL_HOSPITAL_KPI, INITIAL_ASSIGNED_PATIENTS, INITIAL_NGO_REFERRALS,
@@ -179,8 +181,7 @@ const getInitialHospitalData = (profileEmail: string) => {
 export default function HospitalDashboard({ onPageChange, onLogout }: { onPageChange?: (page: string) => void; onLogout: () => void }) {
   const toast = useToast();
   const navigate = useNavigate();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const { sidebarCollapsed, mobileSidebarOpen, setMobileSidebarOpen, toggleSidebar } = useSidebarState();
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
   const [profile, setProfile] = useState(() => getInitialHospitalProfile());
@@ -319,7 +320,8 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
       e.status === 'Assigned to Hospital' ||
       e.status === 'Accepted by Hospital' ||
       e.status === 'Declined by Hospital' ||
-      e.status === 'Appointment Confirmed'
+      e.status === 'Appointment Confirmed' ||
+      e.status === 'Completed'
     );
   }, [enquiries]);
 
@@ -336,6 +338,8 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
   const [decliningEnquiry, setDecliningEnquiry] = useState<PatientEnquiry | null>(null);
   const [hospitalDeclineReasonText, setHospitalDeclineReasonText] = useState('');
+  const [completingEnquiry, setCompletingEnquiry] = useState<PatientEnquiry | null>(null);
+  const [completeRemarksText, setCompleteRemarksText] = useState('');
   const [timelineEnquiry, setTimelineEnquiry] = useState<PatientEnquiry | null>(null);
   const [hospitalEnquiryTabFilter, setHospitalEnquiryTabFilter] = useState('All');
 
@@ -480,93 +484,50 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-800 font-sans">
       
-      {/* Mobile Backdrop Overlay */}
-      {mobileSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden"
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
-
-      {/* ===== SIDEBAR NAVIGATION ===== */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 bg-[#063b42] text-white transition-all duration-300 flex flex-col justify-between select-none ${
-        mobileSidebarOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full lg:translate-x-0'
-      } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'}`}>
-        <div>
-          {/* Brand Header */}
-          <div className="p-5 flex items-center justify-between border-b border-white/10">
-            <div className="flex items-center space-x-3 overflow-hidden">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0 border border-emerald-400/30 text-emerald-300">
-                <Building2 className="w-5.5 h-5.5" />
-              </div>
-              {(!sidebarCollapsed || mobileSidebarOpen) && (
-                <div className="overflow-hidden">
-                  <span className="font-headline-lg text-base font-black text-white tracking-tight truncate block">
-                    Partner Hospital
-                  </span>
-                  <span className="text-[10px] text-emerald-300 font-semibold tracking-wider uppercase block">
-                    CAB Clinical Network
-                  </span>
-                </div>
-              )}
-            </div>
-            <button onClick={() => setMobileSidebarOpen(false)} className="lg:hidden text-white/70 hover:text-white p-1 rounded-lg">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="p-3 space-y-1 max-h-[calc(100vh-160px)] overflow-y-auto">
-            {sidebarItems.map((item) => {
-              const IconComp = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveTab(item.id);
-                    setSearchTerm('');
-                    setMobileSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between rounded-xl p-2.5 text-[13px] font-semibold transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-white/12 text-white shadow-sm border-l-4 border-emerald-400'
-                      : 'text-white/60 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <div className="flex items-center">
-                    <IconComp className={`w-4.5 h-4.5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3'}`} />
-                    {(!sidebarCollapsed || mobileSidebarOpen) && <span>{item.label}</span>}
-                  </div>
-                  {(!sidebarCollapsed || mobileSidebarOpen) && item.badge !== undefined && item.badge > 0 && (
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-400 text-[#063b42]">
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Footer Navigation & Logout */}
-        <div className="p-3 border-t border-white/10 space-y-1">
-          <button
-            onClick={() => navigate('/')}
-            className="w-full flex items-center rounded-xl p-2.5 text-xs font-semibold text-white/70 hover:text-white hover:bg-white/10 cursor-pointer transition-colors"
-          >
-            <Globe className={`w-4.5 h-4.5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3'}`} />
-            {(!sidebarCollapsed || mobileSidebarOpen) && <span>Return to Main Website</span>}
-          </button>
-          <button
-            onClick={onLogout}
-            className="w-full flex items-center rounded-xl p-2.5 text-xs font-semibold text-red-300 hover:text-red-100 hover:bg-red-950/30 cursor-pointer transition-colors"
-          >
-            <LogOut className={`w-4.5 h-4.5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3'}`} />
-            {(!sidebarCollapsed || mobileSidebarOpen) && <span>Secure Logout</span>}
-          </button>
-        </div>
-      </aside>
+      <DashboardSidebar
+        items={sidebarItems}
+        activeTab={activeTab}
+        onSelect={(id) => {
+          setActiveTab(id);
+          setSearchTerm('');
+          setMobileSidebarOpen(false);
+        }}
+        sidebarCollapsed={sidebarCollapsed}
+        mobileSidebarOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
+        bgClass="bg-[#063b42]"
+        brandIcon={Building2}
+        brandIconWrapperClass="bg-emerald-500/20 border border-emerald-400/30 text-emerald-300"
+        brandLabel={
+          <>
+            <span className="block">Partner Hospital</span>
+            <span className="text-[10px] text-emerald-300 font-semibold tracking-wider uppercase block">CAB Clinical Network</span>
+          </>
+        }
+        brandLabelClass="text-base"
+        activeAccentBorderClass="border-emerald-400"
+        badgeClass="bg-emerald-400 text-[#063b42]"
+        navItemPaddingClass="p-2.5 text-[13px]"
+        navIconSizeClass="w-4.5 h-4.5"
+        navIconMarginClass="mr-3"
+        footer={
+          <>
+            <SidebarFooterButton
+              icon={Globe}
+              label="Return to Main Website"
+              onClick={() => navigate('/')}
+              expanded={!sidebarCollapsed || mobileSidebarOpen}
+            />
+            <SidebarFooterButton
+              icon={LogOut}
+              label="Secure Logout"
+              onClick={onLogout}
+              expanded={!sidebarCollapsed || mobileSidebarOpen}
+              colorClass="text-red-300 hover:text-red-100 hover:bg-red-950/30"
+            />
+          </>
+        }
+      />
 
       {/* ===== MAIN WORKSPACE ===== */}
       <main className="flex-1 flex flex-col min-w-0 bg-[#f4f8f9]">
@@ -575,15 +536,10 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
         <header className="bg-white border-b border-slate-200/80 px-4 sm:px-6 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-xs">
           <div className="flex items-center space-x-3 sm:space-x-4">
             <button
-              onClick={() => {
-                if (window.innerWidth < 1024) {
-                  setMobileSidebarOpen(!mobileSidebarOpen);
-                } else {
-                  setSidebarCollapsed(!sidebarCollapsed);
-                }
-              }}
+              onClick={toggleSidebar}
               className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer"
               title="Toggle Menu"
+              aria-label="Toggle menu"
             >
               <Menu className="w-5 h-5 lg:hidden" />
               <Terminal className="w-5 h-5 hidden lg:block" />
@@ -824,7 +780,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               {/* Filter Row */}
               <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap justify-between items-center gap-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  {['All', 'Pending Action', 'Appointment Confirmed', 'Declined by Hospital'].map(st => (
+                  {['All', 'Pending Action', 'Appointment Confirmed', 'Completed', 'Declined by Hospital'].map(st => (
                     <button
                       key={st}
                       onClick={() => setHospitalEnquiryTabFilter(st)}
@@ -961,6 +917,17 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
                                     <X className="w-3.5 h-3.5" /> Decline
                                   </button>
                                 </>
+                              )}
+                              {enq.status === 'Appointment Confirmed' && (
+                                <button
+                                  onClick={() => {
+                                    setCompletingEnquiry(enq);
+                                    setCompleteRemarksText('');
+                                  }}
+                                  className="px-2.5 py-1 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg text-[11px] font-bold transition-colors cursor-pointer inline-flex items-center gap-1"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> Mark Completed
+                                </button>
                               )}
                               <button
                                 onClick={() => setTimelineEnquiry(enq)}
@@ -1659,11 +1626,16 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
       {/* ===== MODAL: VIEW PATIENT PROFILE ===== */}
       {selectedPatientModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="patient-profile-modal-title"
+        >
           <div className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
             <div className="bg-[#063b42] text-white px-6 py-4 flex justify-between items-center">
-              <span className="font-bold text-sm">Patient Clinical Profile — {selectedPatientModal.name}</span>
-              <button onClick={() => setSelectedPatientModal(null)} className="text-white/70 hover:text-white">✕</button>
+              <span id="patient-profile-modal-title" className="font-bold text-sm">Patient Clinical Profile — {selectedPatientModal.name}</span>
+              <button onClick={() => setSelectedPatientModal(null)} aria-label="Close" className="text-white/70 hover:text-white">✕</button>
             </div>
             <div className="p-6 overflow-y-auto space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
@@ -1710,9 +1682,14 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
       {/* ===== MODAL: REFERRAL ACCEPT / DECLINE ===== */}
       {selectedReferralModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="referral-modal-title"
+        >
           <div className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4 text-xs">
-            <h3 className="font-bold text-slate-900 text-sm">Evaluate NGO Patient Referral — {selectedReferralModal.patientName}</h3>
+            <h3 id="referral-modal-title" className="font-bold text-slate-900 text-sm">Evaluate NGO Patient Referral — {selectedReferralModal.patientName}</h3>
             <p className="text-slate-600">Diagnosis: <strong>{selectedReferralModal.cancerType}</strong> • Priority: <strong>{selectedReferralModal.priority}</strong></p>
 
             <div>
@@ -1730,9 +1707,14 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
       {/* ===== MODAL: ADD DOCTOR ===== */}
       {showAddDoctorModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="add-doctor-modal-title"
+        >
           <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4 text-xs">
-            <h3 className="font-bold text-slate-900 text-sm">Add Oncologist to Hospital Directory</h3>
+            <h3 id="add-doctor-modal-title" className="font-bold text-slate-900 text-sm">Add Oncologist to Hospital Directory</h3>
             <form onSubmit={handleAddDoctorSubmit} className="space-y-3">
               <div>
                 <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Doctor Full Name *</label>
@@ -1761,9 +1743,14 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
       {/* ===== MODAL: UPLOAD MEDICAL REPORT ===== */}
       {showUploadReportModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="upload-report-modal-title"
+        >
           <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4 text-xs">
-            <h3 className="font-bold text-slate-900 text-sm">Upload Patient Medical Document</h3>
+            <h3 id="upload-report-modal-title" className="font-bold text-slate-900 text-sm">Upload Patient Medical Document</h3>
             <form onSubmit={handleUploadReportSubmit} className="space-y-3">
               <div>
                 <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Select Patient</label>
@@ -1798,9 +1785,14 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
       {/* ===== MODAL: VERIFY COST ESTIMATE ===== */}
       {showVerifyCostModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="verify-cost-modal-title"
+        >
           <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4 text-xs">
-            <h3 className="font-bold text-slate-900 text-sm">Verify Financial Aid Treatment Cost</h3>
+            <h3 id="verify-cost-modal-title" className="font-bold text-slate-900 text-sm">Verify Financial Aid Treatment Cost</h3>
             <p className="text-slate-600">Patient: <strong>{showVerifyCostModal.patientName}</strong> • NGO Est: <strong>₹{showVerifyCostModal.estimatedCost.toLocaleString()}</strong></p>
             <form onSubmit={handleVerifyCostSubmit} className="space-y-3">
               <div>
@@ -1818,13 +1810,18 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
       {/* Accept Patient Modal (Step 5 & 6: Auto Appointment Creation) */}
       {acceptingEnquiry && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="accept-patient-modal-title"
+        >
           <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+              <h3 id="accept-patient-modal-title" className="font-bold text-slate-900 text-base flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" /> Accept Patient & Schedule Appointment
               </h3>
-              <button onClick={() => setAcceptingEnquiry(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <button onClick={() => setAcceptingEnquiry(null)} aria-label="Close" className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1938,13 +1935,18 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
       {/* Decline Patient Modal */}
       {decliningEnquiry && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="decline-patient-modal-title"
+        >
           <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+              <h3 id="decline-patient-modal-title" className="font-bold text-slate-900 text-base flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-red-600" /> Decline Patient Referral
               </h3>
-              <button onClick={() => setDecliningEnquiry(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <button onClick={() => setDecliningEnquiry(null)} aria-label="Close" className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1997,11 +1999,76 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
         </div>
       )}
 
+      {/* Mark Treatment Completed Modal */}
+      {completingEnquiry && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="complete-treatment-modal-title"
+        >
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 id="complete-treatment-modal-title" className="font-bold text-slate-900 text-base flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-primary" /> Mark Treatment Completed
+              </h3>
+              <button onClick={() => setCompletingEnquiry(null)} aria-label="Close" className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="text-xs space-y-1 text-slate-600 bg-slate-50 p-3 rounded-xl">
+              <p><strong className="text-slate-800">Enquiry ID:</strong> {completingEnquiry.enquiryId}</p>
+              <p><strong className="text-slate-800">Patient:</strong> {completingEnquiry.patientName}</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Closing Remarks (Optional)
+              </label>
+              <textarea
+                rows={3}
+                value={completeRemarksText}
+                onChange={e => setCompleteRemarksText(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-primary outline-none"
+                placeholder="e.g. Treatment course completed, patient discharged in stable condition."
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setCompletingEnquiry(null)}
+                className="px-4 py-2 border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!apiToken) return;
+                  try {
+                    await completeEnquiryTreatment(completingEnquiry.id, apiToken, completeRemarksText || undefined);
+                    showToast(`Patient ${completingEnquiry.patientName}'s case marked as completed.`);
+                    setCompletingEnquiry(null);
+                    refetchEnquiries();
+                  } catch (err) {
+                    showToast(err instanceof ApiError ? err.message : 'Unable to reach the server.');
+                  }
+                }}
+                className="px-5 py-2 bg-primary hover:bg-primary/90 text-white text-xs font-bold rounded-xl shadow-sm cursor-pointer"
+              >
+                Mark Completed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Enquiry Timeline Modal */}
       <EnquiryTimelineModal
         enquiry={timelineEnquiry}
         isOpen={!!timelineEnquiry}
         onClose={() => setTimelineEnquiry(null)}
+        apiToken={apiToken}
       />
 
     </div>

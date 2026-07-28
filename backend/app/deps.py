@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import decode_access_token
+from app.models.revoked_token import RevokedToken
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -14,6 +15,7 @@ DbSession = Annotated[Session, Depends(get_db)]
 
 
 def get_current_claims(
+    db: DbSession,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
 ) -> dict:
     if credentials is None:
@@ -21,6 +23,12 @@ def get_current_claims(
     claims = decode_access_token(credentials.credentials)
     if claims is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired token")
+    # Tokens issued before the jti/revocation table existed have no "jti"
+    # claim and simply can't be revoked -- they just expire on their own
+    # TTL as before, so this stays backward compatible.
+    jti = claims.get("jti")
+    if jti and db.query(RevokedToken).filter(RevokedToken.jti == jti).first() is not None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token has been revoked")
     return claims
 
 

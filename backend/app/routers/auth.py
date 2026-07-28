@@ -1,12 +1,13 @@
-import random
 from datetime import datetime, timezone
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.core.limiter import limiter
-from app.core.security import create_access_token, hash_password, verify_password
-from app.deps import DbSession
+from app.core.security import create_access_token, generate_numeric_id, hash_password, verify_password
+from app.deps import DbSession, get_current_claims
 from app.models.hospital import Hospital
+from app.models.revoked_token import RevokedToken
 from app.models.user import User
 from app.models.volunteer import Volunteer
 from app.schemas.auth import LoginIn, TokenOut
@@ -47,6 +48,21 @@ def volunteer_login(request: Request, payload: LoginIn, db: DbSession):
     return TokenOut(access_token=token, role="volunteer", name=volunteer.name)
 
 
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("30/minute")
+def logout(request: Request, db: DbSession, claims: Annotated[dict, Depends(get_current_claims)]):
+    """Shared across staff/hospital/volunteer -- all three use the same
+    Bearer-token scheme. Previously "logout" only did
+    localStorage.removeItem on the frontend, so a token copied before
+    logout (or simply left in browser history/dev tools) stayed fully
+    valid for its whole 8h life. This actually revokes it server-side.
+    """
+    jti = claims.get("jti")
+    if jti and db.query(RevokedToken).filter(RevokedToken.jti == jti).first() is None:
+        db.add(RevokedToken(jti=jti))
+        db.commit()
+
+
 @router.post("/volunteer/register", response_model=VolunteerOut, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
 def volunteer_register(request: Request, payload: VolunteerRegisterIn, db: DbSession):
@@ -54,7 +70,7 @@ def volunteer_register(request: Request, payload: VolunteerRegisterIn, db: DbSes
         raise HTTPException(status.HTTP_409_CONFLICT, "An account with this email already exists")
 
     year = datetime.now(timezone.utc).year
-    volunteer_id = f"V-{year}-{random.randint(10000, 99999)}"
+    volunteer_id = f"V-{year}-{generate_numeric_id()}"
 
     volunteer = Volunteer(
         volunteer_id=volunteer_id,

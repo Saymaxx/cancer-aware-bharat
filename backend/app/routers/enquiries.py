@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
@@ -21,6 +22,7 @@ from app.schemas.enquiry import (
     AdminRejectIn,
     EnquiryLookupIn,
     HospitalAcceptIn,
+    HospitalCompleteIn,
     HospitalDeclineIn,
     PatientEnquiryCreate,
     PatientEnquiryOut,
@@ -33,6 +35,21 @@ router = APIRouter(prefix="/enquiries", tags=["enquiries"])
 
 ALLOWED_REPORT_TYPES = {"application/pdf", "image/jpeg", "image/png"}
 MAX_REPORT_BYTES = 10 * 1024 * 1024  # 10 MB
+
+# Magic-byte signatures for the 3 types we accept. The client-supplied
+# Content-Type header is trivially spoofable (it's just a form field), so it
+# can only be used to pick a signature to check against, never trusted on
+# its own.
+_MAGIC_SIGNATURES: dict[str, tuple[bytes, ...]] = {
+    "application/pdf": (b"%PDF-",),
+    "image/jpeg": (b"\xff\xd8\xff",),
+    "image/png": (b"\x89PNG\r\n\x1a\n",),
+}
+
+
+def _matches_declared_type(contents: bytes, declared_type: str) -> bool:
+    signatures = _MAGIC_SIGNATURES.get(declared_type, ())
+    return any(contents.startswith(sig) for sig in signatures)
 
 
 def _staff_name(db: Session, claims: dict) -> str:
@@ -65,7 +82,9 @@ def lookup_enquiry(request: Request, payload: EnquiryLookupIn, db: DbSession):
 
 
 @router.get("", response_model=list[PatientEnquiryOut])
+@limiter.limit("60/minute")
 def list_enquiries(
+    request: Request,
     db: DbSession,
     claims: Annotated[dict, Depends(require_roles("admin", "superadmin", "hospital"))],
     status_filter: str | None = Query(default=None, alias="status"),
@@ -90,7 +109,9 @@ def list_enquiries(
 
 
 @router.get("/{enquiry_id}", response_model=PatientEnquiryOut)
+@limiter.limit("60/minute")
 def get_enquiry(
+    request: Request,
     enquiry_id: UUID,
     db: DbSession,
     claims: Annotated[dict, Depends(require_roles("admin", "superadmin", "hospital"))],
@@ -104,39 +125,47 @@ def get_enquiry(
 
 
 @router.post("/{enquiry_id}/admin-approve", response_model=PatientEnquiryOut)
+@limiter.limit("30/minute")
 def admin_approve_enquiry(
+    request: Request,
     enquiry_id: UUID,
     payload: AdminDecisionIn,
     db: DbSession,
     claims: Annotated[dict, Depends(require_admin_or_superadmin)],
 ):
-    return enquiry_workflow.admin_approve(db, enquiry_id, _staff_name(db, claims), payload.remarks)
+    return enquiry_workflow.admin_approve(db, enquiry_id, _staff_name(db, claims), UUID(claims["sub"]), payload.remarks)
 
 
 @router.post("/{enquiry_id}/admin-reject", response_model=PatientEnquiryOut)
+@limiter.limit("30/minute")
 def admin_reject_enquiry(
+    request: Request,
     enquiry_id: UUID,
     payload: AdminRejectIn,
     db: DbSession,
     claims: Annotated[dict, Depends(require_admin_or_superadmin)],
 ):
-    return enquiry_workflow.admin_reject(db, enquiry_id, _staff_name(db, claims), payload.rejection_reason)
+    return enquiry_workflow.admin_reject(db, enquiry_id, _staff_name(db, claims), UUID(claims["sub"]), payload.rejection_reason)
 
 
 @router.post("/{enquiry_id}/assign-hospital", response_model=PatientEnquiryOut)
+@limiter.limit("30/minute")
 def assign_hospital(
+    request: Request,
     enquiry_id: UUID,
     payload: SuperAdminAssignIn,
     db: DbSession,
     claims: Annotated[dict, Depends(require_roles("superadmin"))],
 ):
     return enquiry_workflow.super_admin_assign_hospital(
-        db, enquiry_id, payload.hospital_id, _staff_name(db, claims), payload.remarks
+        db, enquiry_id, payload.hospital_id, _staff_name(db, claims), UUID(claims["sub"]), payload.remarks
     )
 
 
 @router.post("/{enquiry_id}/hospital-accept", response_model=PatientEnquiryOut)
+@limiter.limit("30/minute")
 def hospital_accept_enquiry(
+    request: Request,
     enquiry_id: UUID,
     payload: HospitalAcceptIn,
     db: DbSession,
@@ -149,7 +178,9 @@ def hospital_accept_enquiry(
 
 
 @router.post("/{enquiry_id}/hospital-decline", response_model=PatientEnquiryOut)
+@limiter.limit("30/minute")
 def hospital_decline_enquiry(
+    request: Request,
     enquiry_id: UUID,
     payload: HospitalDeclineIn,
     db: DbSession,
@@ -158,19 +189,47 @@ def hospital_decline_enquiry(
     return enquiry_workflow.hospital_decline(db, enquiry_id, hospital_id, payload.decline_reason)
 
 
+@router.post("/{enquiry_id}/complete", response_model=PatientEnquiryOut)
+@limiter.limit("30/minute")
+def complete_treatment(
+    request: Request,
+    enquiry_id: UUID,
+    payload: HospitalCompleteIn,
+    db: DbSession,
+    hospital_id: Annotated[UUID, Depends(current_hospital_id)],
+):
+    return enquiry_workflow.hospital_complete_treatment(db, enquiry_id, hospital_id, payload.remarks)
+
+
 @router.post("/{enquiry_id}/reports", response_model=UploadedReportOut, status_code=status.HTTP_201_CREATED)
 @limiter.limit("20/minute")
-async def upload_report(request: Request, enquiry_id: UUID, db: DbSession, file: UploadFile):
-    """Public - attached during patient enquiry submission (or added later by reference number)."""
+async def upload_report(
+    request: Request,
+    enquiry_id: UUID,
+    db: DbSession,
+    file: UploadFile,
+    phone: Annotated[str, Form()],
+):
+    """Public - attached during patient enquiry submission (or added later by reference number).
+
+    Requires the enquiry's own phone number as ownership proof (mirroring
+    /enquiries/lookup's reference-number+phone check) -- otherwise the
+    enquiry UUID alone would let anyone who obtains/guesses it attach files
+    to that patient's medical record indefinitely.
+    """
     enquiry = db.query(PatientEnquiry).filter(PatientEnquiry.id == enquiry_id).first()
     if enquiry is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Enquiry not found")
+    if enquiry.phone != phone:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Phone number does not match this enquiry")
     if file.content_type not in ALLOWED_REPORT_TYPES:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Only PDF, JPEG, or PNG reports are accepted")
 
     contents = await file.read(MAX_REPORT_BYTES + 1)
     if len(contents) > MAX_REPORT_BYTES:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "File exceeds the 10 MB limit")
+    if not _matches_declared_type(contents, file.content_type):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "File content doesn't match its declared type")
 
     # file.filename is fully client-controlled. Path(...).name strips any
     # directory components (e.g. "../../etc/passwd" -> "passwd"), so the
@@ -192,3 +251,37 @@ async def upload_report(request: Request, enquiry_id: UUID, db: DbSession, file:
     db.commit()
     db.refresh(report)
     return report
+
+
+@router.get("/{enquiry_id}/reports/{report_id}/download")
+@limiter.limit("60/minute")
+def download_report(
+    request: Request,
+    enquiry_id: UUID,
+    report_id: UUID,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_roles("admin", "superadmin", "hospital"))],
+):
+    """Replaces the previous raw-filesystem-path exposure (UploadedReportOut.url)
+    with a real, access-controlled route -- same role/ownership rules as
+    viewing the enquiry itself.
+    """
+    enquiry = db.query(PatientEnquiry).filter(PatientEnquiry.id == enquiry_id).first()
+    if enquiry is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Enquiry not found")
+    if claims["role"] == "hospital" and enquiry.hospital_id != UUID(claims["sub"]):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Not assigned to your hospital")
+
+    report = (
+        db.query(UploadedReport)
+        .filter(UploadedReport.id == report_id, UploadedReport.enquiry_id == enquiry_id)
+        .first()
+    )
+    if report is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Report not found")
+
+    file_path = Path(report.url)
+    if not file_path.is_file():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Report file is missing from storage")
+
+    return FileResponse(path=file_path, filename=report.name, media_type=report.type or "application/octet-stream")

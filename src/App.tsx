@@ -1,30 +1,39 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './api/queryClient';
+import { getHospitalSession, getStaffSession, getVolunteerSession, logout } from './api/client';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import HomeTab from './components/HomeTab';
-import AboutTab from './components/AboutTab';
-import HospitalsTab from './components/HospitalsTab';
-import EventsTab from './components/EventsTab';
-import BlogsTab from './components/BlogsTab';
-import GalleryTab from './components/GalleryTab';
-import MissionTab from './components/MissionTab';
-import JoinUsTab from './components/JoinUsTab';
-import DoctorsTab from './components/DoctorsTab';
-import VolunteerAuthPage from './components/VolunteerAuthPage';
-import AdminAuthPage from './components/AdminAuthPage';
-import HospitalAuthPage from './components/HospitalAuthPage';
 
 // Common Polish Components
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { ToastProvider } from './components/common/Toast';
 
-// Modals
+// Modals -- always mounted (visibility toggled by isOpen), used from
+// essentially every page, so lazy-loading these would add Suspense
+// overhead without shrinking the bundle that actually matters.
 import VolunteerModal from './components/VolunteerModal';
 import EnquiryModal from './components/EnquiryModal';
 import SitemapModal from './components/SitemapModal';
 
-// Lazy Loaded Heavy Dashboard Components (Code Splitting & Performance)
+// Lazy Loaded Route-Level Pages (Code Splitting & Performance).
+// Previously only the 4 dashboards were split out this way -- every public
+// tab and auth page was eagerly bundled into the one entry chunk even
+// though a visitor only ever loads one of them per page view.
+const HomeTab = lazy(() => import('./components/HomeTab'));
+const AboutTab = lazy(() => import('./components/AboutTab'));
+const HospitalsTab = lazy(() => import('./components/HospitalsTab'));
+const EventsTab = lazy(() => import('./components/EventsTab'));
+const BlogsTab = lazy(() => import('./components/BlogsTab'));
+const GalleryTab = lazy(() => import('./components/GalleryTab'));
+const MissionTab = lazy(() => import('./components/MissionTab'));
+const JoinUsTab = lazy(() => import('./components/JoinUsTab'));
+const DoctorsTab = lazy(() => import('./components/DoctorsTab'));
+const VolunteerAuthPage = lazy(() => import('./components/VolunteerAuthPage'));
+const AdminAuthPage = lazy(() => import('./components/AdminAuthPage'));
+const HospitalAuthPage = lazy(() => import('./components/HospitalAuthPage'));
+
 const VolunteerDashboard = lazy(() => import('./components/VolunteerDashboard'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const SuperAdminDashboard = lazy(() => import('./components/SuperAdminDashboard'));
@@ -91,8 +100,13 @@ function PublicLayout({
         onOpenEnquiry={onOpenEnquiry}
       />
 
-      {/* Page Content */}
-      {children}
+      {/* Page Content -- every route rendered through PublicLayout now
+          points at a lazy-loaded component (see imports above), so one
+          Suspense boundary here covers all of them without repeating it
+          at each <Route>. */}
+      <Suspense fallback={<PageLoadingFallback />}>
+        {children}
+      </Suspense>
 
       {/* Footer */}
       <Footer
@@ -267,8 +281,10 @@ function AppContent() {
               <Suspense fallback={<PageLoadingFallback />}>
                 <VolunteerDashboard
                   onLogout={() => {
+                    const token = getVolunteerSession()?.accessToken;
                     localStorage.removeItem('aware_bharat_logged_in_volunteer');
                     navigate('/volunteer/login');
+                    if (token) logout(token);
                   }}
                 />
               </Suspense>
@@ -281,8 +297,10 @@ function AppContent() {
               <Suspense fallback={<PageLoadingFallback />}>
                 <HospitalDashboard
                   onLogout={() => {
+                    const token = getHospitalSession()?.accessToken;
                     localStorage.removeItem('aware_bharat_logged_in_hospital');
                     navigate('/hospital/login');
+                    if (token) logout(token);
                   }}
                 />
               </Suspense>
@@ -295,8 +313,10 @@ function AppContent() {
               <Suspense fallback={<PageLoadingFallback />}>
                 <AdminDashboard
                   onLogout={() => {
+                    const token = getStaffSession()?.accessToken;
                     localStorage.removeItem('aware_bharat_logged_in_staff');
                     navigate('/admin');
+                    if (token) logout(token);
                   }}
                 />
               </Suspense>
@@ -309,8 +329,10 @@ function AppContent() {
               <Suspense fallback={<PageLoadingFallback />}>
                 <SuperAdminDashboard
                   onLogout={() => {
+                    const token = getStaffSession()?.accessToken;
                     localStorage.removeItem('aware_bharat_logged_in_staff');
                     navigate('/superadmin');
+                    if (token) logout(token);
                   }}
                 />
               </Suspense>
@@ -347,10 +369,12 @@ function AppContent() {
 // Global Provider Wrapper Export
 export default function App() {
   return (
-    <ErrorBoundary>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
+      </ErrorBoundary>
+    </QueryClientProvider>
   );
 }

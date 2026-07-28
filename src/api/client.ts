@@ -3,6 +3,10 @@
 // case conversion -- just shape mapping, done in mappers.ts.
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
+// The backend now mounts every route at both its original unprefixed path
+// and /v1 (see backend/app/main.py) -- /v1 is the new canonical path, kept
+// unprefixed too only so nothing external breaks during the transition.
+const API_PREFIX = '/v1';
 
 const STAFF_SESSION_KEY = 'aware_bharat_logged_in_staff';
 const HOSPITAL_SESSION_KEY = 'aware_bharat_logged_in_hospital';
@@ -16,13 +20,35 @@ export class ApiError extends Error {
   }
 }
 
+// Every dashboard used to catch API errors independently and show a
+// generic "Unable to reach the server" -- a session-expired/revoked 401
+// was indistinguishable from a network outage, and nothing ever redirected
+// back to login. This runs once, centrally, for any authenticated request
+// that comes back 401.
+function handleUnauthorized() {
+  const path = window.location.pathname;
+  if (path.startsWith('/admin')) {
+    localStorage.removeItem(STAFF_SESSION_KEY);
+    if (path !== '/admin') window.location.href = '/admin';
+  } else if (path.startsWith('/superadmin')) {
+    localStorage.removeItem(STAFF_SESSION_KEY);
+    if (path !== '/superadmin') window.location.href = '/superadmin';
+  } else if (path.startsWith('/hospital')) {
+    localStorage.removeItem(HOSPITAL_SESSION_KEY);
+    if (path !== '/hospital/login') window.location.href = '/hospital/login';
+  } else if (path.startsWith('/volunteer')) {
+    localStorage.removeItem(VOLUNTEER_SESSION_KEY);
+    if (path !== '/volunteer/login') window.location.href = '/volunteer/login';
+  }
+}
+
 async function request<T>(path: string, options: RequestInit = {}, token?: string | null): Promise<T> {
   const headers: Record<string, string> = { ...(options.headers as Record<string, string> | undefined) };
   const isFormData = options.body instanceof FormData;
   if (!isFormData) headers['Content-Type'] = 'application/json';
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+  const res = await fetch(`${API_BASE_URL}${API_PREFIX}${path}`, { ...options, headers });
 
   if (!res.ok) {
     let detail = res.statusText;
@@ -30,6 +56,12 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
       const body = await res.json();
       detail = body.detail || detail;
     } catch { /* non-JSON error body */ }
+    // Only for requests that were actually authenticated -- a bare login
+    // attempt also 401s on wrong credentials, and that must never trigger
+    // a "session expired" redirect.
+    if (res.status === 401 && token) {
+      handleUnauthorized();
+    }
     throw new ApiError(res.status, detail);
   }
 
@@ -170,6 +202,18 @@ export function getMyVolunteerProfile(token: string): Promise<ApiVolunteer> {
   return request<ApiVolunteer>('/volunteers/me', {}, token);
 }
 
+// Revokes the token server-side (see backend/app/routers/auth.py logout).
+// Best-effort: callers still clear localStorage and navigate away even if
+// this fails (e.g. the token already expired), since the user's intent to
+// leave shouldn't be blocked by a network hiccup.
+export async function logout(token: string): Promise<void> {
+  try {
+    await request<void>('/auth/logout', { method: 'POST' }, token);
+  } catch {
+    /* already logged out / expired / offline -- nothing more to do */
+  }
+}
+
 // ---------------- Raw API shapes (camelCase, as returned by FastAPI) ----------------
 
 export interface ApiUploadedReport {
@@ -298,10 +342,40 @@ export function submitEnquiry(payload: SubmitEnquiryPayload): Promise<ApiPatient
   return request<ApiPatientEnquiry>('/enquiries', { method: 'POST', body: JSON.stringify(payload) });
 }
 
-export function uploadEnquiryReport(enquiryId: string, file: File): Promise<ApiUploadedReport> {
+export function uploadEnquiryReport(enquiryId: string, file: File, phone: string): Promise<ApiUploadedReport> {
   const form = new FormData();
   form.append('file', file);
+  form.append('phone', phone);
   return request<ApiUploadedReport>(`/enquiries/${enquiryId}/reports`, { method: 'POST', body: form });
+}
+
+// The download route requires a Bearer token, so a plain <a href> can't hit
+// it directly (and putting the token in the URL as a query param is exactly
+// the kind of thing that must never happen). Fetches the file as a blob
+// with the auth header, then triggers the save the same way a normal link
+// would.
+export async function downloadEnquiryReport(enquiryId: string, reportId: string, token: string, filename: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}${API_PREFIX}/enquiries/${enquiryId}/reports/${reportId}/download`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const body = await res.json();
+      detail = body.detail || detail;
+    } catch { /* non-JSON error body */ }
+    if (res.status === 401) handleUnauthorized();
+    throw new ApiError(res.status, detail);
+  }
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(objectUrl);
 }
 
 export function listEnquiries(token: string): Promise<ApiPatientEnquiry[]> {
@@ -347,6 +421,13 @@ export function hospitalDeclineEnquiry(id: string, token: string, declineReason:
   return request<ApiPatientEnquiry>(`/enquiries/${id}/hospital-decline`, {
     method: 'POST',
     body: JSON.stringify({ declineReason }),
+  }, token);
+}
+
+export function completeEnquiryTreatment(id: string, token: string, remarks?: string): Promise<ApiPatientEnquiry> {
+  return request<ApiPatientEnquiry>(`/enquiries/${id}/complete`, {
+    method: 'POST',
+    body: JSON.stringify({ remarks }),
   }, token);
 }
 

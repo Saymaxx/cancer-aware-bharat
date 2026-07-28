@@ -18,6 +18,10 @@ import { INITIAL_BLOGS } from '../data';
 import { PatientEnquiry, Hospital, BlogArticle } from '../types';
 import { useToast } from './common/Toast';
 import StatusBadge from './common/StatusBadge';
+import DashboardSidebar from './common/DashboardSidebar';
+import { useSidebarState } from '../hooks/useSidebarState';
+import { useEscapeKey } from '../hooks/useEscapeKey';
+import { csvCell, downloadCsv } from '../utils/csvExport';
 
 import {
   SUPER_ADMIN_KPI, INITIAL_ADMIN_ACCOUNTS, INITIAL_HOSPITAL_APPLICATIONS,
@@ -40,8 +44,7 @@ import {
 
 export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPageChange?: (page: string) => void; onLogout: () => void }) {
   const toast = useToast();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const { sidebarCollapsed, mobileSidebarOpen, setMobileSidebarOpen, toggleSidebar } = useSidebarState();
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
   // Real-time Patient Enquiries & Notifications from the backend API
@@ -68,22 +71,15 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   const [timelineEnquiry, setTimelineEnquiry] = useState<PatientEnquiry | null>(null);
   const [superAdminEnquiryFilter, setSuperAdminEnquiryFilter] = useState('All');
 
-  // Close open modals on ESC key press
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setShowAdminModal(false);
-        setAssigningEnquiry(null);
-        setTimelineEnquiry(null);
-        setShowHospitalDetail(null);
-        setShowRejectDialog(null);
-        setShowApprovalResult(null);
-        setCreatedAdminCredentials(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  useEscapeKey(() => {
+    setShowAdminModal(false);
+    setAssigningEnquiry(null);
+    setTimelineEnquiry(null);
+    setShowHospitalDetail(null);
+    setShowRejectDialog(null);
+    setShowApprovalResult(null);
+    setCreatedAdminCredentials(null);
+  });
 
   const handleExportAssignmentsCSV = () => {
     if (superAdminFilteredEnquiries.length === 0) {
@@ -94,25 +90,18 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     const rows = superAdminFilteredEnquiries.map(e => [
       e.enquiryId,
       e.referenceNumber,
-      `"${(e.patientName || '').replace(/"/g, '""')}"`,
+      csvCell(e.patientName),
       e.age,
       e.gender,
       e.phone,
-      `"${(e.city || '').replace(/"/g, '""')}"`,
-      `"${(e.reason || '').replace(/"/g, '""')}"`,
+      csvCell(e.city),
+      csvCell(e.reason),
       e.priority,
-      `"${(e.assignedHospitalName || e.preferredHospitalName || 'Pending Assignment').replace(/"/g, '""')}"`,
-      `"${(e.status || '').replace(/"/g, '""')}"`,
+      csvCell(e.assignedHospitalName || e.preferredHospitalName || 'Pending Assignment'),
+      csvCell(e.status),
       e.date
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `CAB_SuperAdmin_Hospital_Assignments_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(headers, rows, 'CAB_SuperAdmin_Hospital_Assignments');
     toast.success('Export Complete', 'Hospital assignments CSV downloaded successfully.');
   };
 
@@ -605,22 +594,15 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     const headers = ['Patient Code', 'Full Name', 'Age', 'Gender', 'Primary Diagnosis', 'Clinic Partner', 'Financial Aid Status', 'Aid Amount'];
     const rows = patients.map(p => [
       p.id,
-      `"${(p.name || '').replace(/"/g, '""')}"`,
+      csvCell(p.name),
       p.age,
       p.gender,
-      `"${(p.diagnosis || '').replace(/"/g, '""')}"`,
-      `"${(p.hospitalName || '').replace(/"/g, '""')}"`,
+      csvCell(p.diagnosis),
+      csvCell(p.hospitalName),
       p.financialAidStatus,
       p.financialAidAmount || 0
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `CAB_SuperAdmin_Patients_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(headers, rows, 'CAB_SuperAdmin_Patients');
     toast.success('Export Complete', 'Patients CSV downloaded successfully.');
   };
 
@@ -632,23 +614,16 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     const headers = ['Volunteer ID', 'Full Name', 'Email', 'Phone', 'Domain', 'Registered Date', 'Hours Logged', 'Attendance Rate', 'Status'];
     const rows = volunteers.map(v => [
       v.id,
-      `"${(v.name || '').replace(/"/g, '""')}"`,
+      csvCell(v.name),
       v.email,
       v.phone,
-      `"${(v.domain || '').replace(/"/g, '""')}"`,
+      csvCell(v.domain),
       v.registeredDate,
       v.hoursLogged,
       v.attendanceRate + '%',
       v.status
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `CAB_SuperAdmin_Volunteers_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(headers, rows, 'CAB_SuperAdmin_Volunteers');
     toast.success('Export Complete', 'Volunteers CSV downloaded successfully.');
   };
 
@@ -660,21 +635,14 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     const headers = ['Campaign ID', 'Title', 'Date', 'Type', 'Location', 'Assigned Volunteers', 'Status'];
     const rows = campaigns.map(c => [
       c.id,
-      `"${(c.title || '').replace(/"/g, '""')}"`,
+      csvCell(c.title),
       c.date,
       c.type,
-      `"${(c.loc || '').replace(/"/g, '""')}"`,
-      `"${(c.vols || '').replace(/"/g, '""')}"`,
+      csvCell(c.loc),
+      csvCell(c.vols),
       c.status || 'Active'
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `CAB_SuperAdmin_Campaigns_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(headers, rows, 'CAB_SuperAdmin_Campaigns');
     toast.success('Export Complete', 'Campaigns CSV downloaded successfully.');
   };
 
@@ -686,21 +654,14 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     const headers = ['Receipt ID', 'Donor Entity', 'Entity Type', 'Inflow Amount (INR)', 'Audit Date', 'Inflow Channel', 'Tax Exemption Status'];
     const rows = donations.map(d => [
       d.id,
-      `"${(d.donorName || '').replace(/"/g, '""')}"`,
+      csvCell(d.donorName),
       d.donorType,
       d.amount,
       d.date,
       d.paymentMethod,
       d.receiptSent ? 'Sent (80G)' : 'Pending'
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `CAB_SuperAdmin_Donations_Ledger_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(headers, rows, 'CAB_SuperAdmin_Donations_Ledger');
     toast.success('Export Complete', 'Donations ledger CSV downloaded successfully.');
   };
 
@@ -713,21 +674,14 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     const rows = auditLogs.map(l => [
       l.id,
       l.timestamp,
-      `"${(l.actor || '').replace(/"/g, '""')}"`,
+      csvCell(l.actor),
       l.actorRole,
-      `"${(l.action || '').replace(/"/g, '""')}"`,
-      `"${(l.target || '').replace(/"/g, '""')}"`,
+      csvCell(l.action),
+      csvCell(l.target),
       l.ipAddress,
       l.severity
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `CAB_SuperAdmin_Audit_Logs_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv(headers, rows, 'CAB_SuperAdmin_Audit_Logs');
     toast.success('Export Complete', 'Audit logs CSV downloaded successfully.');
   };
 
@@ -802,64 +756,30 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-800">
 
-      {/* Mobile Backdrop Overlay */}
-      {mobileSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden"
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
-
-      {/* ===== SIDEBAR ===== */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 bg-[#1a1042] text-white transition-all duration-300 flex flex-col justify-between select-none ${
-        mobileSidebarOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full lg:translate-x-0'
-      } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'}`}>
-        <div>
-          <div className="p-5 flex items-center justify-between border-b border-white/10">
-            <div className="flex items-center space-x-3 overflow-hidden">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg">
-                <Crown className="w-5 h-5 text-white" />
-              </div>
-              {(!sidebarCollapsed || mobileSidebarOpen) && (
-                <span className="font-headline-lg text-base font-black text-white tracking-tight truncate">
-                  Super Admin Console
-                </span>
-              )}
-            </div>
-            <button 
-              onClick={() => setMobileSidebarOpen(false)}
-              className="lg:hidden text-white/70 hover:text-white p-1 rounded-lg"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <nav className="p-3 space-y-0.5 max-h-[calc(100vh-160px)] overflow-y-auto">
-            {sidebarItems.map((item) => {
-              const IconComp = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => { 
-                    setActiveTab(item.id); 
-                    setSearchTerm(''); 
-                    setMobileSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center rounded-xl p-2.5 text-[13px] font-semibold transition-all cursor-pointer ${isActive
-                    ? 'bg-white/10 text-white shadow-sm border-l-4 border-purple-400'
-                    : 'text-white/50 hover:text-white hover:bg-white/5'
-                    }`}
-                >
-                  <IconComp className={`w-4.5 h-4.5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3'}`} />
-                  {(!sidebarCollapsed || mobileSidebarOpen) && <span>{item.label}</span>}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-      </aside>
+      <DashboardSidebar
+        items={sidebarItems}
+        activeTab={activeTab}
+        onSelect={(id) => {
+          setActiveTab(id);
+          setSearchTerm('');
+          setMobileSidebarOpen(false);
+        }}
+        sidebarCollapsed={sidebarCollapsed}
+        mobileSidebarOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
+        bgClass="bg-[#1a1042]"
+        brandIcon={Crown}
+        brandIconWrapperClass="bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg"
+        brandLabel="Super Admin Console"
+        brandLabelClass="text-base"
+        activeAccentBorderClass="border-purple-400"
+        navItemPaddingClass="p-2.5 text-[13px]"
+        navIconSizeClass="w-4.5 h-4.5"
+        navIconMarginClass="mr-3"
+        // No badgeClass: this dashboard has never rendered nav badge pills,
+        // even though one sidebarItems entry does carry a badge count --
+        // preserved as-is rather than silently changing behavior.
+      />
 
       {/* ===== MAIN ===== */}
       <main className="flex-1 flex flex-col min-w-0 bg-[#f8f7ff]">
@@ -867,16 +787,11 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
         {/* Header */}
         <header className="bg-white border-b border-purple-100/50 px-4 sm:px-6 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-xs">
           <div className="flex items-center space-x-3 sm:space-x-4">
-            <button 
-              onClick={() => {
-                if (window.innerWidth < 1024) {
-                  setMobileSidebarOpen(!mobileSidebarOpen);
-                } else {
-                  setSidebarCollapsed(!sidebarCollapsed);
-                }
-              }} 
+            <button
+              onClick={toggleSidebar}
               className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer"
               title="Toggle Menu"
+              aria-label="Toggle menu"
             >
               <Menu className="w-5 h-5 lg:hidden" />
               <Terminal className="w-5 h-5 hidden lg:block" />
@@ -1246,14 +1161,20 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
               {/* Admin Create/Edit Modal */}
               {showAdminModal && (
-                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowAdminModal(false)}>
+                <div
+                  className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+                  onClick={() => setShowAdminModal(false)}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="admin-account-modal-title"
+                >
                   <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4" onClick={e => e.stopPropagation()}>
                     <div className="flex justify-between items-center border-b pb-3">
                       <div>
-                        <h3 className="text-base font-bold text-slate-900">{editingAdmin ? 'Edit Staff Admin Account' : 'Create New Staff Admin'}</h3>
+                        <h3 id="admin-account-modal-title" className="text-base font-bold text-slate-900">{editingAdmin ? 'Edit Staff Admin Account' : 'Create New Staff Admin'}</h3>
                         <p className="text-xs text-slate-500">Assign region, role permissions, and administrative login credentials.</p>
                       </div>
-                      <button onClick={() => setShowAdminModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer"><X className="w-5 h-5" /></button>
+                      <button onClick={() => setShowAdminModal(false)} aria-label="Close" className="text-slate-400 hover:text-slate-600 cursor-pointer"><X className="w-5 h-5" /></button>
                     </div>
 
                     <form onSubmit={saveAdmin} className="space-y-3.5 text-xs">
@@ -1332,13 +1253,18 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
               {/* Created Admin Credentials Summary Modal */}
               {createdAdminCredentials && (
-                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                <div
+                  className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="admin-credentials-modal-title"
+                >
                   <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-5 animate-[scaleUp_0.2s_ease-out]">
                     <div className="text-center space-y-2">
                       <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200 shadow-sm">
                         <ShieldCheck className="w-8 h-8" />
                       </div>
-                      <h3 className="text-lg font-black text-slate-900">Admin Account Credentials</h3>
+                      <h3 id="admin-credentials-modal-title" className="text-lg font-black text-slate-900">Admin Account Credentials</h3>
                       <p className="text-xs text-slate-500">Provide these login credentials to <strong>{createdAdminCredentials.name}</strong> to access the Regional Admin Portal.</p>
                     </div>
 
@@ -1497,9 +1423,15 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
               {/* Reject Dialog */}
               {showRejectDialog && (
-                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowRejectDialog(null)}>
+                <div
+                  className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+                  onClick={() => setShowRejectDialog(null)}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="reject-hospital-modal-title"
+                >
                   <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
-                    <h3 className="text-base font-bold text-red-700 mb-3 flex items-center gap-2"><AlertTriangle className="w-5 h-5" /> Reject Hospital Application</h3>
+                    <h3 id="reject-hospital-modal-title" className="text-base font-bold text-red-700 mb-3 flex items-center gap-2"><AlertTriangle className="w-5 h-5" /> Reject Hospital Application</h3>
                     <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} rows={4} className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 outline-none text-xs resize-none focus:border-red-400" placeholder="Provide a detailed reason for rejection..." />
                     <div className="flex gap-3 mt-4">
                       <button onClick={() => setShowRejectDialog(null)} className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">Cancel</button>
@@ -1511,12 +1443,18 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
               {/* Approval Credentials Modal */}
               {showApprovalResult && (
-                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowApprovalResult(null)}>
+                <div
+                  className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+                  onClick={() => setShowApprovalResult(null)}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="hospital-approved-modal-title"
+                >
                   <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 text-center" onClick={e => e.stopPropagation()}>
                     <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3 border-2 border-emerald-200">
                       <CheckCircle2 className="w-8 h-8 text-emerald-600" />
                     </div>
-                    <h3 className="text-base font-bold text-slate-900 mb-1">Hospital Approved!</h3>
+                    <h3 id="hospital-approved-modal-title" className="text-base font-bold text-slate-900 mb-1">Hospital Approved!</h3>
                     <p className="text-xs text-slate-500 mb-4">Login credentials have been auto-generated. Share them securely with the hospital.</p>
                     <div className="bg-slate-900 text-emerald-400 p-4 rounded-xl font-mono text-xs text-left space-y-1.5 mb-4">
                       <p>Email: <span className="text-white">{showApprovalResult.email}</span></p>
@@ -2140,11 +2078,17 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
               {/* Add Custom Role Modal */}
               {showRoleModal && (
-                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowRoleModal(false)}>
+                <div
+                  className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+                  onClick={() => setShowRoleModal(false)}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="custom-role-modal-title"
+                >
                   <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4" onClick={e => e.stopPropagation()}>
                     <div className="flex justify-between items-center border-b pb-3">
-                      <h3 className="text-base font-bold text-slate-900">Create Custom Role</h3>
-                      <button onClick={() => setShowRoleModal(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer"><X className="w-5 h-5" /></button>
+                      <h3 id="custom-role-modal-title" className="text-base font-bold text-slate-900">Create Custom Role</h3>
+                      <button onClick={() => setShowRoleModal(false)} aria-label="Close" className="text-slate-400 hover:text-slate-600 cursor-pointer"><X className="w-5 h-5" /></button>
                     </div>
                     <form onSubmit={handleAddRole} className="space-y-3.5 text-xs">
                       <div>
@@ -2334,13 +2278,18 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
       {/* Super Admin Hospital Assignment Modal (Step 4) */}
       {assigningEnquiry && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="assign-hospital-modal-title"
+        >
           <div className="bg-white w-full max-w-3xl rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] flex flex-col">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+              <h3 id="assign-hospital-modal-title" className="font-bold text-slate-900 text-base flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-indigo-600" /> Assign Patient to Hospital Partner
               </h3>
-              <button onClick={() => setAssigningEnquiry(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <button onClick={() => setAssigningEnquiry(null)} aria-label="Close" className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -2503,6 +2452,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
         enquiry={timelineEnquiry}
         isOpen={!!timelineEnquiry}
         onClose={() => setTimelineEnquiry(null)}
+        apiToken={apiToken}
       />
 
     </div>

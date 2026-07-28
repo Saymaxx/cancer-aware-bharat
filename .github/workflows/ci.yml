@@ -21,6 +21,14 @@ jobs:
         run: npm run lint
       - name: Build
         run: npm run build
+      - name: Dependency vulnerability audit
+        # Non-blocking for now: fixing the two existing high/critical
+        # findings (react-router-dom, vitest's esbuild/vite chain) needs
+        # breaking major-version upgrades, out of scope for this phase.
+        # Dependabot (.github/dependabot.yml) will open PRs for these;
+        # this step keeps them visible in every CI run in the meantime.
+        run: npm audit --audit-level=high
+        continue-on-error: true
 
   backend:
     name: Backend (pytest)
@@ -55,7 +63,21 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - name: Run migrations
         run: alembic upgrade head
+      - name: Migration drift check (models vs. migrations)
+        # Non-blocking: the hand-written 0001 migration has known
+        # pre-existing drift from the models (nullable/server_default
+        # representation and unique-constraint-vs-unique-index differences)
+        # that predates this check and needs its own dedicated migration to
+        # reconcile -- not something to silently rewrite as a side effect of
+        # adding CI visibility. This step's job is to make sure drift never
+        # goes unnoticed again going forward.
+        run: alembic check
+        continue-on-error: true
       - name: Seed dev data (tests log in as these accounts)
         run: python -m app.seed
       - name: Run tests
         run: pytest -v
+      - name: Dependency vulnerability audit
+        # Non-blocking: see the matching frontend step above for why.
+        run: pip-audit -r requirements.txt
+        continue-on-error: true

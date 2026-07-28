@@ -5,7 +5,7 @@ import {
   Mail, Phone, Lock, MapPin, Award, Check, Clock, Upload, Stethoscope,
   Activity, ShieldCheck, Heart, Sparkles, Building, AlertCircle, Save, FileText,
   HelpCircle, ChevronDown, ChevronUp, Download, Layers, Users, CheckSquare, Info,
-  X, UserCheck, Calendar, DollarSign, Globe, ExternalLink, RefreshCw, Key, Printer
+  X, UserCheck, Calendar, DollarSign, Globe, ExternalLink, RefreshCw, Printer
 } from 'lucide-react';
 import { ApiError, loginHospital, setHospitalSession } from '../api/client';
 
@@ -32,9 +32,10 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
   // Accordion FAQ state
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
 
-  // Login form state
-  const [loginEmail, setLoginEmail] = useState('hospital1@awarebharat.local');
-  const [loginPassword, setLoginPassword] = useState('ChangeMe123!');
+  // Login form state -- previously pre-filled with a real seed-account
+  // password, handing a working login to anyone who opened this page.
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
 
   // Step 1: Hospital Details State
   const [hospName, setHospName] = useState('');
@@ -194,7 +195,12 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
         setErrorMessage('Please enter Representative Name, Official Email, and Phone Number.');
         return false;
       }
-      if (!email.includes('@') || !email.includes('.')) {
+      // Previously just `!email.includes('@') || !email.includes('.')`,
+      // which both rejected valid addresses and accepted garbage like
+      // "a@.@b.c" -- disagreeing with the native type="email" constraint
+      // already on the input. Not a full RFC 5322 validator, but a real
+      // shape check instead of two substring tests.
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
         setErrorMessage('Please provide a valid official email address.');
         return false;
       }
@@ -607,15 +613,6 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-              </div>
-
-              {/* Hint Card */}
-              <div className="p-3.5 bg-teal-50 border border-teal-200 rounded-2xl text-xs space-y-1 text-teal-900">
-                <p className="font-bold text-[11px] uppercase tracking-wider text-[#063b42] flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5 text-teal-600" /> Demo Approved Credentials:
-                </p>
-                <p className="font-mono text-[11px]">Email: <span className="font-bold text-slate-900">hospital1@awarebharat.local</span></p>
-                <p className="font-mono text-[11px]">Password: <span className="font-bold text-slate-900">ChangeMe123!</span></p>
               </div>
 
               <button

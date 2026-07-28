@@ -25,17 +25,23 @@ export default function SitemapModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="sitemap-modal-title"
+    >
       <div className="relative bg-white w-full max-w-3xl rounded-xl shadow-[0px_12px_32px_rgba(0,0,0,0.15)] border border-outline-variant/30 overflow-hidden flex flex-col max-h-[90vh]">
-        
+
         {/* Header */}
         <div className="bg-primary px-6 py-4 flex justify-between items-center text-white">
           <div className="flex items-center space-x-2">
             <Network className="w-5 h-5 text-secondary-container" />
-            <span className="font-headline-lg text-lg font-bold">Interactive Portal Sitemap</span>
+            <span id="sitemap-modal-title" className="font-headline-lg text-lg font-bold">Interactive Portal Sitemap</span>
           </div>
-          <button 
+          <button
             onClick={onClose}
+            aria-label="Close"
             className="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />

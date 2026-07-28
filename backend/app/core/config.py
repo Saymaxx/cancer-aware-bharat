@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     upload_dir: str = "./uploads"
     log_level: str = "INFO"
 
+    # Off by default: trusting X-Forwarded-For only makes sense when a real
+    # reverse proxy/load balancer sits in front of the app and sets that
+    # header itself. Turning this on without such a proxy would let any
+    # client spoof the header to dodge rate limiting entirely.
+    trust_proxy_headers: bool = False
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

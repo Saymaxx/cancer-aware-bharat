@@ -1,76 +1,61 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { listEnquiries, listHospitals, listNotifications } from './client';
 import { mapApiEnquiry, mapApiHospital, mapApiNotification } from './mappers';
-import { AppNotification, Hospital, PatientEnquiry } from '../types';
 
 const POLL_INTERVAL_MS = 20000;
 
 /** Enquiries visible to the logged-in staff member. Refetches on an interval
  * and exposes `refetch` so action handlers can force an immediate refresh
- * right after a mutation (approve/reject/assign) succeeds. */
+ * right after a mutation (approve/reject/assign) succeeds.
+ *
+ * Previously hand-rolled with useState/useEffect/setInterval: every
+ * dashboard instance ran its own independent fetch loop with no caching or
+ * dedup between them, and the interval kept polling unconditionally even
+ * with the tab in the background. React Query's refetchInterval already
+ * pauses while the tab is hidden and refetches on refocus, and dedupes
+ * concurrent requests for the same token across components for free.
+ */
 export function useApiEnquiries(token: string | null) {
-  const [enquiries, setEnquiries] = useState<PatientEnquiry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const query = useQuery({
+    queryKey: ['enquiries', token],
+    queryFn: () => listEnquiries(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
 
-  const refetch = useCallback(async () => {
-    if (!token) return;
-    try {
-      const data = await listEnquiries(token);
-      setEnquiries(data.map(mapApiEnquiry));
-      setError(null);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load enquiries');
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    refetch();
-    const interval = setInterval(refetch, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [refetch]);
-
-  return { enquiries, loading, error, refetch };
+  return {
+    enquiries: (query.data ?? []).map(mapApiEnquiry),
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load enquiries' : null,
+    refetch: query.refetch,
+  };
 }
 
 export function useApiNotifications(token: string | null) {
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const query = useQuery({
+    queryKey: ['notifications', token],
+    queryFn: () => listNotifications(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
 
-  const refetch = useCallback(async () => {
-    if (!token) return;
-    try {
-      const data = await listNotifications(token);
-      setNotifications(data.map(mapApiNotification));
-    } catch {
-      // Notifications are non-critical; fail silently rather than blocking the dashboard.
-    }
-  }, [token]);
-
-  useEffect(() => {
-    refetch();
-    const interval = setInterval(refetch, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [refetch]);
-
-  return { notifications, refetch };
+  return {
+    // Notifications are non-critical; fail silently rather than blocking the dashboard.
+    notifications: (query.data ?? []).map(mapApiNotification),
+    refetch: query.refetch,
+  };
 }
 
 /** Public hospital directory -- used by the patient enquiry form and the
  * Super Admin hospital-assignment picker. */
 export function useApiHospitals() {
-  const [hospitals, setHospitals] = useState<Hospital[]>([]);
-  const [loading, setLoading] = useState(true);
+  const query = useQuery({
+    queryKey: ['hospitals'],
+    queryFn: () => listHospitals(),
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    listHospitals()
-      .then(data => { if (!cancelled) setHospitals(data.map(mapApiHospital)); })
-      .catch(() => { /* leave hospitals empty on failure */ })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
-
-  return { hospitals, loading };
+  return {
+    hospitals: (query.data ?? []).map(mapApiHospital),
+    loading: query.isLoading,
+  };
 }

@@ -1,15 +1,33 @@
-import React from 'react';
-import { X, CheckCircle, Clock, User, Building2, Shield, Calendar, FileText, AlertCircle, FileCheck, Stethoscope, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, CheckCircle, Clock, User, Building2, Shield, Calendar, FileText, AlertCircle, FileCheck, Stethoscope, ArrowRight, Download } from 'lucide-react';
 import { PatientEnquiry, TimelineEvent } from '../types';
+import { downloadEnquiryReport, ApiError } from '../api/client';
 
 interface EnquiryTimelineModalProps {
   enquiry: PatientEnquiry | null;
   isOpen: boolean;
   onClose: () => void;
+  apiToken?: string | null;
 }
 
-export default function EnquiryTimelineModal({ enquiry, isOpen, onClose }: EnquiryTimelineModalProps) {
+export default function EnquiryTimelineModal({ enquiry, isOpen, onClose, apiToken }: EnquiryTimelineModalProps) {
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState('');
+
   if (!isOpen || !enquiry) return null;
+
+  const handleDownload = async (reportId: string, name: string) => {
+    if (!enquiry || !apiToken) return;
+    setDownloadError('');
+    setDownloadingId(reportId);
+    try {
+      await downloadEnquiryReport(enquiry.id, reportId, apiToken, name);
+    } catch (err) {
+      setDownloadError(err instanceof ApiError ? err.message : 'Unable to download this report.');
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -43,9 +61,14 @@ export default function EnquiryTimelineModal({ enquiry, isOpen, onClose }: Enqui
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="enquiry-timeline-modal-title"
+    >
       <div className="relative bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-        
+
         {/* Header */}
         <div className="bg-[#004349] px-6 py-4 flex justify-between items-center text-white">
           <div className="flex items-center space-x-3">
@@ -59,13 +82,14 @@ export default function EnquiryTimelineModal({ enquiry, isOpen, onClose }: Enqui
                 </span>
                 <span className="text-xs text-white/70">Ref: {enquiry.referenceNumber}</span>
               </div>
-              <h3 className="font-headline-lg text-lg font-bold text-white">
+              <h3 id="enquiry-timeline-modal-title" className="font-headline-lg text-lg font-bold text-white">
                 Patient Workflow Tracking & Timeline
               </h3>
             </div>
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="text-white/80 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -126,6 +150,7 @@ export default function EnquiryTimelineModal({ enquiry, isOpen, onClose }: Enqui
               <h5 className="font-bold text-xs text-slate-800 mb-2 flex items-center gap-1.5">
                 <FileText className="w-4 h-4 text-primary" /> Uploaded Medical Documents & Reports ({enquiry.uploadedReports.length})
               </h5>
+              {downloadError && <p className="text-[11px] text-red-600 mb-2">{downloadError}</p>}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {enquiry.uploadedReports.map(rep => (
                   <div key={rep.id} className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 flex justify-between items-center text-xs">
@@ -133,9 +158,14 @@ export default function EnquiryTimelineModal({ enquiry, isOpen, onClose }: Enqui
                       <p className="font-semibold text-slate-800 truncate">{rep.name}</p>
                       <span className="text-[10px] text-slate-500">{rep.size} • {rep.uploadedAt}</span>
                     </div>
-                    <span className="px-2 py-0.5 bg-primary/10 text-primary font-bold text-[10px] rounded">
-                      Attached
-                    </span>
+                    <button
+                      onClick={() => handleDownload(rep.id, rep.name)}
+                      disabled={!apiToken || downloadingId === rep.id}
+                      className="px-2 py-0.5 bg-primary/10 text-primary hover:bg-primary/20 font-bold text-[10px] rounded flex items-center gap-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    >
+                      <Download className="w-3 h-3" />
+                      {downloadingId === rep.id ? 'Downloading…' : 'Download'}
+                    </button>
                   </div>
                 ))}
               </div>

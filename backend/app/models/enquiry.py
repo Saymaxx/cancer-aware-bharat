@@ -50,13 +50,21 @@ class PatientEnquiry(Base):
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="Pending Admin Review")
     priority: Mapped[str] = mapped_column(String(20), nullable=False, default="Normal")  # Normal/Urgent/Critical
 
-    # Decision snapshots (denormalized for quick read, mirrors frontend PatientEnquiry type)
+    # Decision snapshots (denormalized for quick read, mirrors frontend PatientEnquiry type).
+    # The *_by columns stay free-text display snapshots deliberately (same
+    # pattern as assigned_hospital_name -- a case should show the name as it
+    # was at decision time). The *_by_id FK columns alongside them are what's
+    # new: User.name has no uniqueness constraint, so two staff sharing a
+    # display name previously made "who approved this" genuinely ambiguous;
+    # the FK lets it be traced to the exact user row regardless.
     admin_decided_by: Mapped[str | None] = mapped_column(String(200))
+    admin_decided_by_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     admin_decided_at: Mapped[str | None] = mapped_column(String(50))
     admin_action: Mapped[str | None] = mapped_column(String(20))  # Approve/Reject
     admin_remarks: Mapped[str | None] = mapped_column(Text)
 
     super_admin_assigned_by: Mapped[str | None] = mapped_column(String(200))
+    super_admin_assigned_by_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     super_admin_assigned_at: Mapped[str | None] = mapped_column(String(50))
     super_admin_remarks: Mapped[str | None] = mapped_column(Text)
 
@@ -97,7 +105,10 @@ class UploadedReport(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     size: Mapped[str | None] = mapped_column(String(30))
     type: Mapped[str | None] = mapped_column(String(100))
-    url: Mapped[str] = mapped_column(String(1000), nullable=False)  # storage key/URL, not the blob itself
+    # Server-local storage path only -- never returned to clients directly
+    # (UploadedReportOut.url is a computed authenticated-download-route path
+    # instead; see app/routers/enquiries.py's download endpoint).
+    url: Mapped[str] = mapped_column(String(1000), nullable=False)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     enquiry = relationship("PatientEnquiry", back_populates="uploaded_reports")

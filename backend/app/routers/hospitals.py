@@ -13,7 +13,9 @@ router = APIRouter(prefix="/hospitals", tags=["hospitals"])
 
 
 @router.get("", response_model=list[HospitalOut])
+@limiter.limit("60/minute")
 def list_hospitals(
+    request: Request,
     db: DbSession,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=500, ge=1, le=1000),
@@ -30,8 +32,11 @@ def list_hospitals(
 
 
 @router.get("/{hospital_id}", response_model=HospitalOut)
-def get_hospital(hospital_id: UUID, db: DbSession):
-    hospital = db.query(Hospital).filter(Hospital.id == hospital_id).first()
+@limiter.limit("60/minute")
+def get_hospital(request: Request, hospital_id: UUID, db: DbSession):
+    # Matches list_hospitals' filter: a deactivated hospital shouldn't be
+    # individually fetchable by a public/unauthenticated caller either.
+    hospital = db.query(Hospital).filter(Hospital.id == hospital_id, Hospital.is_active.is_(True)).first()
     if hospital is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Hospital not found")
     return hospital
@@ -49,7 +54,9 @@ def submit_partner_request(request: Request, payload: HospitalPartnerRequestIn, 
 
 
 @router.get("/partner-requests/all", response_model=list[HospitalPartnerRequestOut])
+@limiter.limit("60/minute")
 def list_partner_requests(
+    request: Request,
     db: DbSession,
     claims: Annotated[dict, Depends(require_roles("admin", "superadmin"))],
     skip: int = Query(default=0, ge=0),

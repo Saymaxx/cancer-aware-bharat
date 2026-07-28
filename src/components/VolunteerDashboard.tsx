@@ -12,6 +12,9 @@ import {
 } from 'lucide-react';
 import { useToast } from './common/Toast';
 import { ApiError, ApiVolunteer, getMyVolunteerProfile } from '../api/client';
+import DashboardSidebar, { SidebarFooterButton } from './common/DashboardSidebar';
+import { useSidebarState } from '../hooks/useSidebarState';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 import {
   MOTIVATIONAL_QUOTES, DEFAULT_VOLUNTEER_STATS,
@@ -121,8 +124,7 @@ interface VolunteerDashboardProps {
 export default function VolunteerDashboard({ onPageChange, onLogout }: VolunteerDashboardProps) {
   const toast = useToast();
   const navigate = useNavigate();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const { sidebarCollapsed, mobileSidebarOpen, setMobileSidebarOpen, toggleSidebar } = useSidebarState();
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
   // Volunteer user profile data
@@ -192,20 +194,13 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
     setTimeout(() => setToastMessage(''), 3500);
   };
 
-  // Close open modals on ESC key press
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setActivePassModal(null);
-        setActiveProtocolModal(null);
-        setActiveLeadContactModal(null);
-        setActiveTrainingModal(null);
-        setShowReportIssueModal(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  useEscapeKey(() => {
+    setActivePassModal(null);
+    setActiveProtocolModal(null);
+    setActiveLeadContactModal(null);
+    setActiveTrainingModal(null);
+    setShowReportIssueModal(false);
+  });
 
   // Motivational quote cycle
   useEffect(() => {
@@ -327,84 +322,31 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
         </div>
       )}
 
-      {/* Mobile Backdrop Overlay */}
-      {mobileSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden"
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
-
-      {/* =====================================================
-          SIDEBAR NAVIGATION
-      ===================================================== */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 bg-[#004349] text-white transition-all duration-300 flex flex-col justify-between select-none ${
-        mobileSidebarOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full lg:translate-x-0'
-      } ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-72'}`}>
-        <div>
-          {/* Sidebar Brand Header */}
-          <div className="p-5 flex items-center justify-between border-b border-white/10">
-            <div className="flex items-center space-x-3 overflow-hidden">
-              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/20">
-                <UserCheck className="w-5 h-5 text-secondary-container" />
-              </div>
-              {(!sidebarCollapsed || mobileSidebarOpen) && (
-                <span className="font-headline-lg text-lg font-black text-white tracking-tight truncate">
-                  CAB Volunteer Portal
-                </span>
-              )}
-            </div>
-            <button 
-              onClick={() => setMobileSidebarOpen(false)}
-              className="lg:hidden text-white/70 hover:text-white p-1 rounded-lg"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Sidebar Navigation Items */}
-          <nav className="p-3 space-y-1 max-h-[calc(100vh-160px)] overflow-y-auto">
-            {sidebarItems.map((item) => {
-              const IconComp = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveTab(item.id);
-                    setMobileSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between rounded-xl p-3 text-sm font-semibold transition-all cursor-pointer ${isActive
-                      ? 'bg-white/10 text-white shadow-sm border-l-4 border-secondary-container'
-                      : 'text-white/60 hover:text-white hover:bg-white/5'
-                    }`}
-                >
-                  <div className="flex items-center">
-                    <IconComp className={`w-5 h-5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3.5'}`} />
-                    {(!sidebarCollapsed || mobileSidebarOpen) && <span>{item.label}</span>}
-                  </div>
-                  {(!sidebarCollapsed || mobileSidebarOpen) && item.badge !== undefined && item.badge > 0 && (
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-secondary-container text-primary">
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Sidebar Footer */}
-        <div className="p-3 border-t border-white/10 space-y-1">
-          <button
+      <DashboardSidebar
+        items={sidebarItems}
+        activeTab={activeTab}
+        onSelect={(id) => {
+          setActiveTab(id);
+          setMobileSidebarOpen(false);
+        }}
+        sidebarCollapsed={sidebarCollapsed}
+        mobileSidebarOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
+        bgClass="bg-[#004349]"
+        brandIcon={UserCheck}
+        brandIconWrapperClass="bg-white/10 backdrop-blur-md border border-white/20"
+        brandLabel="CAB Volunteer Portal"
+        activeAccentBorderClass="border-secondary-container"
+        badgeClass="bg-secondary-container text-primary"
+        footer={
+          <SidebarFooterButton
+            icon={Globe}
+            label="Return to Main Website"
             onClick={() => navigate('/')}
-            className="w-full flex items-center rounded-xl p-2.5 text-xs font-semibold text-white/70 hover:text-white hover:bg-white/10 cursor-pointer transition-colors"
-          >
-            <Globe className={`w-4.5 h-4.5 shrink-0 ${sidebarCollapsed && !mobileSidebarOpen ? 'mx-auto' : 'mr-3'}`} />
-            {(!sidebarCollapsed || mobileSidebarOpen) && <span>Return to Main Website</span>}
-          </button>
-        </div>
-      </aside>
+            expanded={!sidebarCollapsed || mobileSidebarOpen}
+          />
+        }
+      />
 
       {/* =====================================================
           MAIN WORKSPACE & STICKY HEADER
@@ -415,15 +357,10 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
         <header className="bg-white border-b border-outline-variant/30 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-xs">
           <div className="flex items-center space-x-3 sm:space-x-4">
             <button
-              onClick={() => {
-                if (window.innerWidth < 1024) {
-                  setMobileSidebarOpen(!mobileSidebarOpen);
-                } else {
-                  setSidebarCollapsed(!sidebarCollapsed);
-                }
-              }}
+              onClick={toggleSidebar}
               className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer focus:outline-none"
               title="Toggle Navigation Menu"
+              aria-label="Toggle menu"
             >
               <Menu className="w-5 h-5 lg:hidden" />
               <Terminal className="w-5 h-5 hidden lg:block" />
@@ -1074,17 +1011,23 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
 
       {/* 1. DIGITAL VOLUNTEER EVENT PASS MODAL */}
       {activePassModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4" onClick={() => setActivePassModal(null)}>
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setActivePassModal(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="event-pass-modal-title"
+        >
           <div className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-slate-200 text-xs" onClick={e => e.stopPropagation()}>
             <div className="bg-gradient-to-r from-[#004349] to-primary p-6 text-white text-center relative">
-              <button onClick={() => setActivePassModal(null)} className="absolute top-4 right-4 text-white/80 hover:text-white p-1 rounded-full">
+              <button onClick={() => setActivePassModal(null)} aria-label="Close" className="absolute top-4 right-4 text-white/80 hover:text-white p-1 rounded-full">
                 <X className="w-5 h-5" />
               </button>
               <div className="w-12 h-12 bg-white/10 rounded-2xl mx-auto flex items-center justify-center mb-2 border border-white/20">
                 <UserCheck className="w-6 h-6 text-secondary-container" />
               </div>
               <p className="text-[10px] font-bold tracking-widest uppercase text-secondary-container">Official Event Pass</p>
-              <h3 className="text-base font-bold mt-1">{activePassModal.name}</h3>
+              <h3 id="event-pass-modal-title" className="text-base font-bold mt-1">{activePassModal.name}</h3>
             </div>
             <div className="p-6 space-y-4 text-center">
               <div className="w-24 h-24 bg-slate-100 rounded-2xl mx-auto flex items-center justify-center border border-slate-200">
@@ -1117,13 +1060,19 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
 
       {/* 2. CAMP GUIDELINES MODAL */}
       {activeProtocolModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4" onClick={() => setActiveProtocolModal(null)}>
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setActiveProtocolModal(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="protocol-modal-title"
+        >
           <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-4 text-xs" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+              <h3 id="protocol-modal-title" className="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-emerald-600" /> Operational & Safety Protocol Guidelines
               </h3>
-              <button onClick={() => setActiveProtocolModal(null)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setActiveProtocolModal(null)} aria-label="Close" className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1149,13 +1098,19 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
 
       {/* 3. CONTACT REGIONAL LEAD MODAL */}
       {activeLeadContactModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4" onClick={() => setActiveLeadContactModal(null)}>
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setActiveLeadContactModal(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="lead-contact-modal-title"
+        >
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-4 text-xs" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+              <h3 id="lead-contact-modal-title" className="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <PhoneCall className="w-5 h-5 text-primary" /> Regional Lead Direct Desk
               </h3>
-              <button onClick={() => setActiveLeadContactModal(null)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setActiveLeadContactModal(null)} aria-label="Close" className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1189,13 +1144,19 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
 
       {/* 4. INTERACTIVE TRAINING MODULE MODAL */}
       {activeTrainingModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4" onClick={() => setActiveTrainingModal(null)}>
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setActiveTrainingModal(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="training-modal-title"
+        >
           <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-4 text-xs" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+              <h3 id="training-modal-title" className="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <GraduationCap className="w-5 h-5 text-primary" /> {activeTrainingModal.title}
               </h3>
-              <button onClick={() => setActiveTrainingModal(null)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setActiveTrainingModal(null)} aria-label="Close" className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1242,13 +1203,19 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
 
       {/* 5. REPORT SCHEDULE ISSUE MODAL */}
       {showReportIssueModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4" onClick={() => setShowReportIssueModal(false)}>
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setShowReportIssueModal(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="report-issue-modal-title"
+        >
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-200 space-y-4 text-xs" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+              <h3 id="report-issue-modal-title" className="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-red-600" /> Report Camp Issue / Delay
               </h3>
-              <button onClick={() => setShowReportIssueModal(false)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setShowReportIssueModal(false)} aria-label="Close" className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
             </div>

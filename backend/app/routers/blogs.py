@@ -1,7 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Request, status
 
+from app.core.limiter import limiter
 from app.deps import DbSession
 from app.models.blog import BlogArticle
 from app.schemas.blog import BlogArticleOut
@@ -10,7 +11,9 @@ router = APIRouter(prefix="/blogs", tags=["blogs"])
 
 
 @router.get("", response_model=list[BlogArticleOut])
+@limiter.limit("60/minute")
 def list_blogs(
+    request: Request,
     db: DbSession,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=500, ge=1, le=1000),
@@ -19,7 +22,8 @@ def list_blogs(
 
 
 @router.get("/{blog_id}", response_model=BlogArticleOut)
-def get_blog(blog_id: UUID, db: DbSession):
+@limiter.limit("60/minute")
+def get_blog(request: Request, blog_id: UUID, db: DbSession):
     blog = db.query(BlogArticle).filter(BlogArticle.id == blog_id).first()
     if blog is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Blog article not found")

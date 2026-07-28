@@ -45,6 +45,90 @@ class TestSubmission:
         assert resp.status_code == 404
 
 
+class TestReportUpload:
+    def test_upload_report_succeeds_with_matching_phone(self, client):
+        enquiry = submit_sample_enquiry(client, phone="+91 90000 44444")
+        resp = client.post(
+            f"/enquiries/{enquiry['id']}/reports",
+            data={"phone": "+91 90000 44444"},
+            files={"file": ("report.pdf", b"%PDF-1.4 fake pdf contents", "application/pdf")},
+        )
+        assert resp.status_code == 201, resp.text
+        assert resp.json()["type"] == "application/pdf"
+
+    def test_upload_report_rejects_mismatched_phone(self, client):
+        enquiry = submit_sample_enquiry(client, phone="+91 90000 55555")
+        resp = client.post(
+            f"/enquiries/{enquiry['id']}/reports",
+            data={"phone": "+91 00000 00000"},
+            files={"file": ("report.pdf", b"%PDF-1.4 fake pdf contents", "application/pdf")},
+        )
+        assert resp.status_code == 403
+
+    def test_upload_report_rejects_spoofed_content_type(self, client):
+        enquiry = submit_sample_enquiry(client, phone="+91 90000 66666")
+        resp = client.post(
+            f"/enquiries/{enquiry['id']}/reports",
+            data={"phone": "+91 90000 66666"},
+            files={"file": ("fake.pdf", b"this is not actually a pdf", "application/pdf")},
+        )
+        assert resp.status_code == 400
+
+
+class TestReportDownload:
+    def _upload_sample_report(self, client, phone: str) -> dict:
+        enquiry = submit_sample_enquiry(client, phone=phone)
+        resp = client.post(
+            f"/enquiries/{enquiry['id']}/reports",
+            data={"phone": phone},
+            files={"file": ("report.pdf", b"%PDF-1.4 fake pdf contents", "application/pdf")},
+        )
+        assert resp.status_code == 201, resp.text
+        return {**resp.json(), "enquiryId": enquiry["id"]}
+
+    def test_url_points_at_download_route_not_a_filesystem_path(self, client):
+        report = self._upload_sample_report(client, "+91 90000 77777")
+        assert report["url"] == f"/v1/enquiries/{report['enquiryId']}/reports/{report['id']}/download"
+
+    def test_download_requires_auth(self, client):
+        report = self._upload_sample_report(client, "+91 90000 88888")
+        resp = client.get(f"/enquiries/{report['enquiryId']}/reports/{report['id']}/download")
+        assert resp.status_code == 401
+
+    def test_admin_can_download(self, client, admin_token):
+        report = self._upload_sample_report(client, "+91 90000 99999")
+        resp = client.get(
+            f"/enquiries/{report['enquiryId']}/reports/{report['id']}/download",
+            headers=auth_header(admin_token),
+        )
+        assert resp.status_code == 200
+        assert resp.content == b"%PDF-1.4 fake pdf contents"
+
+    def test_unassigned_hospital_cannot_download(
+        self, client, admin_token, superadmin_token, hospital1_token, hospital2_token, hospitals
+    ):
+        report = self._upload_sample_report(client, "+91 90001 00000")
+        client.post(f"/enquiries/{report['enquiryId']}/admin-approve", json={}, headers=auth_header(admin_token))
+        apex_id = find_hospital_id(hospitals, "Apex Oncology Institute")
+        client.post(
+            f"/enquiries/{report['enquiryId']}/assign-hospital",
+            json={"hospitalId": apex_id},
+            headers=auth_header(superadmin_token),
+        )
+
+        owner_resp = client.get(
+            f"/enquiries/{report['enquiryId']}/reports/{report['id']}/download",
+            headers=auth_header(hospital1_token),
+        )
+        assert owner_resp.status_code == 200
+
+        other_resp = client.get(
+            f"/enquiries/{report['enquiryId']}/reports/{report['id']}/download",
+            headers=auth_header(hospital2_token),
+        )
+        assert other_resp.status_code == 403
+
+
 class TestAuthAndRoleGuards:
     def test_list_enquiries_requires_auth(self, client):
         resp = client.get("/enquiries")
@@ -293,3 +377,94 @@ class TestFullWorkflow:
 
         assert any(e["id"] == enquiry["id"] for e in hosp1_list)
         assert not any(e["id"] == enquiry["id"] for e in hosp2_list)
+
+
+class TestWorkflowCompleteness:
+    def _accept_flow(self, client, admin_token, superadmin_token, hospital1_token, hospitals):
+        enquiry = submit_sample_enquiry(client)
+        client.post(f"/enquiries/{enquiry['id']}/admin-approve", json={}, headers=auth_header(admin_token))
+        hospital1_id = find_hospital_id(hospitals, "Apex Oncology Institute")
+        client.post(
+            f"/enquiries/{enquiry['id']}/assign-hospital",
+            json={"hospitalId": hospital1_id},
+            headers=auth_header(superadmin_token),
+        )
+        client.post(
+            f"/enquiries/{enquiry['id']}/hospital-accept",
+            json={"appointmentDate": "2026-08-01", "appointmentTime": "10:00 AM", "doctorName": "Dr. Test"},
+            headers=auth_header(hospital1_token),
+        )
+        return enquiry
+
+    def test_completed_transition_reachable(self, client, admin_token, superadmin_token, hospital1_token, hospitals):
+        enquiry = self._accept_flow(client, admin_token, superadmin_token, hospital1_token, hospitals)
+
+        resp = client.post(
+            f"/enquiries/{enquiry['id']}/complete", json={"remarks": "All good"}, headers=auth_header(hospital1_token)
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "Completed"
+        assert body["appointment"]["status"] == "Completed"
+
+    def test_cannot_complete_before_appointment_confirmed(self, client, admin_token, superadmin_token, hospital1_token, hospitals):
+        enquiry = submit_sample_enquiry(client)
+        client.post(f"/enquiries/{enquiry['id']}/admin-approve", json={}, headers=auth_header(admin_token))
+        hospital1_id = find_hospital_id(hospitals, "Apex Oncology Institute")
+        client.post(
+            f"/enquiries/{enquiry['id']}/assign-hospital",
+            json={"hospitalId": hospital1_id},
+            headers=auth_header(superadmin_token),
+        )
+
+        resp = client.post(f"/enquiries/{enquiry['id']}/complete", json={}, headers=auth_header(hospital1_token))
+        assert resp.status_code == 409
+
+    def test_cannot_assign_to_inactive_hospital(self, client, admin_token, superadmin_token, hospitals, db_session):
+        from app.models.hospital import Hospital
+
+        enquiry = submit_sample_enquiry(client)
+        client.post(f"/enquiries/{enquiry['id']}/admin-approve", json={}, headers=auth_header(admin_token))
+        hospital1_id = find_hospital_id(hospitals, "Apex Oncology Institute")
+
+        hospital = db_session.query(Hospital).filter(Hospital.id == hospital1_id).first()
+        hospital.is_active = False
+        db_session.flush()
+
+        resp = client.post(
+            f"/enquiries/{enquiry['id']}/assign-hospital",
+            json={"hospitalId": hospital1_id},
+            headers=auth_header(superadmin_token),
+        )
+        assert resp.status_code == 400
+
+    def test_staff_attribution_fk_recorded(self, client, admin_token, db_session):
+        from app.models.enquiry import PatientEnquiry
+        from app.models.user import User
+
+        enquiry = submit_sample_enquiry(client)
+        client.post(f"/enquiries/{enquiry['id']}/admin-approve", json={}, headers=auth_header(admin_token))
+
+        row = db_session.query(PatientEnquiry).filter(PatientEnquiry.id == enquiry["id"]).first()
+        admin_user = db_session.query(User).filter(User.email == "admin@awarebharat.local").first()
+        assert row.admin_decided_by_id == admin_user.id
+
+    def test_double_accept_race_returns_409(self, client, admin_token, superadmin_token, hospital1_token, hospitals, db_session):
+        from app.models.enquiry import PatientEnquiry
+
+        enquiry = self._accept_flow(client, admin_token, superadmin_token, hospital1_token, hospitals)
+
+        # Simulate the race a real concurrent request would hit: reset the
+        # status back so the guard doesn't block a second attempt, leaving
+        # the already-created AppointmentDetails row (unique on enquiry_id)
+        # as the only remaining defense.
+        row = db_session.query(PatientEnquiry).filter(PatientEnquiry.id == enquiry["id"]).first()
+        row.status = "Assigned to Hospital"
+        db_session.flush()
+
+        resp = client.post(
+            f"/enquiries/{enquiry['id']}/hospital-accept",
+            json={"appointmentDate": "2026-08-01", "appointmentTime": "10:00 AM", "doctorName": "Dr. Test"},
+            headers=auth_header(hospital1_token),
+        )
+        assert resp.status_code == 409

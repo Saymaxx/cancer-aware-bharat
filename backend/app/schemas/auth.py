@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from app.schemas.base import CamelModel
 
 
@@ -9,8 +11,8 @@ class TokenOut(CamelModel):
 
 
 class LoginIn(CamelModel):
-    email: str
-    password: str
+    email: str = Field(min_length=1, max_length=255)
+    password: str = Field(min_length=1, max_length=128)
 
 
 class StaffRegisterIn(CamelModel):

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, CheckCircle, Heart, Award } from 'lucide-react';
 import { VolunteerRegistration } from '../types';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface VolunteerModalProps {
   isOpen: boolean;
@@ -20,16 +21,7 @@ export default function VolunteerModal({ isOpen, onClose }: VolunteerModalProps)
   const [consent, setConsent] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Handle ESC key to close modal
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  useEscapeKey(onClose, isOpen);
 
   if (!isOpen) return null;
 
@@ -94,17 +86,23 @@ export default function VolunteerModal({ isOpen, onClose }: VolunteerModalProps)
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="volunteer-modal-title"
+    >
       <div className="relative bg-white w-full max-w-2xl rounded-xl shadow-[0px_12px_32px_rgba(0,0,0,0.15)] border border-outline-variant/30 overflow-hidden flex flex-col max-h-[90vh]">
-        
+
         {/* Header */}
         <div className="bg-primary px-6 py-4 flex justify-between items-center text-white">
           <div className="flex items-center space-x-2">
             <Heart className="w-5 h-5 text-secondary-container" fill="currentColor" />
-            <span className="font-headline-lg text-xl font-bold">Join as a Volunteer</span>
+            <span id="volunteer-modal-title" className="font-headline-lg text-xl font-bold">Join as a Volunteer</span>
           </div>
-          <button 
+          <button
             onClick={onClose}
+            aria-label="Close"
             className="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
           >
             <X className="w-5 h-5" />

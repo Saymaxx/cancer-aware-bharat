@@ -4,6 +4,7 @@ import { PatientEnquiry, UploadedReport } from '../types';
 import { ApiError, submitEnquiry, uploadEnquiryReport } from '../api/client';
 import { mapApiEnquiry } from '../api/mappers';
 import { useApiHospitals } from '../api/hooks';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 type PendingFile = UploadedReport & { file: File };
 
@@ -49,16 +50,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
     }
   }, [hospitals, hospitalId]);
 
-  // Handle ESC key to close modal
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  useEscapeKey(onClose, isOpen);
 
   if (!isOpen) return null;
 
@@ -126,7 +118,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
       const uploadedReports = [];
       for (const pending of uploadedFiles) {
         try {
-          uploadedReports.push(await uploadEnquiryReport(created.id, pending.file));
+          uploadedReports.push(await uploadEnquiryReport(created.id, pending.file, created.phone));
         } catch {
           // Skip files that fail to upload rather than blocking the whole submission
         }
@@ -163,17 +155,23 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="enquiry-modal-title"
+    >
       <div className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-outline-variant/30 overflow-hidden flex flex-col max-h-[90vh]">
-        
+
         {/* Header */}
         <div className="bg-[#004349] px-6 py-4 flex justify-between items-center text-white">
           <div className="flex items-center space-x-2">
             <Stethoscope className="w-5 h-5 text-secondary-container" />
-            <span className="font-headline-lg text-xl font-bold">Patient Navigation & Camp Booking</span>
+            <span id="enquiry-modal-title" className="font-headline-lg text-xl font-bold">Patient Navigation & Camp Booking</span>
           </div>
-          <button 
+          <button
             onClick={onClose}
+            aria-label="Close"
             className="text-white/80 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
