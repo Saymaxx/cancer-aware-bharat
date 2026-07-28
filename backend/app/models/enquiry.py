@@ -43,6 +43,11 @@ class PatientEnquiry(Base):
     notes: Mapped[str | None] = mapped_column(Text)
 
     hospital_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("hospitals.id"))
+    # Deliberately denormalized, not a bug: a case should show the hospital
+    # name as it was communicated to the patient at assignment time, not
+    # retroactively rewritten if the hospital later renames. Do not "fix"
+    # this into a live join on hospital_id -- that would silently break
+    # historical accuracy for already-decided cases.
     preferred_hospital_name: Mapped[str | None] = mapped_column(String(255))
     assigned_hospital_name: Mapped[str | None] = mapped_column(String(255))
     preferred_date: Mapped[str | None] = mapped_column(String(30))
@@ -78,6 +83,11 @@ class PatientEnquiry(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     hospital = relationship("Hospital", back_populates="enquiries")
+    # cascade="all, delete-orphan" below is currently unexercised dead code:
+    # no DELETE /enquiries/{id} endpoint exists anywhere to trigger it (a
+    # patient-record system deliberately has no hard-delete path). Left in
+    # place because it's the correct behavior *if* a delete endpoint is ever
+    # added, but untested until then -- verify it before relying on it.
     timeline = relationship("TimelineEvent", back_populates="enquiry", cascade="all, delete-orphan", order_by="TimelineEvent.created_at")
     uploaded_reports = relationship("UploadedReport", back_populates="enquiry", cascade="all, delete-orphan")
     appointment = relationship("AppointmentDetails", back_populates="enquiry", uselist=False, cascade="all, delete-orphan")

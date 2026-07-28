@@ -978,7 +978,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               ) : (
                 <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs min-w-[700px]">
+                    <table className="w-full text-left text-xs">
                       <thead>
                         <tr className="bg-slate-50 text-[10px] uppercase font-bold text-slate-400 border-b">
                           <th className="p-4">Patient Name & ID</th>
@@ -1053,7 +1053,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               ) : (
                 <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs min-w-[650px]">
+                    <table className="w-full text-left text-xs">
                       <thead>
                         <tr className="bg-slate-50 text-[10px] uppercase font-bold text-slate-400 border-b">
                           <th className="p-4">Referral Code & Patient</th>
@@ -1187,7 +1187,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               ) : (
                 <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs min-w-[650px]">
+                    <table className="w-full text-left text-xs">
                       <thead>
                         <tr className="bg-slate-50 text-[10px] uppercase font-bold text-slate-400 border-b">
                           <th className="p-4">Report Name & File</th>
@@ -1310,7 +1310,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               ) : (
                 <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs">
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs min-w-[650px]">
+                    <table className="w-full text-left text-xs">
                       <thead>
                         <tr className="bg-slate-50 text-[10px] uppercase font-bold text-slate-400 border-b">
                           <th className="p-4">Case ID & Patient</th>

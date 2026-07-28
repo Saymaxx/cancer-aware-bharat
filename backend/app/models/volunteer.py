@@ -15,6 +15,11 @@ class Volunteer(Base):
     volunteer_id: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)  # e.g. V-2026-12345
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    # Deliberately not unique (unlike email above): a household phone shared
+    # by two registering volunteers is a plausible real case, not obviously
+    # a data-quality bug. Left open pending product confirmation -- add a
+    # unique constraint here only once that's settled, since retrofitting
+    # one onto existing data could reject a legitimate shared-phone record.
     phone: Mapped[str] = mapped_column(String(30), nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     area: Mapped[str | None] = mapped_column(String(200))

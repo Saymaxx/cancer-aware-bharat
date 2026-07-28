@@ -1,4 +1,32 @@
-from tests.conftest import auth_header
+from tests.conftest import ADMIN_CREDENTIALS, auth_header
+
+
+class TestAuditLog:
+    def test_successful_login_is_recorded(self, client, db_session):
+        from app.models.audit_log import AuditLog
+
+        client.post("/auth/staff/login", json={"email": ADMIN_CREDENTIALS[0], "password": ADMIN_CREDENTIALS[1]})
+        entry = db_session.query(AuditLog).filter(AuditLog.event_type == "login_success").order_by(AuditLog.created_at.desc()).first()
+        assert entry is not None
+        assert entry.role == "admin"
+        assert entry.actor_id is not None
+
+    def test_failed_login_is_recorded_with_attempted_email_but_no_actor(self, client, db_session):
+        from app.models.audit_log import AuditLog
+
+        client.post("/auth/staff/login", json={"email": ADMIN_CREDENTIALS[0], "password": "definitely-wrong"})
+        entry = db_session.query(AuditLog).filter(AuditLog.event_type == "login_failure").order_by(AuditLog.created_at.desc()).first()
+        assert entry is not None
+        assert entry.actor_id is None
+        assert entry.detail == ADMIN_CREDENTIALS[0]
+
+    def test_logout_is_recorded(self, client, db_session, admin_token):
+        from app.models.audit_log import AuditLog
+
+        client.post("/auth/logout", headers=auth_header(admin_token))
+        entry = db_session.query(AuditLog).filter(AuditLog.event_type == "logout").order_by(AuditLog.created_at.desc()).first()
+        assert entry is not None
+        assert entry.role == "admin"
 
 
 class TestLogout:

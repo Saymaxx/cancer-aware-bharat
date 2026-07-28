@@ -71,3 +71,16 @@ class TestVolunteerProfile:
     def test_staff_token_cannot_access_volunteer_me(self, client, admin_token):
         resp = client.get("/volunteers/me", headers=auth_header(admin_token))
         assert resp.status_code == 403
+
+    def test_me_returns_404_not_500_for_deleted_volunteer(self, client, db_session):
+        from app.models.volunteer import Volunteer
+
+        volunteer = register_sample_volunteer(client, email="deleted.volunteer@example.com")
+        login = client.post("/auth/volunteer/login", json={"email": "deleted.volunteer@example.com", "password": volunteer["password"]})
+        token = login.json()["accessToken"]
+
+        db_session.query(Volunteer).filter(Volunteer.id == volunteer["id"]).delete()
+        db_session.flush()
+
+        resp = client.get("/volunteers/me", headers=auth_header(token))
+        assert resp.status_code == 404

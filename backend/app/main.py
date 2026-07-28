@@ -16,7 +16,14 @@ from app.routers import auth, blogs, enquiries, events, hospitals, notifications
 configure_logging()
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Cancer Aware Bharat API", version="0.1.0")
+# /docs, /redoc, and the raw /openapi.json schema are unauthenticated by
+# FastAPI's default -- fine for development, but in production they hand an
+# unauthenticated visitor a complete map of every route, request/response
+# shape, and auth scheme. Disabling them there costs nothing (they're a dev
+# convenience, not a runtime dependency) and closes that recon surface.
+_docs_kwargs = {"docs_url": None, "redoc_url": None, "openapi_url": None} if settings.is_production else {}
+
+app = FastAPI(title="Cancer Aware Bharat API", version="0.1.0", **_docs_kwargs)
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

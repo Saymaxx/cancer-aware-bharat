@@ -12,6 +12,8 @@ INSECURE_JWT_SECRETS = {
     "change-me-to-a-long-random-string",
 }
 
+DEV_ONLY_CORS_ORIGINS = "http://localhost:3000,http://localhost:5173"
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
@@ -25,7 +27,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str = INSECURE_JWT_SECRET_DEFAULT
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 480
-    cors_origins: str = "http://localhost:3000,http://localhost:5173"
+    cors_origins: str = DEV_ONLY_CORS_ORIGINS
     upload_dir: str = "./uploads"
     log_level: str = "INFO"
 
@@ -58,6 +60,13 @@ class Settings(BaseSettings):
             raise RuntimeError(
                 f"JWT_SECRET_KEY must be at least {MIN_PRODUCTION_SECRET_LENGTH} characters "
                 "in production."
+            )
+        if self.cors_origins.strip() == DEV_ONLY_CORS_ORIGINS:
+            raise RuntimeError(
+                "CORS_ORIGINS is still the localhost-only development default. Set it to "
+                "your real production origin(s) (comma-separated) before running with "
+                "ENVIRONMENT=production -- otherwise no browser-based frontend will be able "
+                "to call this API at all."
             )
         return self
 

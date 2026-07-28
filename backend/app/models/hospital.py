@@ -20,6 +20,12 @@ class Hospital(Base):
     state: Mapped[str] = mapped_column(String(120), nullable=False)
     specialties: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
     phone: Mapped[str] = mapped_column(String(30), nullable=False)
+    # Deliberately not unique (unlike login_email below): a hospital group
+    # with multiple branches sharing one contact email is a plausible real
+    # case, not obviously a data-quality bug. Left open pending product
+    # confirmation -- add a unique constraint here only once that's settled,
+    # since retrofitting one onto existing data could reject a legitimate
+    # multi-branch record.
     email: Mapped[str] = mapped_column(String(255), nullable=False)
     address: Mapped[str] = mapped_column(String(500), nullable=False)
     lat: Mapped[float] = mapped_column(Float, nullable=False)

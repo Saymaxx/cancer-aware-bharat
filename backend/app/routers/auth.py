@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
-from app.core.limiter import limiter
+from app.core.limiter import get_client_ip, limiter
 from app.core.security import create_access_token, generate_numeric_id, hash_password, verify_password
 from app.deps import DbSession, get_current_claims
 from app.models.hospital import Hospital
@@ -12,6 +13,7 @@ from app.models.user import User
 from app.models.volunteer import Volunteer
 from app.schemas.auth import LoginIn, TokenOut
 from app.schemas.volunteer import VolunteerOut, VolunteerRegisterIn
+from app.services.audit import record_event
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -21,8 +23,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def staff_login(request: Request, payload: LoginIn, db: DbSession):
     user = db.query(User).filter(User.email == payload.email).first()
     if not user or not verify_password(payload.password, user.hashed_password):
+        record_event(db, "login_failure", role="staff", detail=payload.email, ip_address=get_client_ip(request))
+        db.commit()
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
     token = create_access_token(subject=str(user.id), role=user.role)
+    record_event(db, "login_success", role=user.role, actor_id=user.id, ip_address=get_client_ip(request))
+    db.commit()
     return TokenOut(access_token=token, role=user.role, name=user.name)
 
 
@@ -31,10 +37,16 @@ def staff_login(request: Request, payload: LoginIn, db: DbSession):
 def hospital_login(request: Request, payload: LoginIn, db: DbSession):
     hospital = db.query(Hospital).filter(Hospital.login_email == payload.email).first()
     if not hospital or not hospital.hashed_password or not verify_password(payload.password, hospital.hashed_password):
+        record_event(db, "login_failure", role="hospital", detail=payload.email, ip_address=get_client_ip(request))
+        db.commit()
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
     if not hospital.is_active:
+        record_event(db, "login_failure", role="hospital", actor_id=hospital.id, detail="account inactive", ip_address=get_client_ip(request))
+        db.commit()
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Hospital account is not active")
     token = create_access_token(subject=str(hospital.id), role="hospital")
+    record_event(db, "login_success", role="hospital", actor_id=hospital.id, ip_address=get_client_ip(request))
+    db.commit()
     return TokenOut(access_token=token, role="hospital", name=hospital.name)
 
 
@@ -43,8 +55,12 @@ def hospital_login(request: Request, payload: LoginIn, db: DbSession):
 def volunteer_login(request: Request, payload: LoginIn, db: DbSession):
     volunteer = db.query(Volunteer).filter(Volunteer.email == payload.email).first()
     if not volunteer or not verify_password(payload.password, volunteer.hashed_password):
+        record_event(db, "login_failure", role="volunteer", detail=payload.email, ip_address=get_client_ip(request))
+        db.commit()
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
     token = create_access_token(subject=str(volunteer.id), role="volunteer")
+    record_event(db, "login_success", role="volunteer", actor_id=volunteer.id, ip_address=get_client_ip(request))
+    db.commit()
     return TokenOut(access_token=token, role="volunteer", name=volunteer.name)
 
 
@@ -60,7 +76,10 @@ def logout(request: Request, db: DbSession, claims: Annotated[dict, Depends(get_
     jti = claims.get("jti")
     if jti and db.query(RevokedToken).filter(RevokedToken.jti == jti).first() is None:
         db.add(RevokedToken(jti=jti))
-        db.commit()
+    record_event(
+        db, "logout", role=claims.get("role"), actor_id=UUID(claims["sub"]), ip_address=get_client_ip(request)
+    )
+    db.commit()
 
 
 @router.post("/volunteer/register", response_model=VolunteerOut, status_code=status.HTTP_201_CREATED)

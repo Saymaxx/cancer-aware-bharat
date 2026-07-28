@@ -63,6 +63,16 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - name: Run migrations
         run: alembic upgrade head
+      - name: Exercise migration downgrade (then re-upgrade)
+        # downgrade() had never actually been run anywhere before this --
+        # an upgrade()-only migration can hide a downgrade() that's stale,
+        # wrong, or references a since-renamed column/table and would only
+        # be discovered during a real incident rollback. Round-trips back to
+        # base and up to head again so every later step still sees the full
+        # current schema.
+        run: |
+          alembic downgrade base
+          alembic upgrade head
       - name: Migration drift check (models vs. migrations)
         # Non-blocking: the hand-written 0001 migration has known
         # pre-existing drift from the models (nullable/server_default

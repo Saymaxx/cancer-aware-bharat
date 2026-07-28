@@ -19,3 +19,9 @@ FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
+
+# Same rationale as the backend Dockerfile's HEALTHCHECK: without this, an
+# orchestrator has no signal that nginx wedged or the static bundle failed
+# to mount. wget is already present in nginx:alpine, no extra install needed.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget --quiet --spider http://localhost/ || exit 1

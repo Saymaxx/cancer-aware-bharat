@@ -332,12 +332,12 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
         sidebarCollapsed={sidebarCollapsed}
         mobileSidebarOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
-        bgClass="bg-[#004349]"
+        bgClass="bg-[#3d2e12]"
         brandIcon={UserCheck}
         brandIconWrapperClass="bg-white/10 backdrop-blur-md border border-white/20"
         brandLabel="CAB Volunteer Portal"
-        activeAccentBorderClass="border-secondary-container"
-        badgeClass="bg-secondary-container text-primary"
+        activeAccentBorderClass="border-amber-400"
+        badgeClass="bg-amber-400 text-[#3d2e12]"
         footer={
           <SidebarFooterButton
             icon={Globe}

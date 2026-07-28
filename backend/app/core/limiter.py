@@ -5,7 +5,7 @@ from starlette.requests import Request
 from app.core.config import settings
 
 
-def _rate_limit_key(request: Request) -> str:
+def get_client_ip(request: Request) -> str:
     # Behind a real reverse proxy, request.client.host is the proxy's own
     # address for every request -- one attacker's failed logins would then
     # share a rate-limit bucket with every legitimate user. Only trusted
@@ -19,7 +19,7 @@ def _rate_limit_key(request: Request) -> str:
 
 
 limiter = Limiter(
-    key_func=_rate_limit_key,
+    key_func=get_client_ip,
     # Every route is now mounted twice (its original unprefixed path and
     # again under /v1 -- see main.py) using the exact same endpoint
     # function. slowapi's default key_style="url" tracks each mount as a
