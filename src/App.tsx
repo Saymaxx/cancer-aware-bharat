@@ -2,7 +2,8 @@ import React, { useState, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './api/queryClient';
-import { getHospitalSession, getStaffSession, getVolunteerSession, logout } from './api/client';
+import { clearAppLocalStorage, getHospitalSession, getStaffSession, getVolunteerSession, logout } from './api/client';
+import { isTokenExpired } from './utils/jwt';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import TeamPortal from './components/TeamPortal';
@@ -72,6 +73,15 @@ export function AuthGuard({ storageKey, requiredRole, redirectTo = '/', children
     const stored = localStorage.getItem(storageKey);
     const session = stored ? JSON.parse(stored) : null;
     if (!session || (requiredRole && session.role !== requiredRole)) {
+      return <Navigate to={redirectTo} replace />;
+    }
+    // Presence + role alone let a forged localStorage entry render the
+    // dashboard shell (no real data would load -- every fetch still 401s
+    // server-side -- but the shell itself shouldn't render at all). Checking
+    // the token's own exp claim closes that gap without needing a network
+    // round-trip just to decide whether to show the route.
+    if (session.accessToken && isTokenExpired(session.accessToken)) {
+      localStorage.removeItem(storageKey);
       return <Navigate to={redirectTo} replace />;
     }
   } catch {
@@ -317,7 +327,7 @@ function AppContent() {
                 <VolunteerDashboard
                   onLogout={() => {
                     const token = getVolunteerSession()?.accessToken;
-                    localStorage.removeItem('aware_bharat_logged_in_volunteer');
+                    clearAppLocalStorage();
                     navigate('/volunteer/login');
                     if (token) logout(token);
                   }}
@@ -333,7 +343,7 @@ function AppContent() {
                 <HospitalDashboard
                   onLogout={() => {
                     const token = getHospitalSession()?.accessToken;
-                    localStorage.removeItem('aware_bharat_logged_in_hospital');
+                    clearAppLocalStorage();
                     navigate('/hospital/login');
                     if (token) logout(token);
                   }}
@@ -349,7 +359,7 @@ function AppContent() {
                 <AdminDashboard
                   onLogout={() => {
                     const token = getStaffSession()?.accessToken;
-                    localStorage.removeItem('aware_bharat_logged_in_staff');
+                    clearAppLocalStorage();
                     navigate('/admin');
                     if (token) logout(token);
                   }}
@@ -365,7 +375,7 @@ function AppContent() {
                 <SuperAdminDashboard
                   onLogout={() => {
                     const token = getStaffSession()?.accessToken;
-                    localStorage.removeItem('aware_bharat_logged_in_staff');
+                    clearAppLocalStorage();
                     navigate('/superadmin');
                     if (token) logout(token);
                   }}

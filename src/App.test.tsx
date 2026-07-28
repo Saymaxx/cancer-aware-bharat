@@ -6,6 +6,14 @@ import { AuthGuard } from './App';
 const STORAGE_KEY = 'test_session';
 const REDIRECT_TO = '/login';
 
+// Unsigned test JWT -- AuthGuard only ever reads the exp claim client-side,
+// never verifies the signature, so a real signature isn't needed here.
+function fakeJwt(exp: number): string {
+  const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' }));
+  const payload = btoa(JSON.stringify({ exp }));
+  return `${header}.${payload}.`;
+}
+
 function renderGuarded(requiredRole?: string) {
   return render(
     <MemoryRouter initialEntries={['/protected']}>
@@ -55,5 +63,20 @@ describe('AuthGuard', () => {
     localStorage.setItem(STORAGE_KEY, '{not valid json');
     renderGuarded();
     expect(screen.getByText('Login Page')).toBeInTheDocument();
+  });
+
+  it('renders the protected content when the access token has not expired yet', () => {
+    const notExpired = Math.floor(Date.now() / 1000) + 3600;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ role: 'volunteer', accessToken: fakeJwt(notExpired) }));
+    renderGuarded();
+    expect(screen.getByText('Protected Content')).toBeInTheDocument();
+  });
+
+  it('redirects and clears the session when the access token has already expired', () => {
+    const alreadyExpired = Math.floor(Date.now() / 1000) - 3600;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ role: 'volunteer', accessToken: fakeJwt(alreadyExpired) }));
+    renderGuarded();
+    expect(screen.getByText('Login Page')).toBeInTheDocument();
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 });

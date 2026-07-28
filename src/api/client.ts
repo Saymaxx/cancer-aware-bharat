@@ -11,6 +11,22 @@ const API_PREFIX = '/v1';
 const STAFF_SESSION_KEY = 'aware_bharat_logged_in_staff';
 const HOSPITAL_SESSION_KEY = 'aware_bharat_logged_in_hospital';
 const VOLUNTEER_SESSION_KEY = 'aware_bharat_logged_in_volunteer';
+const APP_STORAGE_PREFIX = 'aware_bharat_';
+
+// Every dashboard's Patients/Campaigns/Donations/Audit-Logs/etc. tabs still
+// use localStorage as their (intentionally scoped-out) mock data layer --
+// see the audit note on this. That data used to survive logout indefinitely,
+// which on a shared machine leaves the next person able to see whatever the
+// previous session had cached. Clearing the whole app-namespaced prefix on
+// every logout, rather than hand-maintaining a list of keys that will drift
+// as more mock features get added, is the only version of this that stays
+// correct over time.
+export function clearAppLocalStorage() {
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+    if (key?.startsWith(APP_STORAGE_PREFIX)) localStorage.removeItem(key);
+  }
+}
 
 export class ApiError extends Error {
   status: number;
@@ -27,17 +43,20 @@ export class ApiError extends Error {
 // that comes back 401.
 function handleUnauthorized() {
   const path = window.location.pathname;
+  // A 401 here means this session is over just as much as an explicit
+  // logout does -- same cleanup, so stale mock-dashboard data doesn't
+  // outlive an expired/revoked token either.
   if (path.startsWith('/admin')) {
-    localStorage.removeItem(STAFF_SESSION_KEY);
+    clearAppLocalStorage();
     if (path !== '/admin') window.location.href = '/admin';
   } else if (path.startsWith('/superadmin')) {
-    localStorage.removeItem(STAFF_SESSION_KEY);
+    clearAppLocalStorage();
     if (path !== '/superadmin') window.location.href = '/superadmin';
   } else if (path.startsWith('/hospital')) {
-    localStorage.removeItem(HOSPITAL_SESSION_KEY);
+    clearAppLocalStorage();
     if (path !== '/hospital/login') window.location.href = '/hospital/login';
   } else if (path.startsWith('/volunteer')) {
-    localStorage.removeItem(VOLUNTEER_SESSION_KEY);
+    clearAppLocalStorage();
     if (path !== '/volunteer/login') window.location.href = '/volunteer/login';
   }
 }
