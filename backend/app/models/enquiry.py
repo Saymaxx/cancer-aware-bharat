@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, Text, Integer, DateTime, ForeignKey, func
+from sqlalchemy import CheckConstraint, String, Text, Integer, DateTime, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,8 +20,26 @@ ENQUIRY_STATUSES = (
 )
 
 
+PRIORITY_LEVELS = ("Normal", "Urgent", "Critical")
+
+
 class PatientEnquiry(Base):
     __tablename__ = "patient_enquiries"
+    __table_args__ = (
+        # DB-level backstop for status/priority: a typo'd manual UPDATE
+        # (e.g. lowercase 'approved' instead of 'Approved by Admin') used to
+        # silently make an enquiry invisible on every dashboard filter, with
+        # no error raised anywhere. Values mirror ENQUIRY_STATUSES/
+        # PRIORITY_LEVELS above -- keep both in sync if either changes.
+        CheckConstraint(
+            "status IN ('" + "', '".join(ENQUIRY_STATUSES) + "')",
+            name="ck_patient_enquiries_status",
+        ),
+        CheckConstraint(
+            "priority IN ('" + "', '".join(PRIORITY_LEVELS) + "')",
+            name="ck_patient_enquiries_priority",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     enquiry_id: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)  # ENQ-2026-xxxxx
@@ -53,7 +71,7 @@ class PatientEnquiry(Base):
     preferred_date: Mapped[str | None] = mapped_column(String(30))
 
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="Pending Admin Review")
-    priority: Mapped[str] = mapped_column(String(20), nullable=False, default="Normal")  # Normal/Urgent/Critical
+    priority: Mapped[str] = mapped_column(String(20), nullable=False, default="Normal")  # see PRIORITY_LEVELS
 
     # Decision snapshots (denormalized for quick read, mirrors frontend PatientEnquiry type).
     # The *_by columns stay free-text display snapshots deliberately (same
