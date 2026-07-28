@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './api/queryClient';
@@ -29,6 +29,7 @@ const AboutTab = lazy(() => import('./components/AboutTab'));
 const HospitalsTab = lazy(() => import('./components/HospitalsTab'));
 const EventsTab = lazy(() => import('./components/EventsTab'));
 const BlogsTab = lazy(() => import('./components/BlogsTab'));
+const NewsTab = lazy(() => import('./components/NewsTab'));
 const GalleryTab = lazy(() => import('./components/GalleryTab'));
 const MissionTab = lazy(() => import('./components/MissionTab'));
 const JoinUsTab = lazy(() => import('./components/JoinUsTab'));
@@ -58,6 +59,33 @@ function PageLoadingFallback() {
       </div>
     </div>
   );
+}
+
+// ---------- Scroll to Top ----------
+function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+
+  useEffect(() => {
+    // 1. Disable browser's native scroll restoration to prevent it fighting our smooth scroll
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
+    if (!hash) {
+      // 2. Ensure the DOM has time to commit (important when Suspense/lazy loading is involved)
+      // requestAnimationFrame ensures we wait for the next paint, followed by a slight timeout
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth',
+          });
+        }, 10);
+      });
+    }
+  }, [pathname, hash]);
+
+  return null;
 }
 
 // ---------- Auth Guard ----------
@@ -108,19 +136,23 @@ function PublicLayout({
   return (
     <>
       {/* Top Banner Alert */}
-      <div className="gradient-primary text-white text-xs py-2.5 px-4 text-center font-medium leading-relaxed">
-        <span className="inline-flex items-center gap-2 flex-wrap justify-center">
-          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse shrink-0" />
-          <span className="opacity-90">
-            <strong className="font-semibold text-white">Campaign Alert:</strong> Free Early Detection & Screening Camps active across New Delhi & Pune.
-          </span>
-          <button
-            onClick={onOpenEnquiry}
-            className="underline underline-offset-2 font-semibold hover:opacity-80 transition-opacity cursor-pointer"
-          >
-            Register Now →
-          </button>
-        </span>
+      <div className="gradient-primary text-white text-xs py-2.5 overflow-hidden flex items-center relative">
+        <div className="animate-marquee hover:[animation-play-state:paused]">
+          {[...Array(6)].map((_, i) => (
+            <span key={i} className="flex items-center gap-2 mx-6 shrink-0 whitespace-nowrap">
+              <span className="text-base leading-none">📢</span>
+              <span className="opacity-90">
+                <strong className="font-semibold text-white tracking-wide">Campaign Alert:</strong> Free Early Detection & Screening Camps active across New Delhi & Pune.
+              </span>
+              <button
+                onClick={onOpenEnquiry}
+                className="underline underline-offset-2 font-semibold hover:opacity-80 transition-opacity cursor-pointer shrink-0"
+              >
+                Register Now →
+              </button>
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Main Sticky Navbar */}
@@ -232,6 +264,13 @@ function AppContent() {
           <PublicLayout {...publicLayoutProps}>
             <main className="flex-grow section-container py-10 md:py-14">
               <BlogsTab />
+            </main>
+          </PublicLayout>
+        } />
+        <Route path="/news" element={
+          <PublicLayout {...publicLayoutProps}>
+            <main className="flex-grow section-container py-10 md:py-14">
+              <NewsTab />
             </main>
           </PublicLayout>
         } />
@@ -416,6 +455,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <ToastProvider>
+          <ScrollToTop />
           <AppContent />
         </ToastProvider>
       </ErrorBoundary>

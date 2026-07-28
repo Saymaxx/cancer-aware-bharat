@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu, X, Heart, LogIn, LayoutDashboard, LogOut, Building2,
   ChevronDown, Home, Target, Stethoscope, BookOpen, Calendar, UserPlus, PhoneCall,
-  Images, Users, ArrowRight, User, Shield
+  Images, Users, ArrowRight, User, Shield, HeartPulse
 } from 'lucide-react';
 
 
@@ -19,11 +19,10 @@ export default function Navbar({
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [loginDropdownOpen, setLoginDropdownOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [activeMobileDropdown, setActiveMobileDropdown] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const loginDropdownRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLDivElement>(null);
 
   // Scroll detection for navbar background
   useEffect(() => {
@@ -34,18 +33,24 @@ export default function Navbar({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close dropdown on click outside
+  // Close dropdown on click outside or escape key
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setActiveDropdown(null);
       }
-      if (loginDropdownRef.current && !loginDropdownRef.current.contains(event.target as Node)) {
-        setLoginDropdownOpen(false);
+    }
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setActiveDropdown(null);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
   }, []);
 
   // Lock body scroll when mobile menu is open
@@ -83,7 +88,8 @@ export default function Navbar({
   const handleNavClick = (path: string) => {
     navigate(path);
     setMobileMenuOpen(false);
-    setDropdownOpen(false);
+    setActiveDropdown(null);
+    setActiveMobileDropdown(null);
   };
 
   const handleLogout = () => {
@@ -112,6 +118,7 @@ export default function Navbar({
   return (
     <>
       <nav
+        ref={navRef}
         className={`sticky top-0 z-50 w-full transition-all duration-300 ${
           scrolled
             ? 'bg-white/95 backdrop-blur-xl shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] border-b border-outline-variant/10'
@@ -143,13 +150,98 @@ export default function Navbar({
           <div className="hidden lg:flex items-center space-x-1">
             {mainNavLinks.map(link => {
               const isActive = location.pathname === link.path;
+              
+              if (link.label === 'Events') {
+                return (
+                  <div 
+                    className="relative py-2" 
+                    key="events-dropdown" 
+                    onMouseEnter={() => setActiveDropdown('events')}
+                    onMouseLeave={() => setActiveDropdown(null)}
+                  >
+                    <button
+                      onClick={() => setActiveDropdown(activeDropdown === 'events' ? null : 'events')}
+                      className={`relative flex items-center gap-1 px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none cursor-pointer rounded-lg ${
+                        location.pathname === '/events'
+                          ? 'text-secondary font-semibold bg-secondary/5'
+                          : 'text-primary hover:text-secondary hover:bg-secondary/[0.03]'
+                      }`}
+                    >
+                      <span>Events</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'events' ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {activeDropdown === 'events' && (
+                      <div className="absolute top-[100%] left-0 pt-1 z-50 w-[220px]">
+                        <div className="bg-white rounded-[14px] shadow-[0_10px_40px_rgba(22,58,95,0.08)] border border-slate-100 p-1.5 animate-fade-in-slide">
+                          <button
+                            onClick={() => handleNavClick('/events')}
+                            className="w-full px-3 py-2.5 text-sm font-medium text-primary hover:bg-primary/[0.04] hover:text-secondary rounded-lg transition-colors text-left block"
+                          >
+                            Event Details
+                          </button>
+                          <button
+                            onClick={() => handleNavClick('/gallery')}
+                            className="w-full px-3 py-2.5 text-sm font-medium text-primary hover:bg-primary/[0.04] hover:text-secondary rounded-lg transition-colors text-left block"
+                          >
+                            Event Gallery
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              if (link.label === 'Blogs') {
+                return (
+                  <div 
+                    className="relative py-2" 
+                    key="blogs-dropdown"
+                    onMouseEnter={() => setActiveDropdown('blogs')}
+                    onMouseLeave={() => setActiveDropdown(null)}
+                  >
+                    <button
+                      onClick={() => setActiveDropdown(activeDropdown === 'blogs' ? null : 'blogs')}
+                      className={`relative flex items-center gap-1 px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none cursor-pointer rounded-lg ${
+                        location.pathname === '/blogs' || location.pathname === '/news'
+                          ? 'text-secondary font-semibold bg-secondary/5'
+                          : 'text-primary hover:text-secondary hover:bg-secondary/[0.03]'
+                      }`}
+                    >
+                      <span>Blogs</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'blogs' ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {activeDropdown === 'blogs' && (
+                      <div className="absolute top-[100%] left-0 pt-1 z-50 w-[220px]">
+                        <div className="bg-white rounded-[14px] shadow-[0_10px_40px_rgba(22,58,95,0.08)] border border-slate-100 p-1.5 animate-fade-in-slide">
+                          <button
+                            onClick={() => handleNavClick('/blogs')}
+                            className="w-full px-3 py-2.5 text-sm font-medium text-primary hover:bg-primary/[0.04] hover:text-secondary rounded-lg transition-colors text-left block"
+                          >
+                            Articles
+                          </button>
+                          <button
+                            onClick={() => handleNavClick('/news')}
+                            className="w-full px-3 py-2.5 text-sm font-medium text-primary hover:bg-primary/[0.04] hover:text-secondary rounded-lg transition-colors text-left block"
+                          >
+                            News
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
               return (
                 <button
                   key={link.path}
                   onClick={() => handleNavClick(link.path)}
-                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none cursor-pointer ${
+                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none cursor-pointer rounded-lg ${
                     isActive
-                      ? 'text-secondary font-semibold border-b-2 border-secondary'
+                      ? 'text-secondary font-semibold bg-secondary/5'
                       : 'text-primary hover:text-secondary hover:bg-secondary/[0.03]'
                   }`}
                 >
@@ -159,22 +251,26 @@ export default function Navbar({
             })}
 
             {/* More Dropdown */}
-            <div className="relative" ref={dropdownRef}>
+            <div 
+              className="relative py-2" 
+              key="more-dropdown"
+              onMouseEnter={() => setActiveDropdown('more')}
+              onMouseLeave={() => setActiveDropdown(null)}
+            >
               <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                onMouseEnter={() => setDropdownOpen(true)}
-                className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-primary hover:text-secondary hover:bg-secondary/[0.03] transition-all cursor-pointer"
+                onClick={() => setActiveDropdown(activeDropdown === 'more' ? null : 'more')}
+                className={`flex items-center gap-1 px-4 py-2 text-sm font-medium transition-all cursor-pointer rounded-lg ${
+                  activeDropdown === 'more' ? 'bg-secondary/5 text-secondary' : 'text-primary hover:text-secondary hover:bg-secondary/[0.03]'
+                }`}
               >
                 <span>More</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${dropdownOpen ? 'rotate-180 text-primary' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'more' ? 'rotate-180' : ''}`} />
               </button>
 
               {/* Dropdown Panel */}
-              {dropdownOpen && (
-                <div
-                  onMouseLeave={() => setDropdownOpen(false)}
-                  className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.05)] border border-outline-variant/20 py-2 z-50 animate-slide-down"
-                >
+              {activeDropdown === 'more' && (
+                <div className="absolute top-[100%] right-0 pt-1 z-50 w-72">
+                  <div className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.05)] border border-outline-variant/20 py-2 animate-fade-in-slide">
                   {moreLinks.map(item => (
                     <button
                       key={item.path + item.label}
@@ -210,7 +306,7 @@ export default function Navbar({
                   {/* Contact Us */}
                   <button
                     onClick={() => {
-                      setDropdownOpen(false);
+                      setActiveDropdown(null);
                       onOpenEnquiry();
                     }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-secondary/[0.04] hover:text-secondary transition-colors text-left group"
@@ -223,6 +319,7 @@ export default function Navbar({
                       <p className="text-[11px] text-slate-400 font-normal mt-0.5">Patient helpline & enquiry</p>
                     </div>
                   </button>
+                </div>
                 </div>
               )}
             </div>
@@ -269,22 +366,24 @@ export default function Navbar({
                 </button>
               </>
             ) : (
-              <div className="relative" ref={loginDropdownRef}>
+              <div 
+                className="relative py-2" 
+                key="login-dropdown"
+                onMouseEnter={() => setActiveDropdown('login')}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
                 <button
-                  onClick={() => setLoginDropdownOpen(!loginDropdownOpen)}
-                  onMouseEnter={() => setLoginDropdownOpen(true)}
+                  onClick={() => setActiveDropdown(activeDropdown === 'login' ? null : 'login')}
                   className="w-11 h-11 rounded-full bg-white border-[1.5px] border-primary flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm focus:outline-none cursor-pointer"
                 >
                   <User className="w-5 h-5" />
                 </button>
 
                 {/* Profile Login Dropdown */}
-                {loginDropdownOpen && (
-                  <div
-                    onMouseLeave={() => setLoginDropdownOpen(false)}
-                    className="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.05)] border border-outline-variant/20 py-2 z-50 animate-slide-down"
-                  >
-                    <p className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 mb-2">
+                {activeDropdown === 'login' && (
+                  <div className="absolute top-[100%] right-0 pt-1 z-50 w-64">
+                    <div className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.05)] border border-outline-variant/20 py-2 animate-fade-in-slide">
+                      <p className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 mb-2">
                       Sign In Access
                     </p>
                     <button
@@ -302,12 +401,13 @@ export default function Navbar({
                       <span>Hospital Login</span>
                     </button>
                     <button
-                      onClick={() => handleNavClick('/super-admin/login')}
+                      onClick={() => handleNavClick('/patient/login')}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-primary hover:bg-secondary/[0.04] hover:text-secondary transition-colors text-left group"
                     >
-                      <Shield className="w-4 h-4" />
-                      <span>Admin Login</span>
+                      <HeartPulse className="w-4 h-4" />
+                      <span>Patient Login</span>
                     </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -342,15 +442,15 @@ export default function Navbar({
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
+        <div className="fixed inset-0 z-[9999] lg:hidden">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/40 backdrop-blur-md animate-fade-in"
             onClick={() => setMobileMenuOpen(false)}
           />
 
           {/* Menu Panel */}
-          <div className="absolute top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl animate-slide-down overflow-y-auto">
+          <div className="absolute top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl animate-slide-in-right overflow-y-auto">
             {/* Mobile Menu Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/10">
               <div className="flex items-center gap-2.5">
@@ -383,21 +483,105 @@ export default function Navbar({
                 { path: '/gallery', label: 'Media & Impact Gallery', icon: Images },
                 { path: '/doctors', label: 'Our Doctors', icon: Stethoscope },
                 { path: '/join-us', label: 'Join Us / मिशन से जुड़ें', icon: UserPlus },
-              ].map(item => (
-                <button
-                  key={item.path}
-                  onClick={() => handleNavClick(item.path)}
-                  className={`flex items-center gap-3 w-full text-left py-2.5 px-3 rounded-xl text-sm transition-all ${
-                    location.pathname === item.path
-                      ? 'bg-primary/[0.06] text-primary font-semibold'
-                      : 'text-on-surface-variant hover:bg-surface-container-low hover:text-secondary'
-                  }`}
-                >
-                  <item.icon className={`w-4 h-4 shrink-0 ${location.pathname === item.path ? 'text-primary' : 'text-on-surface-variant/60'}`} />
-                  {item.label}
-                  {location.pathname === item.path && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
-                </button>
-              ))}
+              ].map(item => {
+                if (item.label === 'Events & Camps') {
+                  return (
+                    <div key="mobile-events-dropdown" className="space-y-1">
+                      <button
+                        onClick={() => setActiveMobileDropdown(activeMobileDropdown === 'events' ? null : 'events')}
+                        className={`flex items-center justify-between w-full text-left py-2.5 px-3 rounded-xl text-sm transition-all ${
+                          location.pathname === '/events'
+                            ? 'bg-primary/[0.06] text-primary font-semibold'
+                            : 'text-on-surface-variant hover:bg-surface-container-low hover:text-secondary'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Calendar className={`w-4 h-4 shrink-0 ${location.pathname === '/events' ? 'text-primary' : 'text-on-surface-variant/60'}`} />
+                          Events & Camps
+                        </div>
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${activeMobileDropdown === 'events' ? 'rotate-180' : ''}`} />
+                      </button>
+                      
+                      {activeMobileDropdown === 'events' && (
+                        <div className="pl-10 space-y-1 animate-fade-in-slide">
+                          <button
+                            onClick={() => handleNavClick('/events')}
+                            className={`flex items-center gap-3 w-full text-left py-2 px-3 rounded-xl text-sm transition-all ${
+                              location.pathname === '/events' ? 'text-primary font-semibold' : 'text-on-surface-variant hover:text-secondary'
+                            }`}
+                          >
+                            Event Details
+                          </button>
+                          <button
+                            onClick={() => handleNavClick('/gallery')}
+                            className={`flex items-center gap-3 w-full text-left py-2 px-3 rounded-xl text-sm transition-all text-on-surface-variant hover:text-secondary`}
+                          >
+                            Event Gallery
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                if (item.label === 'Educational Blogs') {
+                  return (
+                    <div key="mobile-blogs-dropdown" className="space-y-1">
+                      <button
+                        onClick={() => setActiveMobileDropdown(activeMobileDropdown === 'blogs' ? null : 'blogs')}
+                        className={`flex items-center justify-between w-full text-left py-2.5 px-3 rounded-xl text-sm transition-all ${
+                          location.pathname === '/blogs' || location.pathname === '/news'
+                            ? 'bg-primary/[0.06] text-primary font-semibold'
+                            : 'text-on-surface-variant hover:bg-surface-container-low hover:text-secondary'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <BookOpen className={`w-4 h-4 shrink-0 ${location.pathname === '/blogs' || location.pathname === '/news' ? 'text-primary' : 'text-on-surface-variant/60'}`} />
+                          Blogs
+                        </div>
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${activeMobileDropdown === 'blogs' ? 'rotate-180' : ''}`} />
+                      </button>
+                      
+                      {activeMobileDropdown === 'blogs' && (
+                        <div className="pl-10 space-y-1 animate-fade-in-slide">
+                          <button
+                            onClick={() => handleNavClick('/blogs')}
+                            className={`flex items-center gap-3 w-full text-left py-2 px-3 rounded-xl text-sm transition-all ${
+                              location.pathname === '/blogs' ? 'text-primary font-semibold' : 'text-on-surface-variant hover:text-secondary'
+                            }`}
+                          >
+                            Articles
+                          </button>
+                          <button
+                            onClick={() => handleNavClick('/news')}
+                            className={`flex items-center gap-3 w-full text-left py-2 px-3 rounded-xl text-sm transition-all ${
+                              location.pathname === '/news' ? 'text-primary font-semibold' : 'text-on-surface-variant hover:text-secondary'
+                            }`}
+                          >
+                            News
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => handleNavClick(item.path)}
+                    className={`flex items-center gap-3 w-full text-left py-2.5 px-3 rounded-xl text-sm transition-all ${
+                      location.pathname === item.path
+                        ? 'bg-primary/[0.06] text-primary font-semibold'
+                        : 'text-on-surface-variant hover:bg-surface-container-low hover:text-secondary'
+                    }`}
+                  >
+                    <item.icon className={`w-4 h-4 shrink-0 ${location.pathname === item.path ? 'text-primary' : 'text-on-surface-variant/60'}`} />
+                    {item.label}
+                    {location.pathname === item.path && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Mobile Auth Section */}
@@ -453,12 +637,12 @@ export default function Navbar({
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      navigate('/super-admin/login');
+                      navigate('/patient/login');
                     }}
                     className="w-full py-2.5 px-4 rounded-xl bg-surface-variant/40 text-primary text-center font-semibold text-sm flex items-center justify-center space-x-2"
                   >
-                    <Shield className="w-4 h-4" />
-                    <span>Admin Login</span>
+                    <HeartPulse className="w-4 h-4" />
+                    <span>Patient Login</span>
                   </button>
                 </>
               )}
