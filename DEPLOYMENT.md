@@ -37,11 +37,13 @@ variables on the host:
 
 | Variable | Value |
 |---|---|
+| `ENVIRONMENT` | `production` -- gates the two startup checks below (and refuses to run `app.seed`) |
 | `DATABASE_URL` | from step 1 |
-| `JWT_SECRET_KEY` | a long random string -- `python -c "import secrets; print(secrets.token_urlsafe(48))"` -- **not** the `dev-secret-change-me` default |
-| `CORS_ORIGINS` | your frontend's real URL once you know it, e.g. `https://cancer-aware-bharat.vercel.app` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | `480` is fine to start; tighten later if you add refresh tokens |
+| `JWT_SECRET_KEY` | a long random string -- `python -c "import secrets; print(secrets.token_urlsafe(48))"` -- **not** the `dev-secret-change-me` default. With `ENVIRONMENT=production` set, the app now refuses to start on the placeholder or on anything under 32 characters, instead of just silently accepting it |
+| `CORS_ORIGINS` | your frontend's real URL once you know it, e.g. `https://cancer-aware-bharat.vercel.app`. With `ENVIRONMENT=production` set, the app now refuses to start if this is still the localhost-only dev default |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `480` is fine to start; tighten later if you add refresh tokens. A token can also be revoked early via `/auth/logout`, which now actually invalidates it server-side rather than only clearing it client-side |
 | `UPLOAD_DIR` | `./uploads` -- see the note on file storage below |
+| `LOG_LEVEL` | `INFO` is fine to start. All requests and unhandled errors are logged; see `backend/app/core/logging_config.py` |
 
 **Run once after the first deploy** (as a one-off command / release step,
 however your platform does that):
@@ -74,11 +76,17 @@ Build command: `npm run build`. Output directory: `dist`. Set at build time:
 
 | Variable | Value |
 |---|---|
-| `VITE_API_URL` | your backend's public URL from step 2, e.g. `https://cab-api.up.railway.app` |
+| `VITE_API_URL` | your backend's public URL from step 2, e.g. `https://cab-api.up.railway.app` (no path suffix -- the frontend appends `/v1` itself) |
 
 Vite inlines `VITE_API_URL` into the JS bundle at build time -- if you
 change the backend URL later, you must rebuild the frontend, not just
 restart it.
+
+Every route is mounted at both its original unprefixed path and again
+under `/v1` (see `backend/app/main.py`); the frontend always calls the
+`/v1` path. Nothing outside the frontend depends on this today, but if
+you build another client against this API, prefer `/v1` too -- it's the
+one that gets versioning guarantees going forward.
 
 ## 4. Close the loop on CORS
 
@@ -94,9 +102,20 @@ gone stale, see `git log --oneline | grep -i port` for the story.
 curl https://your-backend-url/health
 ```
 
+`/health` actually runs `SELECT 1` against the database and returns 503
+if that fails -- a 200 here means the app can really reach Postgres, not
+just that the process is up. Wire this into your platform's own health
+check / load balancer target if it supports one, so a database outage
+gets caught automatically instead of waiting for a user to notice.
+
 Then in the browser: submit a patient enquiry, log in as the account you
 created in step 2, confirm it shows up. That exercises frontend build,
 backend connectivity, CORS, and the database in one pass.
+
+If something looks wrong afterward, two places to look before guessing:
+the `audit_logs` table (every login success/failure and logout, with
+role/IP/timestamp -- not tied to a specific patient case) for account
+activity, and each enquiry's own timeline for anything patient-specific.
 
 ## Not covered here (deliberately out of scope for this pass)
 
