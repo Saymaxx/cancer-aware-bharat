@@ -2,7 +2,7 @@ import React, { useState, lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './api/queryClient';
-import { clearAppLocalStorage, getHospitalSession, getStaffSession, getVolunteerSession, logout } from './api/client';
+import { clearAppLocalStorage, getHospitalSession, getPatientSession, getStaffSession, getVolunteerSession, logout } from './api/client';
 import { isTokenExpired } from './utils/jwt';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -37,11 +37,13 @@ const DoctorsTab = lazy(() => import('./components/DoctorsTab'));
 const VolunteerAuthPage = lazy(() => import('./components/VolunteerAuthPage'));
 const AdminAuthPage = lazy(() => import('./components/AdminAuthPage'));
 const HospitalAuthPage = lazy(() => import('./components/HospitalAuthPage'));
+const PatientAuthPage = lazy(() => import('./components/PatientAuthPage'));
 
 const VolunteerDashboard = lazy(() => import('./components/VolunteerDashboard'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const SuperAdminDashboard = lazy(() => import('./components/SuperAdminDashboard'));
 const HospitalDashboard = lazy(() => import('./components/HospitalDashboard'));
+const PatientDashboard = lazy(() => import('./components/PatientDashboard'));
 
 // Loading Fallback Spinner for Suspense
 function PageLoadingFallback() {
@@ -131,7 +133,7 @@ function PublicLayout({
   onOpenSitemap: () => void;
 }) {
   const location = useLocation();
-  const isAuthPage = ['/admin', '/superadmin', '/volunteer/login', '/hospital/login'].includes(location.pathname);
+  const isAuthPage = ['/admin', '/superadmin', '/volunteer/login', '/hospital/login', '/patient/login'].includes(location.pathname);
 
   return (
     <>
@@ -341,6 +343,13 @@ function AppContent() {
             </main>
           </PublicLayout>
         } />
+        <Route path="/patient/login" element={
+          <PublicLayout {...publicLayoutProps}>
+            <main className="flex-grow w-full mx-auto">
+              <PatientAuthPage />
+            </main>
+          </PublicLayout>
+        } />
 
         {/* ===== Hidden Admin Auth Pages ===== */}
         <Route path="/admin" element={
@@ -416,6 +425,23 @@ function AppContent() {
                     const token = getStaffSession()?.accessToken;
                     clearAppLocalStorage();
                     navigate('/superadmin');
+                    if (token) logout(token);
+                  }}
+                />
+              </Suspense>
+            </main>
+          </AuthGuard>
+        } />
+
+        <Route path="/patient/dashboard" element={
+          <AuthGuard storageKey="aware_bharat_logged_in_patient" redirectTo="/patient/login">
+            <main className="flex-grow w-full mx-auto">
+              <Suspense fallback={<PageLoadingFallback />}>
+                <PatientDashboard
+                  onLogout={() => {
+                    const token = getPatientSession()?.accessToken;
+                    clearAppLocalStorage();
+                    navigate('/patient/login');
                     if (token) logout(token);
                   }}
                 />

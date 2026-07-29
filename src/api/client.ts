@@ -11,6 +11,7 @@ const API_PREFIX = '/v1';
 const STAFF_SESSION_KEY = 'aware_bharat_logged_in_staff';
 const HOSPITAL_SESSION_KEY = 'aware_bharat_logged_in_hospital';
 const VOLUNTEER_SESSION_KEY = 'aware_bharat_logged_in_volunteer';
+const PATIENT_SESSION_KEY = 'aware_bharat_logged_in_patient';
 const APP_STORAGE_PREFIX = 'aware_bharat_';
 
 // Every dashboard's Patients/Campaigns/Donations/Audit-Logs/etc. tabs still
@@ -58,6 +59,9 @@ function handleUnauthorized() {
   } else if (path.startsWith('/volunteer')) {
     clearAppLocalStorage();
     if (path !== '/volunteer/login') window.location.href = '/volunteer/login';
+  } else if (path.startsWith('/patient')) {
+    clearAppLocalStorage();
+    if (path !== '/patient/login') window.location.href = '/patient/login';
   }
 }
 
@@ -162,6 +166,29 @@ export function setVolunteerSession(session: VolunteerSession) {
   localStorage.setItem(VOLUNTEER_SESSION_KEY, JSON.stringify(session));
 }
 
+// ---------------- Patient session ----------------
+
+export interface PatientSession {
+  name: string;
+  email: string;
+  patientRefId: string;
+  accessToken: string;
+}
+
+export function getPatientSession(): PatientSession | null {
+  const raw = localStorage.getItem(PATIENT_SESSION_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function setPatientSession(session: PatientSession) {
+  localStorage.setItem(PATIENT_SESSION_KEY, JSON.stringify(session));
+}
+
 // ---------------- Auth ----------------
 
 interface TokenResponse {
@@ -187,6 +214,13 @@ export async function loginHospital(email: string, password: string): Promise<To
 
 export async function loginVolunteer(email: string, password: string): Promise<TokenResponse> {
   return request<TokenResponse>('/auth/volunteer/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function loginPatient(email: string, password: string): Promise<TokenResponse> {
+  return request<TokenResponse>('/auth/patient/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
@@ -357,8 +391,12 @@ export interface SubmitEnquiryPayload {
   preferredDate?: string;
 }
 
-export function submitEnquiry(payload: SubmitEnquiryPayload): Promise<ApiPatientEnquiry> {
-  return request<ApiPatientEnquiry>('/enquiries', { method: 'POST', body: JSON.stringify(payload) });
+// token is optional: a logged-in patient submitting from their dashboard
+// passes it so the new enquiry auto-links to their account (see
+// optional_patient_id in the backend); the public enquiry form (the common
+// case) omits it and the submission stays fully anonymous, exactly as before.
+export function submitEnquiry(payload: SubmitEnquiryPayload, token?: string | null): Promise<ApiPatientEnquiry> {
+  return request<ApiPatientEnquiry>('/enquiries', { method: 'POST', body: JSON.stringify(payload) }, token);
 }
 
 export function uploadEnquiryReport(enquiryId: string, file: File, phone: string): Promise<ApiUploadedReport> {
@@ -460,4 +498,54 @@ export function listHospitals(): Promise<ApiHospital[]> {
 
 export function listNotifications(token: string): Promise<ApiNotification[]> {
   return request<ApiNotification[]>('/notifications', {}, token);
+}
+
+// ---------------- Patients ----------------
+
+export interface ApiPatient {
+  id: string;
+  patientRefId: string;
+  name: string;
+  email: string;
+  phone: string;
+  emailVerified: boolean;
+  createdAt: string;
+}
+
+export interface RegisterPatientPayload {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+}
+
+export function registerPatient(payload: RegisterPatientPayload): Promise<ApiPatient> {
+  return request<ApiPatient>('/patients/register', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export function verifyPatientEmail(email: string, code: string): Promise<TokenResponse> {
+  return request<TokenResponse>('/patients/verify-email', { method: 'POST', body: JSON.stringify({ email, code }) });
+}
+
+export function requestPatientPasswordReset(email: string): Promise<{ message: string }> {
+  return request<{ message: string }>('/patients/forgot-password/request', { method: 'POST', body: JSON.stringify({ email }) });
+}
+
+export function resetPatientPassword(email: string, code: string, newPassword: string): Promise<{ message: string }> {
+  return request<{ message: string }>('/patients/forgot-password/reset', {
+    method: 'POST',
+    body: JSON.stringify({ email, code, newPassword }),
+  });
+}
+
+export function getMyPatientProfile(token: string): Promise<ApiPatient> {
+  return request<ApiPatient>('/patients/me', {}, token);
+}
+
+export function updateMyPatientProfile(token: string, payload: { name?: string; phone?: string }): Promise<ApiPatient> {
+  return request<ApiPatient>('/patients/me', { method: 'PATCH', body: JSON.stringify(payload) }, token);
+}
+
+export function listMyPatientEnquiries(token: string): Promise<ApiPatientEnquiry[]> {
+  return request<ApiPatientEnquiry[]>('/patients/me/enquiries', {}, token);
 }

@@ -61,6 +61,11 @@ class PatientEnquiry(Base):
     notes: Mapped[str | None] = mapped_column(Text)
 
     hospital_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("hospitals.id"))
+    # Nullable: guest submissions (the common case) stay fully anonymous.
+    # Populated automatically when a logged-in patient submits (see
+    # optional_patient_id in deps.py), and opportunistically backfilled by
+    # GET /patients/me/enquiries for older phone-matched rows.
+    patient_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("patients.id"), index=True)
     # Deliberately denormalized, not a bug: a case should show the hospital
     # name as it was communicated to the patient at assignment time, not
     # retroactively rewritten if the hospital later renames. Do not "fix"

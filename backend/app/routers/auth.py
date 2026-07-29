@@ -8,6 +8,7 @@ from app.core.limiter import get_client_ip, limiter
 from app.core.security import create_access_token, generate_numeric_id, hash_password, verify_password
 from app.deps import DbSession, get_current_claims
 from app.models.hospital import Hospital
+from app.models.patient import Patient
 from app.models.revoked_token import RevokedToken
 from app.models.user import User
 from app.models.volunteer import Volunteer
@@ -62,6 +63,24 @@ def volunteer_login(request: Request, payload: LoginIn, db: DbSession):
     record_event(db, "login_success", role="volunteer", actor_id=volunteer.id, ip_address=get_client_ip(request))
     db.commit()
     return TokenOut(access_token=token, role="volunteer", name=volunteer.name)
+
+
+@router.post("/patient/login", response_model=TokenOut)
+@limiter.limit("10/minute")
+def patient_login(request: Request, payload: LoginIn, db: DbSession):
+    patient = db.query(Patient).filter(Patient.email == payload.email).first()
+    if not patient or not verify_password(payload.password, patient.hashed_password):
+        record_event(db, "login_failure", role="patient", detail=payload.email, ip_address=get_client_ip(request))
+        db.commit()
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
+    if not patient.email_verified:
+        record_event(db, "login_failure", role="patient", actor_id=patient.id, detail="email not verified", ip_address=get_client_ip(request))
+        db.commit()
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Please verify your email before logging in")
+    token = create_access_token(subject=str(patient.id), role="patient")
+    record_event(db, "login_success", role="patient", actor_id=patient.id, ip_address=get_client_ip(request))
+    db.commit()
+    return TokenOut(access_token=token, role="patient", name=patient.name)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

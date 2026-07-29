@@ -48,7 +48,7 @@ def _assert_status(enquiry: PatientEnquiry, *legal_statuses: str) -> None:
         )
 
 
-def submit_enquiry(db: Session, data: PatientEnquiryCreate) -> PatientEnquiry:
+def submit_enquiry(db: Session, data: PatientEnquiryCreate, patient_id: UUID | None = None) -> PatientEnquiry:
     year = datetime.now(timezone.utc).year
     random_num = generate_numeric_id()
     enquiry_id = f"ENQ-{year}-{random_num}"
@@ -82,6 +82,7 @@ def submit_enquiry(db: Session, data: PatientEnquiryCreate) -> PatientEnquiry:
         symptoms=data.symptoms or data.notes,
         notes=data.notes,
         hospital_id=data.preferred_hospital_id,
+        patient_id=patient_id,
         preferred_hospital_name=preferred_hospital_name,
         preferred_date=data.preferred_date,
         status="Pending Admin Review",

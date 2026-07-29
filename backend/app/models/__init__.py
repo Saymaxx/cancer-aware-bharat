@@ -3,6 +3,7 @@ from app.models.hospital import Hospital, HospitalPartnerRequest
 from app.models.event import Event
 from app.models.blog import BlogArticle
 from app.models.volunteer import Volunteer
+from app.models.patient import OtpCode, Patient
 from app.models.enquiry import PatientEnquiry, TimelineEvent, AppointmentDetails, UploadedReport
 from app.models.notification import Notification
 from app.models.revoked_token import RevokedToken
@@ -15,6 +16,8 @@ __all__ = [
     "Event",
     "BlogArticle",
     "Volunteer",
+    "Patient",
+    "OtpCode",
     "PatientEnquiry",
     "TimelineEvent",
     "AppointmentDetails",

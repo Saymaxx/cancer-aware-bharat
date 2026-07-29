@@ -12,6 +12,7 @@ from app.core.storage import get_storage
 from app.deps import (
     DbSession,
     current_hospital_id,
+    optional_patient_id,
     require_admin_or_superadmin,
     require_roles,
 )
@@ -59,9 +60,19 @@ def _staff_name(db: Session, claims: dict) -> str:
 
 @router.post("", response_model=PatientEnquiryOut, status_code=status.HTTP_201_CREATED)
 @limiter.limit("10/minute")
-def create_enquiry(request: Request, payload: PatientEnquiryCreate, db: DbSession):
-    """Public endpoint - anyone can submit a patient enquiry, no login required."""
-    return enquiry_workflow.submit_enquiry(db, payload)
+def create_enquiry(
+    request: Request,
+    payload: PatientEnquiryCreate,
+    db: DbSession,
+    patient_id: Annotated[UUID | None, Depends(optional_patient_id)] = None,
+):
+    """Public endpoint - anyone can submit a patient enquiry, no login required.
+
+    If a valid patient Bearer token happens to be present, the new enquiry
+    is automatically linked to that account -- guest submissions (still the
+    common case) stay fully anonymous exactly as before.
+    """
+    return enquiry_workflow.submit_enquiry(db, payload, patient_id=patient_id)
 
 
 @router.post("/lookup", response_model=PatientEnquiryOut)
@@ -262,7 +273,7 @@ def download_report(
     enquiry_id: UUID,
     report_id: UUID,
     db: DbSession,
-    claims: Annotated[dict, Depends(require_roles("admin", "superadmin", "hospital"))],
+    claims: Annotated[dict, Depends(require_roles("admin", "superadmin", "hospital", "patient"))],
 ):
     """Replaces the previous raw-filesystem-path exposure (UploadedReportOut.url)
     with a real, access-controlled route -- same role/ownership rules as
@@ -273,6 +284,13 @@ def download_report(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Enquiry not found")
     if claims["role"] == "hospital" and enquiry.hospital_id != UUID(claims["sub"]):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Not assigned to your hospital")
+    if claims["role"] == "patient" and enquiry.patient_id != UUID(claims["sub"]):
+        # patient_id is only populated once GET /patients/me/enquiries has
+        # been called (auto-link on submission, or opportunistic backfill
+        # for older phone-matched rows) -- a patient viewing their own
+        # dashboard hits that first, so this is the expected path, not an
+        # edge case.
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Not your enquiry")
 
     report = (
         db.query(UploadedReport)

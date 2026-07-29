@@ -102,6 +102,24 @@ def auth_header(token: str) -> dict:
     return {"Authorization": f"Bearer {token}"}
 
 
+def extract_otp_code(caplog_text: str, email: str | None = None) -> str:
+    """ConsoleOtpSender (app/core/otp.py) logs the code instead of sending it
+    anywhere real -- tests read it back out of the log the same way a real
+    email/SMS provider would deliver it to the user.
+
+    caplog accumulates every log line for the whole test, so with more than
+    one registration/reset in a test there can be several OTP lines --
+    always returns the *most recent* match (optionally scoped to a specific
+    email) rather than the first, so callers get the code that's actually
+    still valid.
+    """
+    import re
+    pattern = rf"OTP for {re.escape(email)} \([^)]+\): (\d{{6}})" if email else r"OTP for [^:]+: (\d{6})"
+    matches = re.findall(pattern, caplog_text)
+    assert matches, f"no OTP code found in captured logs for {email!r}: {caplog_text!r}"
+    return matches[-1]
+
+
 def submit_sample_enquiry(client, **overrides) -> dict:
     payload = {
         "patientName": "Pytest Patient",

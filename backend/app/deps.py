@@ -46,7 +46,32 @@ require_superadmin = require_roles("superadmin")
 require_admin_or_superadmin = require_roles("admin", "superadmin")
 require_hospital = require_roles("hospital")
 require_volunteer = require_roles("volunteer")
+require_patient = require_roles("patient")
 
 
 def current_hospital_id(claims: Annotated[dict, Depends(require_hospital)]) -> UUID:
     return UUID(claims["sub"])
+
+
+def optional_patient_id(
+    db: DbSession,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
+) -> UUID | None:
+    """Never raises -- used on public endpoints (enquiry submission) that
+    should still work with no token at all, but opportunistically attribute
+    to a logged-in patient when a valid patient-role token happens to be
+    present. Duplicates get_current_claims' checks (expiry, revocation)
+    rather than calling it, since that function raises on anything invalid
+    and this one must not."""
+    if credentials is None:
+        return None
+    claims = decode_access_token(credentials.credentials)
+    if claims is None or claims.get("role") != "patient":
+        return None
+    jti = claims.get("jti")
+    if jti and db.query(RevokedToken).filter(RevokedToken.jti == jti).first() is not None:
+        return None
+    try:
+        return UUID(claims["sub"])
+    except (KeyError, ValueError):
+        return None

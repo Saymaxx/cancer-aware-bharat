@@ -12,9 +12,14 @@ interface EnquiryModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedHospitalId?: string; // Preselect hospital if user clicked 'Contact' from hospital tab
+  // Passed by the patient dashboard so a logged-in patient's submission
+  // auto-links to their account; omitted everywhere else (the public form)
+  // so anonymous submissions keep working exactly as before.
+  apiToken?: string | null;
+  onSubmitted?: () => void;
 }
 
-export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: EnquiryModalProps) {
+export default function EnquiryModal({ isOpen, onClose, selectedHospitalId, apiToken, onSubmitted }: EnquiryModalProps) {
   const { hospitals } = useApiHospitals();
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [createdEnquiry, setCreatedEnquiry] = useState<PatientEnquiry | null>(null);
@@ -112,7 +117,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
         notes,
         preferredHospitalId: hospitalId || undefined,
         preferredDate,
-      });
+      }, apiToken);
 
       // Upload any attached reports now that the enquiry exists server-side
       const uploadedReports = [];
@@ -126,6 +131,7 @@ export default function EnquiryModal({ isOpen, onClose, selectedHospitalId }: En
 
       setCreatedEnquiry(mapApiEnquiry({ ...created, uploadedReports }));
       setFormSubmitted(true);
+      onSubmitted?.();
     } catch (err) {
       setErrorMessage(err instanceof ApiError ? err.message : 'Unable to reach the server. Please check your connection and try again.');
     } finally {

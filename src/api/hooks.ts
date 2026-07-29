@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { listEnquiries, listHospitals, listNotifications } from './client';
+import { listEnquiries, listHospitals, listMyPatientEnquiries, listNotifications } from './client';
 import { mapApiEnquiry, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -27,6 +27,25 @@ export function useApiEnquiries(token: string | null) {
     enquiries: (query.data ?? []).map(mapApiEnquiry),
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load enquiries' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** A logged-in patient's own enquiries (patient_id match or phone match to
+ * older/guest submissions -- see GET /patients/me/enquiries). Same
+ * refetch-on-interval behavior as useApiEnquiries. */
+export function useMyPatientEnquiries(token: string | null) {
+  const query = useQuery({
+    queryKey: ['patient-enquiries', token],
+    queryFn: () => listMyPatientEnquiries(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    enquiries: (query.data ?? []).map(mapApiEnquiry),
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load your enquiries' : null,
     refetch: query.refetch,
   };
 }
