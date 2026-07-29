@@ -15,36 +15,48 @@ import PremiumSection from './common/PremiumSection';
 
 const CAROUSEL_SLIDES = [
   {
-    image: '/events/event-1.jpeg',
-    tag: 'Live Campaign Highlight',
-    titleLine1: 'Early Detection Saves',
-    titleLine2: 'Thousands of Lives.',
-    desc: 'Bringing health awareness, primary support and timely specialist referrals to every village across India. Our mission ensures no patient reaches the hospital too late due to lack of information.',
-    title: 'Free Early Screening Detection Camp — Lions Club Grounds'
+    image: '/hero/hero-new-1.png',
+    tag: 'Doctor Network',
+    titleLine1: 'Expert Care',
+    titleLine2: 'Near You',
+    desc: 'Connecting patients with top oncology specialists and trusted healthcare partners across India.',
+    primaryBtn: 'Find a Specialist',
+    secondaryBtn: 'Patient Enquiry',
+    objectPosition: 'center 20%',
+    alt: 'Expert Care Near You'
   },
   {
-    image: '/events/event-2.jpeg',
-    tag: 'Community Outreach',
-    titleLine1: 'Saving Lives Through',
-    titleLine2: 'Blood Donation.',
-    desc: 'Every donation gives hope to cancer patients. Support blood donation initiatives that help hospitals maintain life-saving blood supplies for patients undergoing chemotherapy and cancer surgeries across India.',
-    title: 'Mega Blood Donation Drive — City Hospital Community Hall'
+    image: '/hero/hero-new-2.png',
+    tag: 'Community Awareness',
+    titleLine1: 'Empowering Communities',
+    titleLine2: 'Through Knowledge',
+    desc: 'We conduct large-scale awareness drives to ensure everyone knows the signs of early cancer.',
+    primaryBtn: 'View Campaigns',
+    secondaryBtn: 'Volunteer With Us',
+    objectPosition: 'center 30%',
+    alt: 'Empowering Communities Through Knowledge'
   },
   {
-    image: '/events/event-4.jpeg',
-    tag: 'Support Workshops',
-    titleLine1: 'Post-Treatment Nutrition',
-    titleLine2: '& Recovery Guidance.',
-    desc: 'Expert onco-nutritionists and physiotherapists guide cancer patients and families through specialised diet plans, yoga programmes and holistic rehabilitation workshops.',
-    title: 'Nutrition Post-Treatment & Holistic Recovery Workshop'
+    image: '/hero/hero-new-3.png',
+    tag: 'Screening Camps',
+    titleLine1: 'Accessible Screening',
+    titleLine2: 'For Every Village',
+    desc: 'Bringing free cancer screening camps directly to rural and underserved communities.',
+    primaryBtn: 'Find Nearby Camps',
+    secondaryBtn: 'Support Our Work',
+    objectPosition: 'center 25%',
+    alt: 'Accessible Screening For Every Village'
   },
   {
-    image: '/events/event-5.jpeg',
-    tag: 'Educational Resources',
-    titleLine1: 'Knowledge is the First',
-    titleLine2: 'Step to Prevention.',
-    desc: 'Free oral, breast and cervical cancer prevention health guides. Understand the earliest warning signs and protect your family through timely screening and awareness.',
-    title: 'Awareness Seminars & Cancer Early Detection Guides'
+    image: '/hero/hero-new-4.jpg',
+    tag: 'Patient Support',
+    titleLine1: 'Guiding Your',
+    titleLine2: 'Journey to Health',
+    desc: 'Our dedicated volunteers stand with patients every step of the way, from diagnosis to treatment.',
+    primaryBtn: 'Get Help Now',
+    secondaryBtn: 'Join Our Mission',
+    objectPosition: 'center 20%',
+    alt: 'Guiding Your Journey to Health'
   }
 ];
 
@@ -1035,7 +1047,7 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
 
   // Carousel state
   const [activeSlide, setActiveSlide] = useState(0);
-
+  const [prevSlide, setPrevSlide] = useState<number | null>(null);
 
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
@@ -1045,10 +1057,11 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
 
   useEffect(() => {
     const slideInterval = setInterval(() => {
+      setPrevSlide(activeSlide);
       setActiveSlide((prev) => (prev + 1) % CAROUSEL_SLIDES.length);
-    }, 7000); // Cinematic 7s duration per slide
+    }, 5000); // 5s visible duration
     return () => clearInterval(slideInterval);
-  }, []);
+  }, [activeSlide]); // Restart interval if activeSlide changes manually
 
 
 
@@ -1071,29 +1084,44 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
       {/* ═══════════════════════════════════════════
           SECTION 1: HERO BANNER
           ═══════════════════════════════════════════ */}
-      <section className="relative h-[85vh] min-h-[600px] md:min-h-[700px] lg:min-h-[800px] flex flex-col justify-center overflow-hidden bg-primary">
+      <section 
+        className="relative h-[75vh] min-h-[500px] md:min-h-[600px] lg:min-h-[700px] flex flex-col justify-center overflow-hidden bg-primary"
+      >
         {/* Background Slides with Ken Burns */}
         <div className="absolute inset-0 z-0 bg-primary">
-          {CAROUSEL_SLIDES.map((slide, idx) => (
-            <div
-              key={idx}
-              className={`absolute inset-0 transition-opacity duration-[1500ms] ease-in-out ${idx === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-            >
+          {CAROUSEL_SLIDES.map((slide, idx) => {
+            let state = 'next';
+            if (idx === activeSlide) state = 'active';
+            else if (idx === prevSlide) state = 'prev';
+
+            return (
               <div
-                className={`w-full h-full transition-transform duration-[8000ms] ease-in-out origin-center ${idx === activeSlide ? 'scale-[1.08]' : 'scale-100'}`}
+                key={idx}
+                className={`absolute inset-0 transition-opacity duration-[1000ms] ease-in-out ${state === 'active' ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
               >
-                <img
-                  src={slide.image}
-                  alt={slide.title}
-                  className="w-full h-full object-cover brightness-[1.05] contrast-[1.05]"
-                  referrerPolicy="no-referrer"
-                  loading={idx === 0 ? 'eager' : 'lazy'}
-                />
+                <div
+                  className={`w-full h-full transition-transform ease-out origin-center ${
+                    state === 'active' 
+                      ? 'duration-[5000ms] scale-[1.05]' 
+                      : state === 'prev' 
+                        ? 'duration-[1000ms] scale-100' 
+                        : 'duration-0 scale-[1.08]'
+                  }`}
+                >
+                  <img
+                    src={slide.image}
+                    alt={slide.alt}
+                    className="w-full h-full object-cover brightness-[1.05] contrast-[1.05]"
+                    style={{ objectPosition: slide.objectPosition || 'center' }}
+                    referrerPolicy="no-referrer"
+                    loading={idx === 0 ? 'eager' : 'lazy'}
+                  />
+                </div>
+                {/* Left-to-Right cinematic gradient overlay */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(22,58,95,0.75)_0%,rgba(22,58,95,0.35)_40%,rgba(22,58,95,0)_75%,transparent_100%)]" />
               </div>
-              {/* Left-to-Right cinematic gradient overlay */}
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(22,58,95,0.75)_0%,rgba(22,58,95,0.35)_40%,rgba(22,58,95,0)_75%,transparent_100%)]" />
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Torn Edge Top (white, to match navbar/body transition) */}
@@ -1124,7 +1152,7 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
         <div className="relative z-20 w-full px-6 md:pl-[6vw] lg:pl-[8vw] pt-24 pb-16 flex flex-col justify-center h-full" key={`hero-text-${activeSlide}`}>
           <div className="max-w-[550px]">
             {/* Small Label */}
-            <div className="animate-fade-in-up opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: '100ms', animationDuration: '600ms' }}>
+            <div className="animate-fade-in-up opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: '0ms', animationDuration: '400ms' }}>
               <span className="inline-block px-4 py-1.5 rounded-full bg-secondary/15 text-secondary text-[11px] font-bold uppercase tracking-[0.2em] border border-secondary/20 mb-6 backdrop-blur-md shadow-sm">
                 {CAROUSEL_SLIDES[activeSlide].tag}
               </span>
@@ -1133,37 +1161,37 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
             {/* Headline */}
             <h1 className="font-outfit text-white text-[42px] sm:text-[54px] md:text-[64px] lg:text-[76px] font-[800] leading-[1.05] tracking-tight mb-6">
               <div className="overflow-hidden pb-1">
-                <div className="animate-fade-in-up opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: '250ms', animationDuration: '700ms' }}>
+                <div className="animate-fade-in-up opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: '100ms', animationDuration: '400ms' }}>
                   {CAROUSEL_SLIDES[activeSlide].titleLine1}
                 </div>
               </div>
               <div className="overflow-hidden mt-1 pb-2">
-                <div className="animate-fade-in-up opacity-0 [animation-fill-mode:forwards] text-white font-[800]" style={{ animationDelay: '400ms', animationDuration: '700ms' }}>
+                <div className="animate-fade-in-up opacity-0 [animation-fill-mode:forwards] text-white font-[800]" style={{ animationDelay: '200ms', animationDuration: '400ms' }}>
                   {CAROUSEL_SLIDES[activeSlide].titleLine2}
                 </div>
               </div>
             </h1>
 
             {/* Subtitle */}
-            <div className="animate-fade-in-up opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: '550ms', animationDuration: '700ms' }}>
+            <div className="animate-fade-in-up opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: '300ms', animationDuration: '400ms' }}>
               <p className="text-white/95 text-[17px] md:text-[20px] lg:text-[22px] font-medium leading-[1.65] mb-10 max-w-full">
                 {CAROUSEL_SLIDES[activeSlide].desc}
               </p>
             </div>
 
             {/* Buttons */}
-            <div className="flex flex-col sm:flex-row flex-wrap gap-4 animate-fade-in-up opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: '700ms', animationDuration: '700ms' }}>
+            <div className="flex flex-col sm:flex-row flex-wrap gap-4 animate-fade-in-up opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: '400ms', animationDuration: '400ms' }}>
               <button
-                onClick={() => navigate('/events')}
+                onClick={CAROUSEL_SLIDES[activeSlide].primaryBtn === 'Join Our Mission' || CAROUSEL_SLIDES[activeSlide].primaryBtn === 'Become a Volunteer' ? onOpenVolunteer : () => navigate('/events')}
                 className="px-10 py-4 rounded-full bg-primary text-white font-semibold text-[16px] hover:bg-[#112d4a] hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(22,58,95,0.4)] flex items-center justify-center gap-2 transition-all duration-300 ease-out"
               >
-                Find Free Screening Camps <ArrowRight className="w-4.5 h-4.5" />
+                {CAROUSEL_SLIDES[activeSlide].primaryBtn} {CAROUSEL_SLIDES[activeSlide].primaryBtn !== 'Join Our Mission' && <ArrowRight className="w-4.5 h-4.5" />}
               </button>
               <button
-                onClick={() => navigate('/join-us')}
+                onClick={CAROUSEL_SLIDES[activeSlide].secondaryBtn === 'Patient Enquiry' || CAROUSEL_SLIDES[activeSlide].secondaryBtn === 'Support Patients' ? onOpenEnquiry : CAROUSEL_SLIDES[activeSlide].secondaryBtn === 'Become a Volunteer' ? onOpenVolunteer : () => navigate('/mission')}
                 className="px-10 py-4 rounded-full bg-transparent border-2 border-white text-white font-semibold text-[16px] hover:bg-white hover:text-primary hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(255,255,255,0.25)] flex items-center justify-center transition-all duration-300 ease-out"
               >
-                Join Our Mission
+                {CAROUSEL_SLIDES[activeSlide].secondaryBtn}
               </button>
             </div>
           </div>
