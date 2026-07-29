@@ -11,6 +11,7 @@ import {
 import { INITIAL_EVENTS } from '../data';
 import { Event } from '../types';
 import TeamShowcase from './TeamShowcase';
+import PremiumSection from './common/PremiumSection';
 
 const CAROUSEL_SLIDES = [
   {
@@ -282,16 +283,9 @@ function UpcomingCampsCarousel({ onOpenEnquiry }: { onOpenEnquiry: () => void })
   };
 
   return (
-    <section className="relative py-20 md:py-28 bg-white overflow-hidden">
-      {/* Decorative */}
-      <div className="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none opacity-40">
-        <div className="absolute top-10 left-10 w-[300px] h-[300px] rounded-full bg-primary/[0.03] blur-[80px]" />
-        <div className="absolute bottom-10 right-10 w-[400px] h-[400px] rounded-full bg-secondary/[0.04] blur-[100px]" />
-      </div>
-
-      <div className="section-container relative z-10">
-        <RevealSection>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
+    <PremiumSection variant="warm-1" withTopDivider="torn" withBottomDivider="wave">
+      <RevealSection>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
             <div className="max-w-2xl">
               <span className="inline-block px-4 py-1.5 rounded-full bg-primary/[0.06] text-primary text-[11px] font-bold tracking-widest uppercase mb-4">
                 UPCOMING CAMPS
@@ -434,8 +428,7 @@ function UpcomingCampsCarousel({ onOpenEnquiry }: { onOpenEnquiry: () => void })
             ))}
           </div>
         </RevealSection>
-      </div>
-    </section>
+    </PremiumSection>
   );
 }
 
@@ -541,7 +534,7 @@ function TestimonialsCarousel() {
   };
 
   return (
-    <section className="relative py-20 md:py-28 bg-[#F8FAFC] overflow-hidden">
+    <PremiumSection variant="warm-2" withTopDivider="wave" withBottomDivider="torn">
       {/* Decorative Dots Background */}
       <div 
         className="absolute inset-0 opacity-[0.025] pointer-events-none"
@@ -652,7 +645,7 @@ function TestimonialsCarousel() {
           </div>
         </RevealSection>
       </div>
-    </section>
+    </PremiumSection>
   );
 }
 
@@ -735,12 +728,7 @@ function TiltCard({ children }: { children: React.ReactNode }) {
 
 function NewsArticlesSection() {
   return (
-    <section className="relative py-20 md:py-28 bg-[#F8FAFC] overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(#163A5F 2px, transparent 2px)', backgroundSize: '40px 40px' }} />
-      <div className="absolute top-1/4 -left-20 w-64 h-64 rounded-full bg-primary/[0.03] blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-20 w-80 h-80 rounded-full bg-secondary/[0.04] blur-3xl pointer-events-none" />
-      
+    <PremiumSection variant="warm-3">
       <div className="section-container relative z-10">
         <RevealSection>
           <div className="text-center max-w-3xl mx-auto mb-16 md:mb-20">
@@ -823,8 +811,8 @@ function NewsArticlesSection() {
             </a>
           </div>
         </RevealSection>
-      </div>
-    </section>
+        </div>
+    </PremiumSection>
   );
 }
 
@@ -850,12 +838,7 @@ function PanoramicGallerySection() {
   const scrollItems = [...PANORAMIC_GALLERY_DATA, ...PANORAMIC_GALLERY_DATA, ...PANORAMIC_GALLERY_DATA];
 
   return (
-    <section className="relative py-20 md:py-28 bg-[#F8FAFC] overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#163A5F 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
-      <div className="absolute top-20 right-10 w-[300px] h-[300px] rounded-full bg-primary/[0.03] blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 left-10 w-[400px] h-[400px] rounded-full bg-secondary/[0.04] blur-3xl pointer-events-none" />
-
+    <PremiumSection variant="warm-1">
       <div className="section-container relative z-10 mb-10 md:mb-14">
         <RevealSection>
           <div className="text-center max-w-3xl mx-auto">
@@ -942,7 +925,7 @@ function PanoramicGallerySection() {
           100% { transform: translateX(calc(-100% / 3)); }
         }
       `}</style>
-    </section>
+    </PremiumSection>
   );
 }
 
@@ -1249,7 +1232,7 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
       {/* ═══════════════════════════════════════════
           SECTION 2: IMPACT STATISTICS
           ═══════════════════════════════════════════ */}
-      <section className="relative z-10 -mt-1 bg-white border-b border-outline-variant/10">
+      <PremiumSection variant="warm-1" withGlow={false} paddingClass="py-10 md:py-14" className="-mt-1 border-b border-outline-variant/10 z-10">
         <div className="section-container py-10 md:py-14">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {[
@@ -1273,17 +1256,12 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
             ))}
           </div>
         </div>
-      </section>
+      </PremiumSection>
 
       {/* ═══════════════════════════════════════════
           SECTION 3: CORE PROGRAMS / PILLARS
           ═══════════════════════════════════════════ */}
-      <section className="relative py-20 md:py-28 bg-slate-50/40 overflow-hidden">
-        {/* Subtle Organic Background Shapes */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute -top-[20%] -left-[10%] w-[50%] max-w-[600px] aspect-square rounded-full bg-primary/[0.015] blur-3xl" />
-          <div className="absolute -bottom-[20%] -right-[10%] w-[60%] max-w-[700px] aspect-square rounded-full bg-secondary/[0.02] blur-3xl" />
-        </div>
+      <PremiumSection variant="warm-2">
 
         <div className="section-container relative z-10">
           <RevealSection>
@@ -1345,7 +1323,7 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
             ))}
           </div>
         </div>
-      </section>
+      </PremiumSection>
 
       {/* ═══════════════════════════════════════════
           SECTION 9: UPCOMING CAMPS CAROUSEL
@@ -1362,13 +1340,7 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
       {/* ═══════════════════════════════════════════
           SECTION 8: PREMIUM SPLIT LAYOUT (WHY CHOOSE US)
           ═══════════════════════════════════════════ */}
-      <section className="relative py-20 md:py-28 bg-white overflow-hidden">
-        {/* Decorative background elements */}
-        <div className="absolute top-0 right-0 w-full h-full overflow-hidden pointer-events-none opacity-40">
-          <div className="absolute top-[10%] right-[-5%] w-[40%] aspect-square rounded-full bg-primary/[0.03] blur-[100px]" />
-          <div className="absolute bottom-[-10%] left-[-5%] w-[30%] aspect-square rounded-full bg-secondary/[0.04] blur-[100px]" />
-        </div>
-
+      <PremiumSection variant="warm-3">
         <div className="section-container relative z-10">
           <div className="flex flex-col lg:flex-row gap-16 lg:gap-20 items-center">
             
@@ -1484,7 +1456,7 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
 
           </div>
         </div>
-      </section>
+      </PremiumSection>
 
       {/* ═══════════════════════════════════════════
           SECTION 10: TESTIMONIALS CAROUSEL
@@ -1592,7 +1564,7 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
       {/* ═══════════════════════════════════════════
           SECTION 11: FAQ
           ═══════════════════════════════════════════ */}
-      <section className="gradient-section py-16 md:py-20">
+      <PremiumSection variant="warm-2" paddingClass="py-16 md:py-20" withGlow={true}>
         <div className="section-container">
           <RevealSection>
             <div className="section-header">
@@ -1615,12 +1587,12 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
             ))}
           </div>
         </div>
-      </section>
+      </PremiumSection>
 
       {/* ═══════════════════════════════════════════
           SECTION 12: NEWSLETTER
           ═══════════════════════════════════════════ */}
-      <section className="bg-[#FFFDF8] py-16 md:py-24 relative overflow-hidden">
+      <PremiumSection variant="warm-1" paddingClass="py-16 md:py-24" withIcons={false} withGlow={false}>
         <div className="section-container relative z-10">
           <RevealSection>
             <div className="max-w-4xl mx-auto bg-white rounded-[2rem] md:rounded-[3rem] p-8 md:p-12 lg:p-16 shadow-[0_20px_60px_rgba(0,0,0,0.03)] border border-[#FFF0D9] relative overflow-hidden group">
@@ -1693,7 +1665,7 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
             </div>
           </RevealSection>
         </div>
-      </section>
+      </PremiumSection>
 
       {/* ═══════════════════════════════════════════
           SECTION 13: PREMIUM FULL-WIDTH CTA

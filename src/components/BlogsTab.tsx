@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, BookOpen, Clock, User, ChevronLeft, Send, CheckCircle, Heart } from 'lucide-react';
 import { INITIAL_BLOGS } from '../data';
 import { BlogArticle } from '../types';
+import PremiumSection from './common/PremiumSection';
 
 export default function BlogsTab() {
   const [selectedArticle, setSelectedArticle] = useState<BlogArticle | null>(null);
@@ -86,7 +87,9 @@ export default function BlogsTab() {
   };
 
   return (
-    <div className="space-y-12">
+    <>
+      <PremiumSection variant="warm-1" withBottomDivider="wave">
+        <div className="space-y-12">
       {selectedArticle ? (
         /* Full Article Detailed Reader View */
         <article className="max-w-3xl mx-auto space-y-6 card-premium !rounded-2xl p-6 md:p-12">
@@ -449,5 +452,7 @@ export default function BlogsTab() {
         </div>
       )}
     </div>
+      </PremiumSection>
+    </>
   );
 }

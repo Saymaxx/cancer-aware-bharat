@@ -4,6 +4,7 @@ import { Search, MapPin, Phone, Mail, Globe, ShieldCheck, Heart, Info, ArrowUpRi
 import { INITIAL_HOSPITALS } from '../data';
 import { Hospital, HospitalPartnerRequest } from '../types';
 import MapContainer from './MapContainer';
+import PremiumSection from './common/PremiumSection';
 
 interface HospitalsTabProps {
   onOpenEnquiry: (hospitalId?: string) => void;
@@ -99,7 +100,9 @@ export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
   };
 
   return (
-    <div className="space-y-12">
+    <>
+      <PremiumSection variant="warm-1" withBottomDivider="wave">
+        <div className="space-y-12">
       {/* Tab Header Section */}
       <section className="text-center max-w-3xl mx-auto space-y-4">
         <span className="section-badge mx-auto">Our Network</span>
@@ -567,5 +570,7 @@ export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
         </div>
       )}
     </div>
+      </PremiumSection>
+    </>
   );
 }

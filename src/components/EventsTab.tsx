@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Calendar, MapPin, Users, Heart, ChevronDown, ChevronUp, CheckCircle, History, ArrowRight } from 'lucide-react';
 import { INITIAL_EVENTS } from '../data';
 import { Event } from '../types';
+import PremiumSection from './common/PremiumSection';
 
 interface EventsTabProps {
   onOpenEnquiry: () => void;
@@ -68,7 +69,9 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
   });
 
   return (
-    <div className="space-y-12">
+    <>
+      <PremiumSection variant="warm-1" withBottomDivider="wave">
+        <div className="space-y-12">
       {/* Page header */}
       <section className="text-center max-w-3xl mx-auto space-y-4">
         <span className="section-badge mx-auto">Campaign Schedule</span>
@@ -274,6 +277,8 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
           </div>
         </div>
       </section>
-    </div>
+        </div>
+      </PremiumSection>
+    </>
   );
 }

@@ -4,6 +4,7 @@ import {
   Image, Search, Calendar, MapPin, ChevronRight, ChevronLeft,
   Eye, X, Maximize2, Sparkles, Filter, Shield, Building2, Users, Globe
 } from 'lucide-react';
+import PremiumSection from './common/PremiumSection';
 
 interface GalleryItem {
   id: string;
@@ -317,7 +318,9 @@ export default function GalleryTab({
   }, [selectedCategory, searchQuery]);
 
   return (
-    <div className="space-y-10 animate-[fadeIn_0.3s_ease-out]">
+    <>
+      <PremiumSection variant="warm-1" withBottomDivider="wave">
+        <div className="space-y-10 animate-[fadeIn_0.3s_ease-out]">
 
       {/* ===== 1. FULL-WIDTH HERO SLIDESHOW (NO TEXT OVERLAYS OR BUTTONS) ===== */}
       <section className="relative w-full rounded-3xl overflow-hidden shadow-2xl bg-black h-[340px] sm:h-[440px] md:h-[500px] lg:h-[540px] group">
@@ -442,6 +445,11 @@ export default function GalleryTab({
 
         </div>
       </section>
+        </div>
+      </PremiumSection>
+
+      <PremiumSection variant="warm-2" withTopDivider="wave" withBottomDivider="wave">
+        <div className="space-y-16">
 
       {/* ===== 4. MODERN PINTEREST / EDITORIAL MASONRY GALLERY (NO BLOG CARDS) ===== */}
       <section className="space-y-6">
@@ -562,6 +570,8 @@ export default function GalleryTab({
           </div>
         </div>
       </section>
+        </div>
+      </PremiumSection>
 
       {/* ===== 6. FULLSCREEN LIGHTBOX PREVIEW MODAL ===== */}
       {activeItemModal && (
@@ -618,6 +628,6 @@ export default function GalleryTab({
         </div>
       )}
 
-    </div>
+    </>
   );
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldAlert, Eye, EyeOff, CheckCircle, Shield, Building, Lock, Mail, Key, UserCheck, ArrowRight, Activity, Terminal, Database, Server, RefreshCw } from 'lucide-react';
 import { ApiError, loginStaff, setStaffSession } from '../api/client';
+import PremiumSection from './common/PremiumSection';
 
 interface AdminAuthPageProps {
   initialRole?: 'admin' | 'superadmin';
@@ -172,7 +173,7 @@ export default function AdminAuthPage({ initialRole = 'admin', lockedRole }: Adm
   }
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center py-10 px-4 bg-background">
+    <PremiumSection variant="warm-3">
       <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-0 rounded-2xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-outline-variant/20 bg-white">
 
         {/* Left Side: Info & Brand Panel */}
@@ -453,6 +454,6 @@ export default function AdminAuthPage({ initialRole = 'admin', lockedRole }: Adm
         </div>
 
       </div>
-    </div>
+    </PremiumSection>
   );
 }

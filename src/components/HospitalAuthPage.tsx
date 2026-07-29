@@ -8,6 +8,7 @@ import {
   X, UserCheck, Calendar, DollarSign, Globe, ExternalLink, RefreshCw, Printer
 } from 'lucide-react';
 import { ApiError, loginHospital, setHospitalSession } from '../api/client';
+import PremiumSection from './common/PremiumSection';
 
 interface HospitalAuthPageProps {
   onPageChange?: (page: string) => void;
@@ -501,7 +502,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f8f9] py-8 px-4 sm:px-6">
+    <PremiumSection variant="warm-1">
       
       {/* Toast Notification */}
       {toastMessage && (
@@ -1223,6 +1224,6 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
         )}
 
       </div>
-    </div>
+    </PremiumSection>
   );
 }

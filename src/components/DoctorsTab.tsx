@@ -4,6 +4,7 @@ import {
   Award, ShieldCheck, MapPin, Calendar, Sparkles, Star, Phone,
   PlayCircle, Stethoscope, Info, CheckCircle2, ChevronRight, HeartPulse, Building2
 } from 'lucide-react';
+import PremiumSection from './common/PremiumSection';
 
 export interface Doctor {
   id: string;
@@ -51,7 +52,9 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
   };
 
   return (
-    <div className="space-y-12 animate-[fadeIn_0.3s_ease-out]">
+    <>
+      <PremiumSection variant="warm-1" withBottomDivider="wave">
+        <div className="space-y-12 animate-[fadeIn_0.3s_ease-out]">
       
       {/* ===== 1. TOP HERO SECTION ===== */}
       <section className="relative rounded-3xl min-h-[380px] flex flex-col justify-between p-6 sm:p-10 md:p-14 border border-outline-variant/30 overflow-hidden shadow-2xl bg-neutral-950 text-white">
@@ -321,7 +324,8 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
           ))}
         </div>
       </section>
-
-    </div>
+        </div>
+      </PremiumSection>
+    </>
   );
 }

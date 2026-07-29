@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Eye, EyeOff, CheckCircle, Shield, Users, Calendar, ArrowRight, User, Mail, Phone, Lock, MapPin, Briefcase, Sparkles } from 'lucide-react';
 import { ApiError, getMyVolunteerProfile, loginVolunteer, registerVolunteer, setVolunteerSession } from '../api/client';
+import PremiumSection from './common/PremiumSection';
 
 interface VolunteerAuthPageProps {}
 
@@ -215,7 +216,7 @@ export default function VolunteerAuthPage({}: VolunteerAuthPageProps) {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-8 px-4">
+    <PremiumSection variant="warm-2">
       <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-5 gap-0 rounded-2xl overflow-hidden shadow-[0_20px_60px_rgba(0,67,73,0.12)] border border-outline-variant/20">
         
         {/* Left Panel — Branding & Info */}
@@ -653,6 +654,6 @@ export default function VolunteerAuthPage({}: VolunteerAuthPageProps) {
           </div>
         </div>
       </div>
-    </div>
+    </PremiumSection>
   );
 }

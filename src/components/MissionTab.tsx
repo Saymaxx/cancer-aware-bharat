@@ -5,6 +5,7 @@ import {
   Clock, Eye, Sparkles, CheckCircle2, ArrowRight, HeartHandshake,
   Users, MapPin, Activity, Stethoscope, ChevronRight, Award, Shield, FileText
 } from 'lucide-react';
+import PremiumSection from './common/PremiumSection';
 
 interface MissionTabProps {
   onOpenVolunteer: () => void;
@@ -98,8 +99,9 @@ export default function MissionTab({ onOpenVolunteer, onOpenEnquiry }: MissionTa
   ];
 
   return (
-    <div className="space-y-12 animate-[fadeIn_0.3s_ease-out]">
-      
+    <>
+      <PremiumSection variant="warm-1" withTopDivider="none" withBottomDivider="torn">
+        <div className="space-y-12 animate-[fadeIn_0.3s_ease-out]">
       {/* ===== HERO SECTION ===== */}
       <section className="relative rounded-2xl min-h-[480px] sm:min-h-[520px] flex flex-col justify-between p-6 sm:p-10 md:p-14 overflow-hidden shadow-2xl bg-neutral-950 text-white">
         
@@ -188,8 +190,11 @@ export default function MissionTab({ onOpenVolunteer, onOpenEnquiry }: MissionTa
         </div>
 
       </section>
+        </div>
+      </PremiumSection>
 
-      {/* ===== CORE MISSION STATEMENT BENTO CARD ===== */}
+      <PremiumSection variant="warm-2">
+        <div className="space-y-16">
       <section className="bg-white rounded-3xl p-8 sm:p-12 border border-outline-variant/30 shadow-md space-y-6">
         <div className="flex items-center gap-3 text-primary">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center font-bold">
@@ -264,8 +269,11 @@ export default function MissionTab({ onOpenVolunteer, onOpenEnquiry }: MissionTa
           })}
         </div>
       </section>
-
-      {/* ===== REFERRAL PATHWAY WORKFLOW (रेफरल प्रक्रिया) ===== */}
+        </div>
+      </PremiumSection>
+      <PremiumSection variant="warm-3" withTopDivider="wave" withBottomDivider="torn">
+        <div className="space-y-16">
+          {/* ===== REFERRAL PATHWAY WORKFLOW (रेफरल प्रक्रिया) ===== */}
       <section className="bg-gradient-to-br from-slate-900 via-neutral-900 to-slate-950 text-white rounded-3xl p-8 sm:p-12 border border-slate-800 space-y-8 shadow-2xl relative overflow-hidden">
         <div className="max-w-2xl space-y-3">
           <span className="px-3 py-1 rounded-full bg-primary/20 text-slate-300 text-xs font-bold uppercase tracking-wider border border-primary/30">
@@ -338,8 +346,12 @@ export default function MissionTab({ onOpenVolunteer, onOpenEnquiry }: MissionTa
           </div>
         </div>
       </section>
+        </div>
+      </PremiumSection>
 
-      {/* ===== CORE VALUES & COMMITMENTS (हमारे मूल सिद्धांत) ===== */}
+      <PremiumSection variant="warm-1">
+        <div className="space-y-16">
+          {/* ===== CORE VALUES & COMMITMENTS (हमारे मूल सिद्धांत) ===== */}
       <section className="space-y-6">
         <div className="text-center max-w-2xl mx-auto space-y-1">
           <h2 className="font-headline-lg text-2xl font-extrabold text-primary">हमारे 4 मूल सिद्धांत व प्रतिबद्धता</h2>
@@ -395,6 +407,8 @@ export default function MissionTab({ onOpenVolunteer, onOpenEnquiry }: MissionTa
         </div>
       </section>
 
-    </div>
+        </div>
+      </PremiumSection>
+    </>
   );
 }

@@ -237,7 +237,7 @@ function AppContent() {
         } />
         <Route path="/about" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow section-container py-10 md:py-14">
+            <main className="flex-grow">
               <AboutTab
                 onOpenVolunteer={() => setVolunteerOpen(true)}
               />
@@ -246,7 +246,7 @@ function AppContent() {
         } />
         <Route path="/hospitals" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow section-container py-10 md:py-14">
+            <main className="flex-grow">
               <HospitalsTab
                 onOpenEnquiry={handleOpenEnquiryForHospital}
               />
@@ -255,7 +255,7 @@ function AppContent() {
         } />
         <Route path="/events" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow section-container py-10 md:py-14">
+            <main className="flex-grow">
               <EventsTab
                 onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
               />
@@ -264,21 +264,21 @@ function AppContent() {
         } />
         <Route path="/blogs" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow section-container py-10 md:py-14">
+            <main className="flex-grow">
               <BlogsTab />
             </main>
           </PublicLayout>
         } />
         <Route path="/news" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow section-container py-10 md:py-14">
+            <main className="flex-grow">
               <NewsTab />
             </main>
           </PublicLayout>
         } />
         <Route path="/gallery" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow section-container py-10 md:py-14">
+            <main className="flex-grow">
               <GalleryTab
                 onOpenVolunteer={() => setVolunteerOpen(true)}
                 onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
@@ -288,7 +288,7 @@ function AppContent() {
         } />
         <Route path="/mission" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow section-container py-10 md:py-14">
+            <main className="flex-grow">
               <MissionTab
                 onOpenVolunteer={() => setVolunteerOpen(true)}
                 onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
@@ -298,14 +298,14 @@ function AppContent() {
         } />
         <Route path="/join-us" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow section-container py-10 md:py-14">
+            <main className="flex-grow">
               <JoinUsTab />
             </main>
           </PublicLayout>
         } />
         <Route path="/doctors" element={
           <PublicLayout {...publicLayoutProps}>
-            <main className="flex-grow section-container py-10 md:py-14">
+            <main className="flex-grow">
               <DoctorsTab
                 onOpenEnquiry={(hName) => handleOpenEnquiryForHospital(hName)}
                 onOpenVolunteer={() => setVolunteerOpen(true)}

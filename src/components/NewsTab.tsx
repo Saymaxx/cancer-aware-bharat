@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Newspaper, ChevronRight, Search, Calendar, MapPin, ArrowRight, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import RevealSection from './common/RevealSection';
+import PremiumSection from './common/PremiumSection';
 
 // --- Mock Data ---
 const NEWS_CATEGORIES = ['All', 'Announcements', 'Events', 'Medical', 'Campaigns', 'Partnerships'];
@@ -170,7 +171,7 @@ export default function NewsTab() {
   };
 
   return (
-    <div className="w-full bg-background space-y-12 pb-20">
+    <>
       {/* Hero Section */}
       <section className="relative h-[300px] md:h-[400px] w-full overflow-hidden flex items-center justify-center">
         <div className="absolute inset-0 z-0">
@@ -199,7 +200,7 @@ export default function NewsTab() {
       </section>
 
       {/* Main Content Area */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <PremiumSection variant="warm-2">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           
           {/* Left Column (Main Feed) */}
@@ -434,7 +435,7 @@ export default function NewsTab() {
 
           </div>
         </div>
-      </section>
-    </div>
+      </PremiumSection>
+    </>
   );
 }

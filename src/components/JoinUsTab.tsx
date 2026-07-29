@@ -5,6 +5,7 @@ import {
   Calendar, Building2, Sparkles, AlertTriangle, Send, FileText,
   HeartHandshake, ChevronRight, Phone, Mail, Award, Target, Eye, LogIn
 } from 'lucide-react';
+import PremiumSection from './common/PremiumSection';
 
 interface VolunteerRole {
   id: string;
@@ -94,7 +95,9 @@ export default function JoinUsTab() {
   };
 
   return (
-    <div className="space-y-12 animate-[fadeIn_0.3s_ease-out]">
+    <>
+      <PremiumSection variant="warm-1" withBottomDivider="wave">
+        <div className="space-y-12 animate-[fadeIn_0.3s_ease-out]">
       
       {/* ===== HERO SECTION FOR VOLUNTEERS ===== */}
       <section className="relative rounded-3xl min-h-[460px] flex flex-col justify-between p-6 sm:p-10 md:p-14 border border-outline-variant/30 overflow-hidden shadow-2xl bg-neutral-950 text-white">
@@ -417,6 +420,8 @@ export default function JoinUsTab() {
         )}
       </section>
 
-    </div>
+        </div>
+      </PremiumSection>
+    </>
   );
 }

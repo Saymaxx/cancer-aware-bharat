@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Linkedin, Plus, ArrowRight } from 'lucide-react';
+import PremiumSection from './common/PremiumSection';
 
 /* ─────────── Section Reveal on Scroll ─────────── */
 function RevealSection({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
@@ -123,14 +124,9 @@ export default function TeamShowcase() {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-surface relative overflow-hidden">
-      {/* Subtle background pattern */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, black 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-      
-      {/* SECTION 1: MEDICAL ADVISORY BOARD */}
-      <section className="py-16 md:py-24 relative z-10 border-b border-outline-variant/10">
-        <div className="section-container">
-          <RevealSection>
+    <PremiumSection variant="warm-2" withTopDivider="wave" withBottomDivider="wave">
+      <div className="space-y-12 max-w-5xl mx-auto">
+        <RevealSection>
             <div className="section-header">
               <span className="section-badge">👨‍⚕️ Medical Experts</span>
               <h2 className="section-title text-3xl md:text-4xl">Meet Our <span className="text-secondary">Medical Advisory Board</span></h2>
@@ -156,9 +152,7 @@ export default function TeamShowcase() {
               </button>
             </div>
           </RevealSection>
-        </div>
-      </section>
-
-    </div>
+      </div>
+    </PremiumSection>
   );
 }
