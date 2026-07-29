@@ -1,10 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  Users, UserCheck, Building2, Calendar, FileText, Heart, ShieldAlert, Shield,
-  BarChart3, Settings, LogOut, Bell, Search, Filter, Plus, Edit2, Trash2,
-  Check, X, ThumbsUp, Send, Download, FileCheck, ChevronLeft, ChevronRight,
-  TrendingUp, DollarSign, BookOpen, MessageSquare, AlertCircle, AlertTriangle,
-  Award, RefreshCw, Terminal, CheckCircle2, User, Key, Menu, Stethoscope, Clock
+  Users, Building2, Calendar, Heart, Shield,
+  BarChart3, Settings, LogOut, Bell, FileCheck,
+  DollarSign, BookOpen, MessageSquare, Terminal, Menu, Stethoscope,
 } from 'lucide-react';
 import { enquiryStore } from '../enquiryStore';
 import { useApiEnquiries, useApiNotifications } from '../api/hooks';
@@ -13,7 +11,6 @@ import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, BlogArticle } from '../types';
 import { INITIAL_BLOGS } from '../data';
 import { useToast } from './common/Toast';
-import StatusBadge from './common/StatusBadge';
 import DashboardSidebar from './common/DashboardSidebar';
 import { useSidebarState } from '../hooks/useSidebarState';
 import { useEscapeKey } from '../hooks/useEscapeKey';
@@ -25,6 +22,22 @@ import {
   INITIAL_ADMIN_FEEDBACKS, type Patient, type AdminVolunteer, type PartnerHospital,
   type CampaignRequest, type AdminDonation, type AdminFeedback
 } from '../adminDashboardData';
+
+import OverviewTab from './admin-dashboard/OverviewTab';
+import EnquiriesTab from './admin-dashboard/EnquiriesTab';
+import PatientsTab from './admin-dashboard/PatientsTab';
+import VolunteersTab from './admin-dashboard/VolunteersTab';
+import CampaignsTab from './admin-dashboard/CampaignsTab';
+import HospitalsTab from './admin-dashboard/HospitalsTab';
+import RequestsTab from './admin-dashboard/RequestsTab';
+import DonationsTab from './admin-dashboard/DonationsTab';
+import AdminBlogsTab from './admin-dashboard/AdminBlogsTab';
+import FeedbackTab from './admin-dashboard/FeedbackTab';
+import NotificationsTab from './admin-dashboard/NotificationsTab';
+import SettingsTab from './admin-dashboard/SettingsTab';
+import {
+  PatientModal, ApproveEnquiryModal, RejectEnquiryModal, DeclineApplicationModal,
+} from './admin-dashboard/Modals';
 
 export default function AdminDashboard({ onPageChange, onLogout }: { onPageChange?: (page: string) => void; onLogout: () => void }) {
   const toast = useToast();
@@ -699,1174 +712,186 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
               TAB: DASHBOARD OVERVIEW
           ===================================================== */}
           {activeTab === 'dashboard' && (
-            <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
-              {/* KPI cards grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  { label: 'Total Patients Managed', value: summaryKpis.totalPatients, icon: Heart, color: 'text-primary bg-primary/10 border-primary/15' },
-                  { label: 'Registered Volunteers', value: summaryKpis.totalVolunteers, icon: Users, color: 'text-secondary bg-secondary/10 border-secondary/15' },
-                  { label: 'Campaigns Scheduled', value: summaryKpis.activeCampaigns, icon: Calendar, color: 'text-indigo-600 bg-indigo-50 border-indigo-100' },
-                  { label: 'Donations Audited (INR)', value: `₹${summaryKpis.donationsReceived.toLocaleString()}`, icon: DollarSign, color: 'text-slate-700 bg-slate-50 border-slate-200' },
-                ].map((kpi, idx) => (
-                  <div key={idx} className="bg-white rounded-2xl border border-outline-variant/30 p-5 shadow-xs flex items-center space-x-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${kpi.color}`}>
-                      <kpi.icon className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-black text-slate-900">{kpi.value}</p>
-                      <p className="text-xs text-slate-500 font-semibold mt-0.5">{kpi.label}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Second row: Activity & Quick Alerts */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                
-                {/* Visual Chart Placeholder */}
-                <div className="lg:col-span-8 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs">
-                  <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-primary" /> Active Intake Trend (Last 6 Months)
-                  </h3>
-                  <div className="flex items-end justify-between gap-4 h-48 pt-4">
-                    {[
-                      { month: 'Feb', val: 120, label: '120 Patients' },
-                      { month: 'Mar', val: 150, label: '150 Patients' },
-                      { month: 'Apr', val: 210, label: '210 Patients' },
-                      { month: 'May', val: 190, label: '190 Patients' },
-                      { month: 'Jun', val: 240, label: '240 Patients' },
-                      { month: 'Jul', val: 310, label: '310 Patients' },
-                    ].map((m, i) => {
-                      const heightPercent = (m.val / 350) * 100;
-                      return (
-                        <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
-                          <span className="text-[10px] font-bold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {m.val}
-                          </span>
-                          <div className="w-full relative rounded-t-lg overflow-hidden bg-slate-100" style={{ height: '100%' }}>
-                            <div
-                              className="absolute bottom-0 w-full rounded-t-lg bg-gradient-to-t from-primary to-primary-container transition-all duration-700 group-hover:from-secondary group-hover:to-secondary/80"
-                              style={{ height: `${heightPercent}%` }}
-                            />
-                          </div>
-                          <span className="text-[10px] font-semibold text-slate-500">{m.month}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Recent Activities Panel */}
-                <div className="lg:col-span-4 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900 mb-4">Audit Logs / Recent Activity</h3>
-                    <div className="space-y-3.5">
-                      {kpiMetrics.recentActivities.map((act) => (
-                        <div key={act.id} className="flex items-start space-x-3 text-xs leading-relaxed">
-                          <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                          <div className="flex-1">
-                            <p className="text-slate-700 font-medium">{act.text}</p>
-                            <span className="text-[10px] text-slate-400 mt-0.5 block">{act.time}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab('notifications')}
-                    className="w-full mt-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-primary hover:bg-slate-100 transition-colors"
-                  >
-                    View All Activity Logs
-                  </button>
-                </div>
-
-              </div>
-            </div>
+            <OverviewTab
+              summaryKpis={summaryKpis}
+              kpiMetrics={kpiMetrics}
+              setActiveTab={setActiveTab}
+            />
           )}
 
           {/* =====================================================
               TAB: PATIENT ENQUIRIES (STEP 2: ADMIN REVIEW)
           ===================================================== */}
           {activeTab === 'enquiries' && (
-            <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
-              {/* KPI Summary Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-secondary">
-                    <Stethoscope className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <span className="text-2xl font-black text-slate-900 block">{pendingAdminCount}</span>
-                    <span className="text-xs text-slate-500 font-medium">Pending Admin Review</span>
-                  </div>
-                </div>
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-primary-container">
-                    <CheckCircle2 className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <span className="text-2xl font-black text-slate-900 block">
-                      {enquiries.filter(e => e.status === 'Approved by Admin' || e.status === 'Assigned to Hospital').length}
-                    </span>
-                    <span className="text-xs text-slate-500 font-medium">Approved by Admin</span>
-                  </div>
-                </div>
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-primary-container">
-                    <Calendar className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <span className="text-2xl font-black text-slate-900 block">
-                      {enquiries.filter(e => e.status === 'Appointment Confirmed').length}
-                    </span>
-                    <span className="text-xs text-slate-500 font-medium">Confirmed Appointments</span>
-                  </div>
-                </div>
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
-                    <AlertCircle className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <span className="text-2xl font-black text-slate-900 block">
-                      {enquiries.filter(e => e.status === 'Rejected by Admin' || e.status === 'Declined by Hospital').length}
-                    </span>
-                    <span className="text-xs text-slate-500 font-medium">Rejected / Declined</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Filter & Search Controls */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap justify-between items-center gap-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  {['All', 'Pending Admin Review', 'Approved by Admin', 'Rejected by Admin', 'Appointment Confirmed'].map(st => (
-                    <button
-                      key={st}
-                      onClick={() => setEnquiryFilter(st)}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        enquiryFilter === st
-                          ? 'bg-[#004349] text-white shadow-xs'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
-                    >
-                      {st} {st === 'Pending Admin Review' && pendingAdminCount > 0 ? `(${pendingAdminCount})` : ''}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <div className="relative w-full sm:w-64">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      placeholder="Search ID, patient, city..."
-                      value={searchTerm}
-                      onChange={e => setSearchTerm(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-primary"
-                    />
-                  </div>
-                  <button
-                    onClick={handleExportEnquiriesCSV}
-                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
-                    title="Export Enquiries to CSV"
-                  >
-                    <Download className="w-3.5 h-3.5 text-primary" />
-                    <span>Export CSV</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Patient Enquiries Table */}
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-slate-200">
-                        <th className="px-6 py-3.5">Enquiry ID & Ref</th>
-                        <th className="px-6 py-3.5">Patient Details</th>
-                        <th className="px-6 py-3.5">Contact & Location</th>
-                        <th className="px-6 py-3.5">Stream & Symptoms</th>
-                        <th className="px-6 py-3.5">Uploaded Reports</th>
-                        <th className="px-6 py-3.5">Date</th>
-                        <th className="px-6 py-3.5">Status</th>
-                        <th className="px-6 py-3.5 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs">
-                      {filteredEnquiries.length === 0 ? (
-                        <tr>
-                          <td colSpan={8} className="px-6 py-8 text-center text-slate-500 font-medium">
-                            No patient enquiries found matching criteria.
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredEnquiries.map((enq) => (
-                          <tr key={enq.id} className="hover:bg-slate-50/70 transition-colors">
-                            <td className="px-6 py-4">
-                              <span className="font-mono font-bold text-primary block">{enq.enquiryId}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">Ref: {enq.referenceNumber}</span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <p className="font-bold text-slate-900">{enq.patientName}</p>
-                              <p className="text-[10px] text-slate-500">{enq.age} yrs • {enq.gender}</p>
-                            </td>
-                            <td className="px-6 py-4">
-                              <p className="font-medium text-slate-800">{enq.city}</p>
-                              <p className="text-[10px] text-slate-500">{enq.phone}</p>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="font-bold text-slate-800 block">{enq.cancerType || enq.reason}</span>
-                              <span className="text-[10px] text-slate-500 truncate block max-w-xs">{enq.symptoms || enq.notes || 'N/A'}</span>
-                            </td>
-                            <td className="px-6 py-4">
-                              {enq.uploadedReports && enq.uploadedReports.length > 0 ? (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
-                                  <FileText className="w-3 h-3" /> {enq.uploadedReports.length} Report(s)
-                                </span>
-                              ) : (
-                                <span className="text-[10px] text-slate-400 italic">No reports</span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 text-slate-600 font-mono text-[11px]">
-                              {enq.date}
-                            </td>
-                            <td className="px-6 py-4">
-                              <StatusBadge status={enq.status} />
-                            </td>
-                            <td className="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
-                              {enq.status === 'Pending Admin Review' && (
-                                <>
-                                  <button
-                                    onClick={() => { setShowApproveEnquiryModal(enq); setApproveRemarks(''); }}
-                                    className="px-2.5 py-1 bg-primary-container hover:bg-slate-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all cursor-pointer inline-flex items-center gap-1"
-                                    title="Approve Enquiry"
-                                  >
-                                    <Check className="w-3 h-3" /> Approve
-                                  </button>
-                                  <button
-                                    onClick={() => { setShowRejectEnquiryModal(enq); setRejectReasonText(''); }}
-                                    className="px-2.5 py-1 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg text-[11px] font-bold transition-colors cursor-pointer inline-flex items-center gap-1"
-                                    title="Reject Enquiry"
-                                  >
-                                    <X className="w-3 h-3" /> Reject
-                                  </button>
-                                </>
-                              )}
-                              <button
-                                onClick={() => setTimelineEnquiry(enq)}
-                                className="p-1.5 hover:bg-slate-100 text-slate-600 rounded-lg text-[11px] font-bold transition-colors cursor-pointer inline-flex items-center gap-1"
-                                title="View Timeline & Details"
-                              >
-                                <Clock className="w-3.5 h-3.5 text-primary" />
-                                <span>Timeline</span>
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+            <EnquiriesTab
+              pendingAdminCount={pendingAdminCount}
+              enquiries={enquiries}
+              filteredEnquiries={filteredEnquiries}
+              enquiryFilter={enquiryFilter}
+              setEnquiryFilter={setEnquiryFilter}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              handleExportEnquiriesCSV={handleExportEnquiriesCSV}
+              setShowApproveEnquiryModal={setShowApproveEnquiryModal}
+              setApproveRemarks={setApproveRemarks}
+              setShowRejectEnquiryModal={setShowRejectEnquiryModal}
+              setRejectReasonText={setRejectReasonText}
+              setTimelineEnquiry={setTimelineEnquiry}
+            />
           )}
 
           {/* =====================================================
               TAB: PATIENTS MANAGER
           ===================================================== */}
           {activeTab === 'patients' && (
-            <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
-              <div className="flex flex-col sm:flex-row gap-3 justify-between items-center bg-white p-4 rounded-2xl border border-outline-variant/30">
-                <div className="flex items-center space-x-2 border border-outline-variant rounded-xl px-3 py-2 w-full sm:max-w-xs bg-slate-50 focus-within:border-primary transition-all">
-                  <Search className="w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by Patient name..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    className="bg-transparent border-none outline-none text-xs w-full"
-                  />
-                </div>
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <div className="relative w-full sm:w-auto">
-                    <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <select
-                      value={patientFilter}
-                      onChange={e => setPatientFilter(e.target.value)}
-                      className="pl-9 pr-6 py-2 border border-outline-variant rounded-xl text-xs bg-slate-50 cursor-pointer appearance-none outline-none w-full sm:w-auto"
-                    >
-                      <option value="All">All Financial Aid Status</option>
-                      <option value="Approved">Approved</option>
-                      <option value="Pending Review">Pending Review</option>
-                      <option value="Disbursed">Disbursed</option>
-                      <option value="Not Requested">Not Requested</option>
-                    </select>
-                  </div>
-                  <button
-                    onClick={handleExportPatientsCSV}
-                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
-                    title="Export Patients CSV"
-                  >
-                    <Download className="w-3.5 h-3.5 text-primary" />
-                    <span>Export CSV</span>
-                  </button>
-                  <button
-                    onClick={() => handleOpenPatientForm(null)}
-                    className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold shadow-sm hover:opacity-95 cursor-pointer flex items-center gap-1 shrink-0"
-                  >
-                    <Plus className="w-4 h-4" /> Add Patient Record
-                  </button>
-                </div>
-              </div>
-
-              {/* Patients Grid/Table */}
-              <div className="bg-white rounded-2xl border border-outline-variant/30 overflow-hidden shadow-xs">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-outline-variant/30">
-                        <th className="px-6 py-3">Patient Code</th>
-                        <th className="px-6 py-3">Patient Details</th>
-                        <th className="px-6 py-3">Primary Diagnosis</th>
-                        <th className="px-6 py-3">Clinic Partner</th>
-                        <th className="px-6 py-3">Financial Aid Status</th>
-                        <th className="px-6 py-3 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-outline-variant/20 text-xs">
-                      {filteredPatients.map((pat) => (
-                        <tr key={pat.id} className="hover:bg-slate-50/55 transition-colors">
-                          <td className="px-6 py-4 font-mono font-bold text-slate-500">{pat.id}</td>
-                          <td className="px-6 py-4">
-                            <p className="font-bold text-slate-950">{pat.name}</p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">{pat.age} yrs • {pat.gender}</p>
-                          </td>
-                          <td className="px-6 py-4 font-medium text-slate-700">{pat.diagnosis}</td>
-                          <td className="px-6 py-4 font-medium text-slate-700">{pat.hospitalName}</td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                              pat.financialAidStatus === 'Approved' ? 'bg-slate-50 text-slate-700 border-slate-200' :
-                              pat.financialAidStatus === 'Pending Review' ? 'bg-slate-50 text-slate-700 border-slate-200' :
-                              pat.financialAidStatus === 'Disbursed' ? 'bg-slate-50 text-slate-700 border-slate-200' :
-                              'bg-slate-100 text-slate-500 border-slate-200'
-                            }`}>
-                              {pat.financialAidStatus}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right space-x-2">
-                            <button
-                              onClick={() => handleOpenPatientForm(pat)}
-                              className="p-1.5 hover:bg-slate-100 rounded-lg text-primary cursor-pointer transition-colors"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeletePatient(pat.id)}
-                              className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 cursor-pointer transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+            <PatientsTab
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              patientFilter={patientFilter}
+              setPatientFilter={setPatientFilter}
+              filteredPatients={filteredPatients}
+              handleExportPatientsCSV={handleExportPatientsCSV}
+              handleOpenPatientForm={handleOpenPatientForm}
+              handleDeletePatient={handleDeletePatient}
+            />
           )}
 
           {/* =====================================================
               TAB: VOLUNTEERS MANAGER
           ===================================================== */}
           {activeTab === 'volunteers' && (
-            <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
-              <div className="flex flex-col sm:flex-row gap-3 justify-between items-center bg-white p-4 rounded-2xl border border-outline-variant/30">
-                <div className="flex items-center space-x-2 border border-outline-variant rounded-xl px-3 py-2 w-full sm:max-w-xs bg-slate-50 focus-within:border-primary transition-all">
-                  <Search className="w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by Volunteer name..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    className="bg-transparent border-none outline-none text-xs w-full"
-                  />
-                </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <select
-                    value={volunteerFilter}
-                    onChange={e => setVolunteerFilter(e.target.value)}
-                    className="px-4 py-2 border border-outline-variant rounded-xl text-xs bg-slate-50 cursor-pointer outline-none w-full sm:w-auto"
-                  >
-                    <option value="All">All Verification Status</option>
-                    <option value="Pending Approval">Pending Approval</option>
-                    <option value="Approved">Approved</option>
-                  </select>
-                  <button
-                    onClick={handleExportVolunteersCSV}
-                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
-                    title="Export Volunteers CSV"
-                  >
-                    <Download className="w-3.5 h-3.5 text-primary" />
-                    <span>Export CSV</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Volunteers list */}
-              <div className="bg-white rounded-2xl border border-outline-variant/30 overflow-hidden shadow-xs">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-outline-variant/30">
-                        <th className="px-6 py-3">Volunteer Details</th>
-                        <th className="px-6 py-3">Domain</th>
-                        <th className="px-6 py-3">Registered Date</th>
-                        <th className="px-6 py-3">Activity Metrics</th>
-                        <th className="px-6 py-3">Status</th>
-                        <th className="px-6 py-3 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-outline-variant/20 text-xs">
-                      {filteredVolunteers.map((vol) => (
-                        <tr key={vol.id} className="hover:bg-slate-50/55 transition-colors">
-                          <td className="px-6 py-4">
-                            <p className="font-bold text-slate-950">{vol.name}</p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">{vol.email} • {vol.phone}</p>
-                          </td>
-                          <td className="px-6 py-4 font-medium text-slate-700">{vol.domain}</td>
-                          <td className="px-6 py-4 text-slate-500">{vol.registeredDate}</td>
-                          <td className="px-6 py-4">
-                            <p className="font-semibold text-slate-700">{vol.hoursLogged} hrs logged</p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">{vol.attendanceRate}% Attendance Rate</p>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                              vol.status === 'Approved' ? 'bg-slate-50 text-slate-700 border-slate-200' :
-                              vol.status === 'Pending Approval' ? 'bg-slate-50 text-slate-700 border-slate-200' :
-                              'bg-red-50 text-red-700 border-red-200'
-                            }`}>
-                              {vol.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right space-x-2">
-                            {vol.status === 'Pending Approval' ? (
-                              <>
-                                <button
-                                  onClick={() => handleApproveVolunteer(vol.id)}
-                                  className="px-3 py-1.5 bg-primary text-white font-bold rounded-lg text-[10px] hover:opacity-95 cursor-pointer inline-flex items-center gap-0.5"
-                                >
-                                  <Check className="w-3 h-3" /> Approve
-                                </button>
-                                <button
-                                  onClick={() => handleRejectVolunteer(vol.id)}
-                                  className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-100 font-bold rounded-lg text-[10px] hover:bg-red-100 cursor-pointer inline-flex items-center gap-0.5"
-                                >
-                                  <X className="w-3 h-3" /> Reject
-                                </button>
-                              </>
-                            ) : (
-                              <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg">
-                                Active Node
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+            <VolunteersTab
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              volunteerFilter={volunteerFilter}
+              setVolunteerFilter={setVolunteerFilter}
+              filteredVolunteers={filteredVolunteers}
+              handleExportVolunteersCSV={handleExportVolunteersCSV}
+              handleApproveVolunteer={handleApproveVolunteer}
+              handleRejectVolunteer={handleRejectVolunteer}
+            />
           )}
 
           {/* =====================================================
               TAB: CAMPAIGNS SCHEDULER
           ===================================================== */}
           {activeTab === 'campaigns' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-[fadeInUp_0.4s_ease-out]">
-              
-              {/* Campaign Schedule Form */}
-              <div className="lg:col-span-1 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs self-start">
-                <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <Calendar className="w-4.5 h-4.5 text-primary" /> Schedule Awareness Campaign
-                </h3>
-                
-                {campaignSuccessToast && (
-                  <div className="mb-4 p-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4.5 h-4.5" /> Campaign Scheduled Successfully!
-                  </div>
-                )}
-
-                <form onSubmit={handleAddCampaign} className="space-y-4 text-xs">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600 block">Campaign Title</label>
-                    <input
-                      type="text"
-                      required
-                      value={newCampaignTitle}
-                      onChange={e => setNewCampaignTitle(e.target.value)}
-                      placeholder="e.g. Dwarka Screening Camp"
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600 block">Campaign Type</label>
-                    <select
-                      value={newCampaignType}
-                      onChange={e => setNewCampaignType(e.target.value)}
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none cursor-pointer"
-                    >
-                      <option value="Screening Camp">Screening Camp (On-site)</option>
-                      <option value="Blood Donation">Blood Donation Drive</option>
-                      <option value="Awareness Drive">Awareness Campaign</option>
-                      <option value="Workshop">Recovery Workshop</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600 block">Campaign Date / Time</label>
-                    <input
-                      type="text"
-                      required
-                      value={newCampaignDate}
-                      onChange={e => setNewCampaignDate(e.target.value)}
-                      placeholder="e.g. Sat, 15 Aug 2026 • 9:00 AM"
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600 block">Location / Coordinates</label>
-                    <input
-                      type="text"
-                      required
-                      value={newCampaignLocation}
-                      onChange={e => setNewCampaignLocation(e.target.value)}
-                      placeholder="e.g. Community Center, Dwarka"
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-95 shadow-sm transition-opacity"
-                  >
-                    Schedule & Broadcast Alert
-                  </button>
-                </form>
-              </div>
-
-              {/* Scheduled active list */}
-              <div className="lg:col-span-2 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs">
-                <h3 className="text-sm font-bold text-slate-900 mb-4">Active & Ongoing Campaigns</h3>
-                
-                <div className="space-y-4">
-                  {[
-                    { title: 'Free Oral Cancer Screening Drive', date: 'Sat, 26 Jul 2026', type: 'Screening Camp', loc: 'Lions Club, Dwarka', vols: '22 / 30 assigned' },
-                    { title: 'Community Blood Donation Camp', date: 'Sun, 27 Jul 2026', type: 'Blood Donation', loc: 'City Hospital, Mumbai', vols: '18 / 20 assigned' },
-                    { title: 'Women\'s Breast Health Awareness', date: 'Wed, 30 Jul 2026', type: 'Awareness Drive', loc: 'Sector 12 Center, Noida', vols: '7 / 15 assigned' },
-                  ].map((c, i) => (
-                    <div key={i} className="p-4 border border-outline-variant/40 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-between text-xs">
-                      <div>
-                        <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold border border-primary/15">{c.type}</span>
-                        <h4 className="font-bold text-slate-900 mt-2">{c.title}</h4>
-                        <p className="text-slate-500 mt-1">{c.date} • {c.loc}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-primary">{c.vols}</p>
-                        <button className="mt-2 text-[10px] font-bold text-secondary hover:underline">Manage Vol Allocation</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-            </div>
+            <CampaignsTab
+              campaignSuccessToast={campaignSuccessToast}
+              handleAddCampaign={handleAddCampaign}
+              newCampaignTitle={newCampaignTitle}
+              setNewCampaignTitle={setNewCampaignTitle}
+              newCampaignType={newCampaignType}
+              setNewCampaignType={setNewCampaignType}
+              newCampaignDate={newCampaignDate}
+              setNewCampaignDate={setNewCampaignDate}
+              newCampaignLocation={newCampaignLocation}
+              setNewCampaignLocation={setNewCampaignLocation}
+            />
           )}
 
           {/* =====================================================
               TAB: HOSPITAL TIE-UPS
           ===================================================== */}
           {activeTab === 'hospitals' && (
-            <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
-              <div className="bg-slate-50 border border-slate-200 text-slate-900 p-4 rounded-xl text-xs flex items-start gap-2.5 leading-relaxed">
-                <AlertCircle className="w-5 h-5 shrink-0 text-slate-700" />
-                <div>
-                  <p className="font-bold">Role-based Access Clearance Level: Regional Coordinator</p>
-                  <p className="text-slate-800/85 mt-0.5">As Admin, you can review partner applications, verify submitted accreditation documents, and recommend entries. Under CAB Trust guidelines, final tie-up approvals or rejections are restricted to the **Super Admin board console**.</p>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-outline-variant/30 overflow-hidden shadow-xs">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-outline-variant/30">
-                        <th className="px-6 py-3">Hospital Node Name</th>
-                        <th className="px-6 py-3">Branch Location</th>
-                        <th className="px-6 py-3">Applied Date</th>
-                        <th className="px-6 py-3">Document Check</th>
-                        <th className="px-6 py-3">Verification Status</th>
-                        <th className="px-6 py-3 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-outline-variant/20 text-xs">
-                      {hospitalRequests.map((hosp) => (
-                        <tr key={hosp.id} className="hover:bg-slate-50/55 transition-colors">
-                          <td className="px-6 py-4">
-                            <p className="font-bold text-slate-950">{hosp.name}</p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">{hosp.contactEmail} • {hosp.contactPhone}</p>
-                          </td>
-                          <td className="px-6 py-4 font-medium text-slate-700">{hosp.city}</td>
-                          <td className="px-6 py-4 text-slate-500">{hosp.appliedDate}</td>
-                          <td className="px-6 py-4">
-                            {hosp.documentVerified ? (
-                              <span className="text-primary-container font-bold flex items-center gap-1">✓ Verified</span>
-                            ) : (
-                              <button
-                                onClick={() => handleVerifyDocument(hosp.id)}
-                                className="px-2.5 py-1 bg-slate-50 text-slate-700 border border-slate-200 rounded text-[10px] font-bold hover:bg-slate-100"
-                              >
-                                Check Document Uploads
-                              </button>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 font-medium">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                              hosp.status === 'Active Partner' ? 'bg-slate-50 text-slate-700 border-slate-200' :
-                              hosp.status === 'Recommended to Super Admin' ? 'bg-slate-50 text-slate-700 border-slate-200' :
-                              hosp.status === 'Declined by Admin' ? 'bg-red-50 text-red-600 border-red-200' :
-                              'bg-slate-50 text-slate-700 border-slate-200'
-                            }`}>
-                              {hosp.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            {hosp.status === 'Pending Tie-up' ? (
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button
-                                  onClick={() => handleRecommendHospital(hosp.id)}
-                                  disabled={!hosp.documentVerified}
-                                  className="px-3 py-1.5 bg-primary text-white font-bold rounded-lg text-[10px] hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs"
-                                  title={!hosp.documentVerified ? 'Verify documents before recommending' : 'Recommend application to Super Admin'}
-                                >
-                                  Recommend to Super Admin
-                                </button>
-                                <button
-                                  onClick={() => setShowAdminDeclineModal(hosp.id)}
-                                  className="px-2.5 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg text-[10px] font-bold hover:bg-red-100 cursor-pointer"
-                                >
-                                  Deny / Decline
-                                </button>
-                              </div>
-                            ) : hosp.status === 'Recommended to Super Admin' ? (
-                              <span className="text-[10px] font-bold text-primary-container bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
-                                Recommended to Board
-                              </span>
-                            ) : hosp.status === 'Declined by Admin' ? (
-                              <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-lg border border-red-200">
-                                Declined by Admin
-                              </span>
-                            ) : (
-                              <span className="text-[10px] font-bold text-primary-container bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
-                                Connected Partner
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* DECLINE APPLICATION MODAL */}
-              {showAdminDeclineModal && (
-                <div
-                  className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-                  role="dialog"
-                  aria-modal="true"
-                  aria-labelledby="decline-application-modal-title"
-                >
-                  <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4 text-xs">
-                    <h3 id="decline-application-modal-title" className="font-bold text-slate-900 text-sm">Decline Hospital Tie-up Application</h3>
-                    <p className="text-slate-600">Provide feedback notes explaining why this hospital partnership application is being declined by the Regional Coordinator desk.</p>
-                    
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Decline Justification Reason *</label>
-                      <textarea
-                        rows={3}
-                        required
-                        value={adminDeclineReason}
-                        onChange={e => setAdminDeclineReason(e.target.value)}
-                        className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none text-xs"
-                        placeholder="e.g. Hospital accreditation documentation incomplete or non-compliant with CAB guidelines..."
-                      />
-                    </div>
-
-                    <div className="flex gap-2 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => { setShowAdminDeclineModal(null); setAdminDeclineReason(''); }}
-                        className="flex-1 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeclineHospitalByAdmin(showAdminDeclineModal)}
-                        className="flex-1 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 cursor-pointer"
-                      >
-                        Decline Application
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <HospitalsTab
+              hospitalRequests={hospitalRequests}
+              handleVerifyDocument={handleVerifyDocument}
+              handleRecommendHospital={handleRecommendHospital}
+              setShowAdminDeclineModal={setShowAdminDeclineModal}
+            />
           )}
 
           {/* =====================================================
               TAB: CAMPAIGN REQUESTS
           ===================================================== */}
           {activeTab === 'requests' && (
-            <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
-              <div className="bg-white rounded-2xl border border-outline-variant/30 overflow-hidden shadow-xs">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-outline-variant/30">
-                        <th className="px-6 py-3">Applicant / Host Organization</th>
-                        <th className="px-6 py-3">Contact Person</th>
-                        <th className="px-6 py-3">Requested Location</th>
-                        <th className="px-6 py-3">Expected Attendees</th>
-                        <th className="px-6 py-3">Status</th>
-                        <th className="px-6 py-3 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-outline-variant/20 text-xs">
-                      {campaignRequests.map((req) => (
-                        <tr key={req.id} className="hover:bg-slate-50/55 transition-colors">
-                          <td className="px-6 py-4">
-                            <p className="font-bold text-slate-950">{req.organizationName}</p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">{req.orgType} • Applied: {req.requestedDate}</p>
-                          </td>
-                          <td className="px-6 py-4">
-                            <p className="font-semibold text-slate-700">{req.contactPerson}</p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">{req.email} • {req.phone}</p>
-                          </td>
-                          <td className="px-6 py-4 text-slate-600 font-medium">{req.location}</td>
-                          <td className="px-6 py-4 text-slate-500 font-bold">{req.expectedAttendees}</td>
-                          <td className="px-6 py-4 font-medium">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                              req.status === 'Scheduled' ? 'bg-slate-50 text-slate-700 border-slate-200' :
-                              'bg-slate-50 text-slate-700 border-slate-200'
-                            }`}>
-                              {req.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            {req.status === 'Pending Scheduling' ? (
-                              <button
-                                onClick={() => handleScheduleFromRequest(req)}
-                                className="px-3 py-1.5 bg-primary text-white font-bold rounded-lg text-[10px] hover:opacity-95 cursor-pointer inline-flex items-center gap-0.5 shadow-sm"
-                              >
-                                <Calendar className="w-3 h-3" /> Convert to Camp
-                              </button>
-                            ) : (
-                              <span className="text-[10px] font-bold text-primary-container bg-slate-50 px-2 py-1 rounded">
-                                Active scheduled
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+            <RequestsTab
+              campaignRequests={campaignRequests}
+              handleScheduleFromRequest={handleScheduleFromRequest}
+            />
           )}
 
           {/* =====================================================
               TAB: DONATIONS AUDIT
           ===================================================== */}
           {activeTab === 'donations' && (
-            <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  { label: 'Cumulative Donations Received', val: summaryKpis.donationsReceived, prefix: '₹' },
-                  { label: 'Total Receipts Dispatched', val: '100%', prefix: '' },
-                  { label: 'Corporate CSR Grants', val: '2 sponsors', prefix: '' },
-                ].map((stat, i) => (
-                  <div key={i} className="bg-white p-5 border border-outline-variant/30 rounded-2xl text-center">
-                    <p className="text-2xl font-black text-slate-900">{stat.prefix}{stat.val.toLocaleString()}</p>
-                    <p className="text-xs text-slate-500 font-semibold mt-1">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Donations History table */}
-              <div className="bg-white rounded-2xl border border-outline-variant/30 overflow-hidden shadow-xs">
-                <div className="p-4 border-b border-outline-variant/20 flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-900">Donation Ledgers</h3>
-                  <button
-                    onClick={handleExportDonationsCSV}
-                    className="px-3.5 py-1.5 border border-outline-variant/50 hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-700 cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Download className="w-4 h-4" /> Export Ledger (Excel)
-                  </button>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-outline-variant/30">
-                        <th className="px-6 py-3">Receipt Code</th>
-                        <th className="px-6 py-3">Donor Entity</th>
-                        <th className="px-6 py-3">Inflow Amount</th>
-                        <th className="px-6 py-3">Audit Date</th>
-                        <th className="px-6 py-3">Inflow Channel</th>
-                        <th className="px-6 py-3 text-right">Tax Exemption Receipt</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-outline-variant/20 text-xs">
-                      {donations.map((don) => (
-                        <tr key={don.id} className="hover:bg-slate-50/55 transition-colors">
-                          <td className="px-6 py-4 font-mono font-bold text-slate-500">{don.id}</td>
-                          <td className="px-6 py-4">
-                            <p className="font-bold text-slate-950">{don.donorName}</p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">{don.donorType}</p>
-                          </td>
-                          <td className="px-6 py-4 font-bold text-slate-900">₹{don.amount.toLocaleString()}</td>
-                          <td className="px-6 py-4 text-slate-500">{don.date}</td>
-                          <td className="px-6 py-4 font-medium text-slate-600">{don.paymentMethod}</td>
-                          <td className="px-6 py-4 text-right">
-                            {don.receiptSent ? (
-                              <span className="text-[10px] font-bold text-primary-container bg-slate-50 px-2 py-0.5 rounded-full">✓ Sent (80G)</span>
-                            ) : (
-                              <button
-                                onClick={() => setDonations(prev => {
-                                  const updated = prev.map(d => d.id === don.id ? { ...d, receiptSent: true } : d);
-                                  localStorage.setItem('aware_bharat_donations', JSON.stringify(updated));
-                                  return updated;
-                                })}
-                                className="px-2.5 py-1 bg-primary text-white rounded text-[10px] font-bold hover:opacity-95"
-                              >
-                                Email Receipt
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
+            <DonationsTab
+              donationsReceived={summaryKpis.donationsReceived}
+              donations={donations}
+              handleExportDonationsCSV={handleExportDonationsCSV}
+              onEmailReceipt={(donationId) => setDonations(prev => {
+                const updated = prev.map(d => d.id === donationId ? { ...d, receiptSent: true } : d);
+                localStorage.setItem('aware_bharat_donations', JSON.stringify(updated));
+                return updated;
+              })}
+            />
           )}
 
           {/* =====================================================
               TAB: BLOGS & EVENTS NEWS
           ===================================================== */}
           {activeTab === 'blogs' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-[fadeInUp_0.4s_ease-out]">
-              
-              {/* Blog publisher */}
-              <div className="lg:col-span-1 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs self-start">
-                <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <BookOpen className="w-4.5 h-4.5 text-primary" /> Publish Notice / Blog
-                </h3>
-                
-                <form onSubmit={handlePublishBlog} className="space-y-4 text-xs">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600 block">Post Category</label>
-                    <select
-                      value={newBlogCategory}
-                      onChange={e => setNewBlogCategory(e.target.value as any)}
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none cursor-pointer"
-                    >
-                      <option value="Prevention">Oncology Prevention</option>
-                      <option value="Nutrition">Nutrition Guide</option>
-                      <option value="Research">Important Announcement / Research</option>
-                      <option value="Survivors">Survivor Story</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600 block">Title</label>
-                    <input
-                      type="text"
-                      required
-                      value={newBlogTitle}
-                      onChange={e => setNewBlogTitle(e.target.value)}
-                      placeholder="e.g. Nutrition Tips during Chemotherapy"
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600 block">Abstract Summary</label>
-                    <textarea
-                      rows={3}
-                      required
-                      value={newBlogSummary}
-                      onChange={e => setNewBlogSummary(e.target.value)}
-                      placeholder="Write brief description for public readers..."
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary resize-none"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-95 shadow-sm transition-opacity cursor-pointer"
-                  >
-                    Publish to Portal News
-                  </button>
-                </form>
-              </div>
-
-              {/* Published articles log */}
-              <div className="lg:col-span-2 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs">
-                <h3 className="text-sm font-bold text-slate-900 mb-4">Published Announcements & News</h3>
-                
-                <div className="space-y-3">
-                  {blogs.map((art) => (
-                    <div key={art.id} className="p-3 border border-outline-variant/40 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-between text-xs">
-                      <div>
-                        <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[9px] font-bold border border-slate-200">{art.category}</span>
-                        <h4 className="font-bold text-slate-900 mt-2">{art.title}</h4>
-                        <p className="text-slate-400 mt-0.5">Author: {art.author} • {art.date}</p>
-                      </div>
-                      <button
-                        onClick={() => handleDeleteBlog(art.id)}
-                        className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg cursor-pointer transition-colors"
-                        title="Delete Blog Article"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-            </div>
+            <AdminBlogsTab
+              newBlogCategory={newBlogCategory}
+              setNewBlogCategory={setNewBlogCategory}
+              newBlogTitle={newBlogTitle}
+              setNewBlogTitle={setNewBlogTitle}
+              newBlogSummary={newBlogSummary}
+              setNewBlogSummary={setNewBlogSummary}
+              handlePublishBlog={handlePublishBlog}
+              blogs={blogs}
+              handleDeleteBlog={handleDeleteBlog}
+            />
           )}
 
           {/* =====================================================
               TAB: VOLUNTEER FEEDBACK
           ===================================================== */}
           {activeTab === 'feedback' && (
-            <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
-              <div className="grid grid-cols-1 gap-4">
-                {feedbacks.map((f) => (
-                  <div key={f.id} className="bg-white rounded-2xl border border-outline-variant/30 p-5 shadow-xs text-xs space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className="font-bold text-slate-900 text-sm">{f.volunteerName}</span>
-                        <p className="text-slate-400 text-[10px] mt-0.5">Campaign: {f.campaignName} • {f.date}</p>
-                      </div>
-                      <div className="flex items-center gap-1 bg-slate-50 text-slate-700 px-2 py-0.5 rounded-full font-bold border border-slate-100 text-[10px]">
-                        ★ {f.rating} / 5 Rating
-                      </div>
-                    </div>
-                    <p className="text-slate-700 italic leading-relaxed">"{f.comment}"</p>
-                    
-                    {/* Reply box */}
-                    {f.status === 'Responded' ? (
-                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                        <p className="font-bold text-primary">Admin Response:</p>
-                        <p className="text-slate-600 mt-1">"{f.response}"</p>
-                      </div>
-                    ) : activeFeedbackId === f.id ? (
-                      <div className="space-y-2 pt-2 border-t border-outline-variant/20">
-                        <textarea
-                          rows={2}
-                          value={feedbackReplyText}
-                          onChange={e => setFeedbackReplyText(e.target.value)}
-                          placeholder="Type response to volunteer..."
-                          className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none resize-none"
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleSendFeedbackReply(f.id)}
-                            className="px-4 py-1.5 bg-primary text-white font-bold rounded-lg hover:opacity-95"
-                          >
-                            Send Reply
-                          </button>
-                          <button
-                            onClick={() => setActiveFeedbackId(null)}
-                            className="px-4 py-1.5 border border-outline-variant rounded-lg font-semibold hover:bg-slate-50"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          setActiveFeedbackId(f.id);
-                          setFeedbackReplyText('');
-                        }}
-                        className="px-3 py-1.5 border border-outline-variant/50 hover:bg-slate-50 rounded-lg font-bold text-slate-700"
-                      >
-                        Reply to Feedback
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <FeedbackTab
+              feedbacks={feedbacks}
+              activeFeedbackId={activeFeedbackId}
+              setActiveFeedbackId={setActiveFeedbackId}
+              feedbackReplyText={feedbackReplyText}
+              setFeedbackReplyText={setFeedbackReplyText}
+              handleSendFeedbackReply={handleSendFeedbackReply}
+            />
           )}
 
           {/* =====================================================
               TAB: NOTIFICATION CENTER
           ===================================================== */}
           {activeTab === 'notifications' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-[fadeInUp_0.4s_ease-out]">
-              
-              {/* Broadcast Form */}
-              <div className="lg:col-span-1 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs self-start">
-                <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <Bell className="w-4.5 h-4.5 text-primary" /> Broadcast announcement to Volunteers
-                </h3>
-                
-                {notifSuccessToast && (
-                  <div className="mb-4 p-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4.5 h-4.5" /> Broadcast alert sent to 2,400+ volunteers!
-                  </div>
-                )}
-
-                <form onSubmit={handleSendAnnouncement} className="space-y-4 text-xs">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600 block">Subject Header</label>
-                    <input
-                      type="text"
-                      required
-                      value={announcementTitle}
-                      onChange={e => setAnnouncementTitle(e.target.value)}
-                      placeholder="e.g. Schedule shift changes"
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600 block">Message Body</label>
-                    <textarea
-                      rows={4}
-                      required
-                      value={announcementMessage}
-                      onChange={e => setAnnouncementMessage(e.target.value)}
-                      placeholder="Write message details here..."
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary resize-none"
-                    />
-                  </div>
-
-                  <button className="w-full py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-95 shadow-sm">
-                    Broadcast Announcement
-                  </button>
-                </form>
-              </div>
-
-              {/* Live notifications from the enquiry workflow */}
-              <div className="lg:col-span-2 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs">
-                <h3 className="text-sm font-bold text-slate-900 mb-4">Enquiry Workflow Notifications</h3>
-                <div className="space-y-4">
-                  {adminNotifications.length === 0 ? (
-                    <p className="text-xs text-slate-500 text-center py-6">No notifications yet.</p>
-                  ) : (
-                    adminNotifications.map((n) => (
-                      <div key={n.id} className={`p-3 border rounded-xl text-xs ${n.read ? 'border-outline-variant/40' : 'border-primary/30 bg-primary/5'}`}>
-                        <h4 className="font-bold text-slate-900">{n.title}</h4>
-                        <p className="text-slate-600 mt-1">{n.message}</p>
-                        <span className="text-[10px] text-slate-400 mt-1 block">{n.timestamp}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-            </div>
+            <NotificationsTab
+              notifSuccessToast={notifSuccessToast}
+              handleSendAnnouncement={handleSendAnnouncement}
+              announcementTitle={announcementTitle}
+              setAnnouncementTitle={setAnnouncementTitle}
+              announcementMessage={announcementMessage}
+              setAnnouncementMessage={setAnnouncementMessage}
+              adminNotifications={adminNotifications}
+            />
           )}
 
           {/* =====================================================
               TAB: ADMIN SETTINGS
           ===================================================== */}
           {activeTab === 'settings' && (
-            <div className="bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs max-w-2xl animate-[fadeInUp_0.4s_ease-out] text-xs">
-              <h3 className="text-sm font-bold text-slate-900 mb-6 flex items-center gap-2">
-                <Settings className="w-5 h-5 text-primary" /> Administrative Settings
-              </h3>
-
-              {passwordSuccess && (
-                <div className="mb-5 p-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl font-semibold flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4.5 h-4.5" /> Settings updated successfully!
-                </div>
-              )}
-
-              <form onSubmit={e => {
+            <SettingsTab
+              passwordSuccess={passwordSuccess}
+              profileName={profileName}
+              setProfileName={setProfileName}
+              profileEmail={profileEmail}
+              setProfileEmail={setProfileEmail}
+              onSubmit={e => {
                 e.preventDefault();
                 localStorage.setItem('aware_bharat_admin_profile', JSON.stringify({ profileName, profileEmail }));
                 setPasswordSuccess(true);
                 setTimeout(() => setPasswordSuccess(false), 3000);
                 toast.success('Settings Saved', 'Administrative preferences updated successfully.');
-              }} className="space-y-5">
-                
-                {/* Node details */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600">Admin Account Name</label>
-                    <input
-                      type="text"
-                      value={profileName}
-                      onChange={e => setProfileName(e.target.value)}
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600">Admin Email Address</label>
-                    <input
-                      type="email"
-                      value={profileEmail}
-                      onChange={e => setProfileEmail(e.target.value)}
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
-                    />
-                  </div>
-                </div>
-
-                {/* Password reset */}
-                <div className="border-t border-outline-variant/20 pt-5 space-y-4">
-                  <h4 className="font-bold text-slate-950 text-sm">Security Credentials</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-600">New Password</label>
-                      <input
-                        type="password"
-                        placeholder="Enter new password"
-                        className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="font-bold text-slate-600">Verify New Password</label>
-                      <input
-                        type="password"
-                        placeholder="Re-enter new password"
-                        className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Submit */}
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-95 shadow-sm transition-opacity"
-                >
-                  Save Administrative Settings
-                </button>
-
-              </form>
-            </div>
+              }}
+            />
           )}
 
         </div>
@@ -1876,273 +901,79 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
           MODAL: ADD / EDIT PATIENT RECORD
       ===================================================== */}
       {showPatientModal && (
-        <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="patient-record-modal-title"
-        >
-          <div className="bg-white w-full max-w-xl rounded-2xl shadow-xl overflow-hidden border border-outline-variant/20 text-xs">
-            <div className="bg-primary text-white px-6 py-4 flex justify-between items-center">
-              <h3 id="patient-record-modal-title" className="font-headline-lg text-sm font-bold flex items-center gap-1.5">
-                <Heart className="w-4 h-4 text-secondary-container animate-pulse" />
-                {editingPatient ? 'Edit Patient Record' : 'Add Patient Intake'}
-              </h3>
-              <button
-                onClick={() => setShowPatientModal(false)}
-                aria-label="Close"
-                className="text-white/80 hover:text-white p-1 hover:bg-white/10 rounded-full transition-colors"
-              >
-                <X className="w-4.5 h-4.5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSavePatient} className="p-6 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-600 block">Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={patientFormName}
-                    onChange={e => setPatientFormName(e.target.value)}
-                    placeholder="Enter full name"
-                    className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600 block">Age</label>
-                    <input
-                      type="number"
-                      required
-                      value={patientFormAge}
-                      onChange={e => setPatientFormAge(e.target.value)}
-                      placeholder="e.g. 45"
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600 block">Gender</label>
-                    <select
-                      value={patientFormGender}
-                      onChange={e => setPatientFormGender(e.target.value as any)}
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none cursor-pointer"
-                    >
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-slate-600 block">Cancer Diagnosis</label>
-                <input
-                  type="text"
-                  required
-                  value={patientFormDiagnosis}
-                  onChange={e => setPatientFormDiagnosis(e.target.value)}
-                  placeholder="e.g. Oral Cavity Cancer (Stage II)"
-                  className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-600 block">Clinic Partner Assignment</label>
-                  <select
-                    value={patientFormHospital}
-                    onChange={e => setPatientFormHospital(e.target.value)}
-                    className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none cursor-pointer"
-                  >
-                    <option value="Apex Oncology Institute">Apex Oncology Institute (Delhi)</option>
-                    <option value="CareWell Cancer Hospital">CareWell Cancer Hospital (Mumbai)</option>
-                    <option value="Tata Cancer Care & Research Center">Tata Cancer Care (Kolkata)</option>
-                    <option value="Narayana Health City">Narayana Health City (Bangalore)</option>
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600 block">Financial Aid Status</label>
-                    <select
-                      value={patientFormAid}
-                      onChange={e => setPatientFormAid(e.target.value as any)}
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none cursor-pointer"
-                    >
-                      <option value="Not Requested">Not Requested</option>
-                      <option value="Pending Review">Pending Review</option>
-                      <option value="Approved">Approved</option>
-                      <option value="Disbursed">Disbursed</option>
-                      <option value="Rejected">Rejected</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-600 block">Aid Amount (INR)</label>
-                    <input
-                      type="number"
-                      value={patientFormAidAmt}
-                      onChange={e => setPatientFormAidAmt(e.target.value)}
-                      placeholder="e.g. 50000"
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2.5 pt-4 border-t border-outline-variant/20 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowPatientModal(false)}
-                  className="px-4 py-2 border border-outline-variant rounded-xl font-semibold hover:bg-slate-50 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-primary text-white font-bold rounded-xl shadow-sm hover:opacity-95 cursor-pointer"
-                >
-                  Save Intake Details
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <PatientModal
+          editingPatient={editingPatient}
+          onClose={() => setShowPatientModal(false)}
+          patientFormName={patientFormName}
+          setPatientFormName={setPatientFormName}
+          patientFormAge={patientFormAge}
+          setPatientFormAge={setPatientFormAge}
+          patientFormGender={patientFormGender}
+          setPatientFormGender={setPatientFormGender}
+          patientFormDiagnosis={patientFormDiagnosis}
+          setPatientFormDiagnosis={setPatientFormDiagnosis}
+          patientFormHospital={patientFormHospital}
+          setPatientFormHospital={setPatientFormHospital}
+          patientFormAid={patientFormAid}
+          setPatientFormAid={setPatientFormAid}
+          patientFormAidAmt={patientFormAidAmt}
+          setPatientFormAidAmt={setPatientFormAidAmt}
+          onSubmit={handleSavePatient}
+        />
       )}
 
       {/* Admin Approve Enquiry Modal */}
       {showApproveEnquiryModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="approve-enquiry-modal-title"
-        >
-          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h3 id="approve-enquiry-modal-title" className="font-bold text-slate-900 text-base flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-primary-container" /> Approve Patient Enquiry
-              </h3>
-              <button onClick={() => setShowApproveEnquiryModal(null)} aria-label="Close" className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="text-xs space-y-1 text-slate-600 bg-slate-50 p-3 rounded-xl">
-              <p><strong className="text-slate-800">Enquiry ID:</strong> {showApproveEnquiryModal.enquiryId}</p>
-              <p><strong className="text-slate-800">Patient:</strong> {showApproveEnquiryModal.patientName} ({showApproveEnquiryModal.age} / {showApproveEnquiryModal.gender})</p>
-              <p><strong className="text-slate-800">Stream:</strong> {showApproveEnquiryModal.reason}</p>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Admin Approval Remarks / Case Notes (Optional)
-              </label>
-              <textarea
-                rows={3}
-                value={approveRemarks}
-                onChange={e => setApproveRemarks(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-primary outline-none"
-                placeholder="e.g. Primary reports verified. Approved for Super Admin hospital assignment."
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setShowApproveEnquiryModal(null)}
-                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-100 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={async () => {
-                  if (!apiToken) return;
-                  try {
-                    await adminApproveEnquiry(showApproveEnquiryModal.id, apiToken, approveRemarks || undefined);
-                    toast.success('Enquiry Approved', `Patient ${showApproveEnquiryModal.patientName} forwarded to Super Admin board.`);
-                    setShowApproveEnquiryModal(null);
-                    setApproveRemarks('');
-                    refetchEnquiries();
-                  } catch (err) {
-                    toast.error('Approval Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
-                  }
-                }}
-                className="px-5 py-2 rounded-xl bg-primary-container text-white text-xs font-bold hover:bg-slate-700 shadow-sm cursor-pointer"
-              >
-                Approve & Forward to Super Admin
-              </button>
-            </div>
-          </div>
-        </div>
+        <ApproveEnquiryModal
+          enquiry={showApproveEnquiryModal}
+          onClose={() => setShowApproveEnquiryModal(null)}
+          approveRemarks={approveRemarks}
+          setApproveRemarks={setApproveRemarks}
+          onApprove={async () => {
+            if (!apiToken) return;
+            try {
+              await adminApproveEnquiry(showApproveEnquiryModal.id, apiToken, approveRemarks || undefined);
+              toast.success('Enquiry Approved', `Patient ${showApproveEnquiryModal.patientName} forwarded to Super Admin board.`);
+              setShowApproveEnquiryModal(null);
+              setApproveRemarks('');
+              refetchEnquiries();
+            } catch (err) {
+              toast.error('Approval Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+            }
+          }}
+        />
       )}
 
       {/* Admin Reject Enquiry Modal */}
       {showRejectEnquiryModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="reject-enquiry-modal-title"
-        >
-          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h3 id="reject-enquiry-modal-title" className="font-bold text-slate-900 text-base flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-red-600" /> Reject Patient Enquiry
-              </h3>
-              <button onClick={() => setShowRejectEnquiryModal(null)} aria-label="Close" className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+        <RejectEnquiryModal
+          enquiry={showRejectEnquiryModal}
+          onClose={() => setShowRejectEnquiryModal(null)}
+          rejectReasonText={rejectReasonText}
+          setRejectReasonText={setRejectReasonText}
+          onReject={async () => {
+            if (!rejectReasonText.trim() || !apiToken) return;
+            try {
+              await adminRejectEnquiry(showRejectEnquiryModal.id, apiToken, rejectReasonText);
+              toast.warning('Enquiry Rejected', `Patient ${showRejectEnquiryModal.patientName} enquiry declined.`);
+              setShowRejectEnquiryModal(null);
+              setRejectReasonText('');
+              refetchEnquiries();
+            } catch (err) {
+              toast.error('Rejection Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+            }
+          }}
+        />
+      )}
 
-            <div className="text-xs space-y-1 text-slate-600 bg-slate-50 p-3 rounded-xl">
-              <p><strong className="text-slate-800">Enquiry ID:</strong> {showRejectEnquiryModal.enquiryId}</p>
-              <p><strong className="text-slate-800">Patient:</strong> {showRejectEnquiryModal.patientName}</p>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Rejection Reason <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                rows={3}
-                required
-                value={rejectReasonText}
-                onChange={e => setRejectReasonText(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:border-red-500 outline-none"
-                placeholder="State reason for rejection..."
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setShowRejectEnquiryModal(null)}
-                className="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-100 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                disabled={!rejectReasonText.trim()}
-                onClick={async () => {
-                  if (!rejectReasonText.trim() || !apiToken) return;
-                  try {
-                    await adminRejectEnquiry(showRejectEnquiryModal.id, apiToken, rejectReasonText);
-                    toast.warning('Enquiry Rejected', `Patient ${showRejectEnquiryModal.patientName} enquiry declined.`);
-                    setShowRejectEnquiryModal(null);
-                    setRejectReasonText('');
-                    refetchEnquiries();
-                  } catch (err) {
-                    toast.error('Rejection Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
-                  }
-                }}
-                className="px-5 py-2 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 shadow-sm disabled:opacity-50 cursor-pointer"
-              >
-                Reject Enquiry
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Decline Hospital Application Modal */}
+      {showAdminDeclineModal && (
+        <DeclineApplicationModal
+          onClose={() => { setShowAdminDeclineModal(null); setAdminDeclineReason(''); }}
+          adminDeclineReason={adminDeclineReason}
+          setAdminDeclineReason={setAdminDeclineReason}
+          onDecline={() => handleDeclineHospitalByAdmin(showAdminDeclineModal)}
+        />
       )}
 
       {/* Enquiry Timeline Modal */}
