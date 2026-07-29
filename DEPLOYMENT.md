@@ -42,7 +42,8 @@ variables on the host:
 | `JWT_SECRET_KEY` | a long random string -- `python -c "import secrets; print(secrets.token_urlsafe(48))"` -- **not** the `dev-secret-change-me` default. With `ENVIRONMENT=production` set, the app now refuses to start on the placeholder or on anything under 32 characters, instead of just silently accepting it |
 | `CORS_ORIGINS` | your frontend's real URL once you know it, e.g. `https://cancer-aware-bharat.vercel.app`. With `ENVIRONMENT=production` set, the app now refuses to start if this is still the localhost-only dev default |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `480` is fine to start; tighten later if you add refresh tokens. A token can also be revoked early via `/auth/logout`, which now actually invalidates it server-side rather than only clearing it client-side |
-| `UPLOAD_DIR` | `./uploads` -- see the note on file storage below |
+| `UPLOAD_DIR` | `./uploads` -- only used when `STORAGE_BACKEND=local` (the default); see the note on file storage below |
+| `STORAGE_BACKEND` | `local` to start, `s3` before real patient volume -- see below |
 | `LOG_LEVEL` | `INFO` is fine to start. All requests and unhandled errors are logged; see `backend/app/core/logging_config.py` |
 
 **Run once after the first deploy** (as a one-off command / release step,
@@ -60,15 +61,37 @@ documented in this repo's README. It exists for local dev only. Use
 hospital accounts and further staff through the app itself once you're
 logged in.
 
-### File uploads won't survive a redeploy
+### File uploads: local disk vs. object storage
 
-Uploaded patient reports currently land on local disk (`UPLOAD_DIR`).
-Most container platforms wipe the filesystem on every deploy, and if you
-ever run more than one backend instance, each instance only sees its own
-uploads. Fine for a first launch; before real patient volume, swap
-`backend/app/routers/enquiries.py`'s upload handler for S3-compatible
-object storage (the platform's own blob storage, Cloudflare R2, or AWS S3
-all work) -- the change is contained to that one file.
+`STORAGE_BACKEND=local` (the default) writes uploaded patient reports to
+`UPLOAD_DIR` on local disk. Most container platforms wipe the filesystem
+on every deploy, and if you ever run more than one backend instance, each
+instance only sees its own uploads -- fine for a first launch, not fine
+once there's real patient volume.
+
+To switch to object storage, set:
+
+```bash
+STORAGE_BACKEND=s3
+S3_BUCKET=your-bucket-name
+S3_REGION=ap-south-1               # match your bucket's region
+# S3_ENDPOINT_URL=...              # only for a non-AWS endpoint (R2, MinIO)
+```
+
+Credentials are **not** app config -- set `AWS_ACCESS_KEY_ID` /
+`AWS_SECRET_ACCESS_KEY` (boto3's standard env vars) on the platform, or
+attach an IAM role/instance profile if your platform supports one, so the
+key never has to live in this app's own settings or logs. The app refuses
+to start with `STORAGE_BACKEND=s3` and no `S3_BUCKET` set (see
+`backend/app/core/config.py`), the same way it refuses to start on a
+placeholder JWT secret.
+
+The bucket needs no public access at all -- every download still goes
+through the authenticated `/enquiries/{id}/reports/{id}/download` route
+(role/ownership-checked exactly as before), which streams the object
+through the backend rather than issuing a public or presigned URL. See
+`backend/app/core/storage.py` for the two backends; switching between
+them touches no other file.
 
 ## 3. Deploy the frontend
 
@@ -123,5 +146,4 @@ activity, and each enquiry's own timeline for anything patient-specific.
   GitHub repo directly if you want that; `.github/workflows/ci.yml` only
   runs tests, it doesn't deploy)
 - Refresh tokens / shorter-lived access tokens
-- Object storage wiring for uploads (see note above)
 - Custom domain + DNS setup

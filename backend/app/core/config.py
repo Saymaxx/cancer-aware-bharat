@@ -31,6 +31,21 @@ class Settings(BaseSettings):
     upload_dir: str = "./uploads"
     log_level: str = "INFO"
 
+    # "local" (default -- writes to upload_dir on this machine's disk, fine
+    # for dev/tests/a first low-volume launch) or "s3" (any S3-compatible
+    # object store: AWS S3, Cloudflare R2, MinIO, a platform's own blob
+    # storage -- all speak the same API boto3 already knows). Credentials are
+    # deliberately *not* Settings fields: boto3's own default chain (env vars
+    # AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY, an IAM role, ECS/EC2 instance
+    # metadata) is the standard way to hand a process S3 credentials, and
+    # reusing it here means one less place secrets get duplicated or logged.
+    storage_backend: str = "local"
+    s3_bucket: str | None = None
+    s3_region: str | None = None
+    # Only needed for a non-AWS S3-compatible endpoint (R2, MinIO, etc.);
+    # leave unset against real AWS S3.
+    s3_endpoint_url: str | None = None
+
     # Off by default: trusting X-Forwarded-For only makes sense when a real
     # reverse proxy/load balancer sits in front of the app and sets that
     # header itself. Turning this on without such a proxy would let any
@@ -67,6 +82,17 @@ class Settings(BaseSettings):
                 "your real production origin(s) (comma-separated) before running with "
                 "ENVIRONMENT=production -- otherwise no browser-based frontend will be able "
                 "to call this API at all."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _validate_storage_backend(self) -> "Settings":
+        if self.storage_backend not in ("local", "s3"):
+            raise RuntimeError(f"STORAGE_BACKEND must be 'local' or 's3', got {self.storage_backend!r}.")
+        if self.storage_backend == "s3" and not self.s3_bucket:
+            raise RuntimeError(
+                "STORAGE_BACKEND=s3 requires S3_BUCKET to be set -- the bucket/container "
+                "uploaded patient reports are written to."
             )
         return self
 

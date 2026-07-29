@@ -18,3 +18,22 @@ class TestCorsProdGuard:
         # Should not raise even though this is the dev-only default -- the
         # guard only fires under ENVIRONMENT=production.
         Settings(environment="development", cors_origins=DEV_ONLY_CORS_ORIGINS)
+
+
+class TestStorageBackendGuard:
+    def test_s3_backend_without_bucket_rejected(self):
+        with pytest.raises(RuntimeError, match="S3_BUCKET"):
+            Settings(storage_backend="s3", s3_bucket=None)
+
+    def test_s3_backend_with_bucket_accepted(self):
+        settings = Settings(storage_backend="s3", s3_bucket="cab-reports")
+        assert settings.storage_backend == "s3"
+        assert settings.s3_bucket == "cab-reports"
+
+    def test_unknown_backend_rejected(self):
+        with pytest.raises(RuntimeError, match="STORAGE_BACKEND"):
+            Settings(storage_backend="azure-blob")
+
+    def test_local_backend_is_the_default(self):
+        settings = Settings()
+        assert settings.storage_backend == "local"

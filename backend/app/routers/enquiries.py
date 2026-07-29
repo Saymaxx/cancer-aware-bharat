@@ -1,14 +1,14 @@
-import uuid
 from pathlib import Path
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request, UploadFile, status
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, selectinload
+from starlette.concurrency import run_in_threadpool
 
-from app.core.config import settings
 from app.core.limiter import limiter
+from app.core.storage import get_storage
 from app.deps import (
     DbSession,
     current_hospital_id,
@@ -233,19 +233,21 @@ async def upload_report(
 
     # file.filename is fully client-controlled. Path(...).name strips any
     # directory components (e.g. "../../etc/passwd" -> "passwd"), so the
-    # write can never escape upload_dir no matter what a client sends.
+    # write can never escape upload_dir no matter what a client sends (and,
+    # for the s3 backend, can't be used to write outside the reports/
+    # prefix either).
     safe_filename = Path(file.filename or "").name or "upload"
-    upload_dir = Path(settings.upload_dir) / str(enquiry_id)
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    stored_name = f"{uuid.uuid4()}_{safe_filename}"
-    (upload_dir / stored_name).write_bytes(contents)
+    # save() does blocking I/O (a disk write, or an S3 network round-trip) --
+    # run_in_threadpool keeps that off the event loop instead of stalling
+    # every other concurrent request for the duration of the call.
+    storage_key = await run_in_threadpool(get_storage().save, enquiry_id, safe_filename, contents)
 
     report = UploadedReport(
         enquiry_id=enquiry.id,
-        name=file.filename or stored_name,
+        name=file.filename or safe_filename,
         size=f"{len(contents) / 1024:.1f} KB",
         type=file.content_type,
-        url=str(upload_dir / stored_name),
+        url=storage_key,
     )
     db.add(report)
     db.commit()
@@ -280,8 +282,29 @@ def download_report(
     if report is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Report not found")
 
-    file_path = Path(report.url)
-    if not file_path.is_file():
+    # Opened eagerly (not inside the generator below) so a missing object
+    # still 404s cleanly -- once StreamingResponse starts, headers are
+    # already committed and there's no way to turn a FileNotFoundError here
+    # into anything but a broken, half-sent response.
+    try:
+        stream = get_storage().open(report.url)
+    except FileNotFoundError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Report file is missing from storage")
 
-    return FileResponse(path=file_path, filename=report.name, media_type=report.type or "application/octet-stream")
+    def _iter_chunks(chunk_size: int = 64 * 1024):
+        try:
+            while chunk := stream.read(chunk_size):
+                yield chunk
+        finally:
+            stream.close()
+
+    # Content-Disposition is built by hand (StreamingResponse, unlike
+    # FileResponse, doesn't set it for us); report.name is client-controlled
+    # from the original upload, so strip CR/LF and escape quotes rather than
+    # trust it verbatim in a header value.
+    safe_name = report.name.replace('"', "'").replace("\r", "").replace("\n", "")
+    return StreamingResponse(
+        _iter_chunks(),
+        media_type=report.type or "application/octet-stream",
+        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
+    )
