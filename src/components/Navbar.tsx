@@ -3,9 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu, X, Heart, LogIn, LayoutDashboard, LogOut, Building2,
   ChevronDown, Home, Target, Stethoscope, BookOpen, Calendar, UserPlus, PhoneCall,
-  Images, Users, ArrowRight, User, Shield, HeartPulse
+  Images, Users, ArrowRight, User, Shield, HeartPulse,
+  Facebook, Instagram, Linkedin, Youtube
 } from 'lucide-react';
-
 
 interface NavbarProps {
   onOpenVolunteer: () => void;
@@ -119,294 +119,302 @@ export default function Navbar({
     <>
       <nav
         ref={navRef}
-        className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-          scrolled
-            ? 'bg-white/95 backdrop-blur-xl shadow-[0_1px_3px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.04)] border-b border-outline-variant/10'
-            : 'bg-white/80 backdrop-blur-md border-b border-transparent'
-        }`}
+        className={`sticky top-0 z-50 w-full transition-all duration-300 ease-out ${scrolled
+            ? 'bg-white/97 backdrop-blur-xl shadow-[0_4px_24px_rgba(22,58,95,0.07),0_1px_3px_rgba(22,58,95,0.04)]'
+            : 'bg-white/90 backdrop-blur-md'
+          }`}
       >
-        <div className="flex justify-between items-center w-full px-4 sm:px-6 lg:px-8 xl:px-12 py-3 max-w-[1440px] mx-auto">
-          {/* Brand Logo */}
+        <div className={`transition-all duration-300 ease-out w-full px-6 sm:px-8 lg:px-10 xl:px-14 max-w-[1480px] mx-auto flex justify-between items-center relative ${scrolled ? 'h-[72px]' : 'h-[84px]'}`}>
+
+          {/* LEFT: Brand Logo */}
           <button
             onClick={() => handleNavClick('/')}
-            className="flex items-center space-x-3 text-left hover:opacity-90 transition-opacity focus:outline-none shrink-0 group"
+            className="flex items-center space-x-3 text-left hover:opacity-90 transition-opacity duration-200 focus:outline-none shrink-0 group z-10"
           >
             <img
               src="/brand-logo.jpeg"
               alt="Cancer Aware Bharat Logo"
-              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover border-2 border-primary/15 shadow-sm group-hover:border-primary/30 transition-all"
+              className={`rounded-full object-cover shadow-[0_2px_10px_rgba(22,58,95,0.12)] group-hover:shadow-[0_4px_14px_rgba(22,58,95,0.18)] transition-all duration-200 ${scrolled ? 'w-10 h-10' : 'w-11 h-11'}`}
             />
             <div className="flex flex-col">
-              <span className="font-outfit text-lg sm:text-xl font-extrabold text-primary tracking-tight leading-tight">
+              <span className={`font-outfit font-extrabold text-primary tracking-tight leading-none transition-all duration-200 ${scrolled ? 'text-[19px]' : 'text-[21px]'}`}>
                 Cancer Aware Bharat
               </span>
-              <span className="text-[10px] font-medium text-on-surface-variant/70 tracking-wide hidden sm:block">
+              <span className="text-[10px] font-semibold text-primary/50 tracking-[0.08em] uppercase hidden sm:block mt-0.5">
                 कैंसर जागरूकता अभियान
               </span>
             </div>
           </button>
 
-          {/* Navigation Links (Desktop) */}
-          <div className="hidden lg:flex items-center space-x-1">
-            {mainNavLinks.map(link => {
-              const isActive = location.pathname === link.path;
-              
-              if (link.label === 'Events') {
-                return (
-                  <div 
-                    className="relative py-2" 
-                    key="events-dropdown" 
-                    onMouseEnter={() => setActiveDropdown('events')}
-                    onMouseLeave={() => setActiveDropdown(null)}
-                  >
-                    <button
-                      onClick={() => setActiveDropdown(activeDropdown === 'events' ? null : 'events')}
-                      className={`relative flex items-center gap-1 px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none cursor-pointer rounded-lg ${
-                        location.pathname === '/events'
-                          ? 'text-secondary font-semibold bg-secondary/5'
-                          : 'text-primary hover:text-secondary hover:bg-secondary/[0.03]'
-                      }`}
+          {/* CENTER: Floating Navigation Pill (Desktop) */}
+          <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 z-10">
+            <div className={`flex items-center bg-white rounded-full shadow-[0_6px_28px_rgba(22,58,95,0.08),0_1px_4px_rgba(22,58,95,0.04)] border border-slate-100/70 px-3 transition-all duration-300 ease-out hover:shadow-[0_8px_36px_rgba(22,58,95,0.11)] ${scrolled ? 'h-[58px] gap-0.5' : 'h-[64px] gap-0.5'}`}>
+              {mainNavLinks.map(link => {
+                const isActive = location.pathname === link.path;
+
+                if (link.label === 'Events') {
+                  const isEventsActive = location.pathname === '/events' || location.pathname === '/gallery';
+                  return (
+                    <div
+                      className="relative flex items-center h-full"
+                      key="events-dropdown"
+                      onMouseEnter={() => setActiveDropdown('events')}
+                      onMouseLeave={() => setActiveDropdown(null)}
                     >
-                      <span>Events</span>
-                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'events' ? 'rotate-180' : ''}`} />
-                    </button>
+                      <button
+                        onClick={() => setActiveDropdown(activeDropdown === 'events' ? null : 'events')}
+                        className={`relative flex items-center gap-1 px-4 py-2 text-[15px] font-semibold transition-all duration-200 rounded-full cursor-pointer focus:outline-none ${
+                          isEventsActive
+                            ? 'text-secondary'
+                            : 'text-primary/80 hover:text-primary hover:bg-primary/[0.04]'
+                        }`}
+                      >
+                        <span>Events</span>
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'events' ? 'rotate-180' : ''}`} />
+                        {isEventsActive && (
+                          <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-5 h-[2px] bg-secondary rounded-full" />
+                        )}
+                      </button>
 
-                    {activeDropdown === 'events' && (
-                      <div className="absolute top-[100%] left-0 pt-1 z-50 w-[220px]">
-                        <div className="bg-white rounded-[14px] shadow-[0_10px_40px_rgba(22,58,95,0.08)] border border-slate-100 p-1.5 animate-fade-in-slide">
-                          <button
-                            onClick={() => handleNavClick('/events')}
-                            className="w-full px-3 py-2.5 text-sm font-medium text-primary hover:bg-primary/[0.04] hover:text-secondary rounded-lg transition-colors text-left block"
-                          >
-                            Event Details
-                          </button>
-                          <button
-                            onClick={() => handleNavClick('/gallery')}
-                            className="w-full px-3 py-2.5 text-sm font-medium text-primary hover:bg-primary/[0.04] hover:text-secondary rounded-lg transition-colors text-left block"
-                          >
-                            Event Gallery
-                          </button>
+                      {activeDropdown === 'events' && (
+                        <div className="absolute top-[100%] left-1/2 -translate-x-1/2 pt-3 z-50 w-[220px]">
+                          <div className="bg-white rounded-2xl shadow-[0_20px_48px_rgba(22,58,95,0.12),0_4px_12px_rgba(22,58,95,0.04)] border border-slate-100/60 p-2 animate-fade-in-slide">
+                            <button
+                              onClick={() => handleNavClick('/events')}
+                              className="w-full px-4 py-3 text-[15px] font-semibold text-primary/80 hover:bg-primary/[0.04] hover:text-secondary rounded-xl transition-colors text-left"
+                            >
+                              Event Details
+                            </button>
+                            <button
+                              onClick={() => handleNavClick('/gallery')}
+                              className="w-full px-4 py-3 text-[15px] font-semibold text-primary/80 hover:bg-primary/[0.04] hover:text-secondary rounded-xl transition-colors text-left"
+                            >
+                              Event Gallery
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              }
+                      )}
+                    </div>
+                  );
+                }
 
-              if (link.label === 'Blogs') {
-                return (
-                  <div 
-                    className="relative py-2" 
-                    key="blogs-dropdown"
-                    onMouseEnter={() => setActiveDropdown('blogs')}
-                    onMouseLeave={() => setActiveDropdown(null)}
-                  >
-                    <button
-                      onClick={() => setActiveDropdown(activeDropdown === 'blogs' ? null : 'blogs')}
-                      className={`relative flex items-center gap-1 px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none cursor-pointer rounded-lg ${
-                        location.pathname === '/blogs' || location.pathname === '/news'
-                          ? 'text-secondary font-semibold bg-secondary/5'
-                          : 'text-primary hover:text-secondary hover:bg-secondary/[0.03]'
-                      }`}
+                if (link.label === 'Blogs') {
+                  const isBlogsActive = location.pathname === '/blogs' || location.pathname === '/news';
+                  return (
+                    <div
+                      className="relative flex items-center h-full"
+                      key="blogs-dropdown"
+                      onMouseEnter={() => setActiveDropdown('blogs')}
+                      onMouseLeave={() => setActiveDropdown(null)}
                     >
-                      <span>Blogs</span>
-                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'blogs' ? 'rotate-180' : ''}`} />
-                    </button>
+                      <button
+                        onClick={() => setActiveDropdown(activeDropdown === 'blogs' ? null : 'blogs')}
+                        className={`relative flex items-center gap-1 px-4 py-2 text-[15px] font-semibold transition-all duration-200 rounded-full cursor-pointer focus:outline-none ${
+                          isBlogsActive
+                            ? 'text-secondary'
+                            : 'text-primary/80 hover:text-primary hover:bg-primary/[0.04]'
+                        }`}
+                      >
+                        <span>Blogs</span>
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'blogs' ? 'rotate-180' : ''}`} />
+                        {isBlogsActive && (
+                          <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-5 h-[2px] bg-secondary rounded-full" />
+                        )}
+                      </button>
 
-                    {activeDropdown === 'blogs' && (
-                      <div className="absolute top-[100%] left-0 pt-1 z-50 w-[220px]">
-                        <div className="bg-white rounded-[14px] shadow-[0_10px_40px_rgba(22,58,95,0.08)] border border-slate-100 p-1.5 animate-fade-in-slide">
-                          <button
-                            onClick={() => handleNavClick('/blogs')}
-                            className="w-full px-3 py-2.5 text-sm font-medium text-primary hover:bg-primary/[0.04] hover:text-secondary rounded-lg transition-colors text-left block"
-                          >
-                            Articles
-                          </button>
-                          <button
-                            onClick={() => handleNavClick('/news')}
-                            className="w-full px-3 py-2.5 text-sm font-medium text-primary hover:bg-primary/[0.04] hover:text-secondary rounded-lg transition-colors text-left block"
-                          >
-                            News
-                          </button>
+                      {activeDropdown === 'blogs' && (
+                        <div className="absolute top-[100%] left-1/2 -translate-x-1/2 pt-3 z-50 w-[220px]">
+                          <div className="bg-white rounded-2xl shadow-[0_20px_48px_rgba(22,58,95,0.12),0_4px_12px_rgba(22,58,95,0.04)] border border-slate-100/60 p-2 animate-fade-in-slide">
+                            <button
+                              onClick={() => handleNavClick('/blogs')}
+                              className="w-full px-4 py-3 text-[15px] font-semibold text-primary/80 hover:bg-primary/[0.04] hover:text-secondary rounded-xl transition-colors text-left"
+                            >
+                              Articles
+                            </button>
+                            <button
+                              onClick={() => handleNavClick('/news')}
+                              className="w-full px-4 py-3 text-[15px] font-semibold text-primary/80 hover:bg-primary/[0.04] hover:text-secondary rounded-xl transition-colors text-left"
+                            >
+                              News
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              }
+                      )}
+                    </div>
+                  );
+                }
 
-              return (
+                return (
+                  <button
+                    key={link.path}
+                    onClick={() => handleNavClick(link.path)}
+                    className={`relative flex items-center px-4 py-2 text-[15px] font-semibold transition-all duration-200 rounded-full cursor-pointer focus:outline-none ${
+                      isActive
+                        ? 'text-secondary'
+                        : 'text-primary/80 hover:text-primary hover:bg-primary/[0.04]'
+                    }`}
+                  >
+                    <span>{link.label}</span>
+                    {isActive && (
+                      <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-5 h-[2px] bg-secondary rounded-full" />
+                    )}
+                  </button>
+                );
+              })}
+
+              {/* More Dropdown */}
+              <div
+                className="relative flex items-center h-full"
+                key="more-dropdown"
+                onMouseEnter={() => setActiveDropdown('more')}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
                 <button
-                  key={link.path}
-                  onClick={() => handleNavClick(link.path)}
-                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none cursor-pointer rounded-lg ${
-                    isActive
-                      ? 'text-secondary font-semibold bg-secondary/5'
-                      : 'text-primary hover:text-secondary hover:bg-secondary/[0.03]'
+                  onClick={() => setActiveDropdown(activeDropdown === 'more' ? null : 'more')}
+                  className={`relative flex items-center gap-1 px-4 py-2 text-[15px] font-semibold transition-all duration-200 rounded-full cursor-pointer focus:outline-none ${
+                    activeDropdown === 'more' ? 'text-secondary bg-primary/[0.04]' : 'text-primary/80 hover:text-primary hover:bg-primary/[0.04]'
                   }`}
                 >
-                  {link.label}
+                  <span>More</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'more' ? 'rotate-180' : ''}`} />
                 </button>
-              );
-            })}
 
-            {/* More Dropdown */}
-            <div 
-              className="relative py-2" 
-              key="more-dropdown"
-              onMouseEnter={() => setActiveDropdown('more')}
-              onMouseLeave={() => setActiveDropdown(null)}
-            >
-              <button
-                onClick={() => setActiveDropdown(activeDropdown === 'more' ? null : 'more')}
-                className={`flex items-center gap-1 px-4 py-2 text-sm font-medium transition-all cursor-pointer rounded-lg ${
-                  activeDropdown === 'more' ? 'bg-secondary/5 text-secondary' : 'text-primary hover:text-secondary hover:bg-secondary/[0.03]'
-                }`}
-              >
-                <span>More</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'more' ? 'rotate-180' : ''}`} />
-              </button>
+                {activeDropdown === 'more' && (
+                  <div className="absolute top-[100%] right-0 pt-3 z-50 w-[320px]">
+                    <div className="bg-white rounded-2xl shadow-[0_20px_48px_rgba(22,58,95,0.12),0_4px_12px_rgba(22,58,95,0.04)] border border-slate-100/60 p-2.5 animate-fade-in-slide">
+                      {moreLinks.map(item => (
+                        <button
+                          key={item.path + item.label}
+                          onClick={() => handleNavClick(item.path)}
+                          className="w-full flex items-center gap-3.5 px-3 py-3 rounded-xl text-primary/80 hover:bg-primary/[0.04] hover:text-secondary transition-all duration-200 text-left group"
+                        >
+                          <div className={`w-9 h-9 rounded-xl bg-primary/[0.06] ${item.color} flex items-center justify-center shrink-0 group-hover:bg-primary/[0.1] transition-colors duration-200`}>
+                            <item.icon className="w-[18px] h-[18px]" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-[14px] leading-tight">{item.label}</p>
+                            <p className="text-[11px] text-slate-400 font-medium mt-0.5">{item.sublabel}</p>
+                          </div>
+                        </button>
+                      ))}
 
-              {/* Dropdown Panel */}
-              {activeDropdown === 'more' && (
-                <div className="absolute top-[100%] right-0 pt-1 z-50 w-72">
-                  <div className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.05)] border border-outline-variant/20 py-2 animate-fade-in-slide">
-                  {moreLinks.map(item => (
-                    <button
-                      key={item.path + item.label}
-                      onClick={() => handleNavClick(item.path)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-secondary/[0.04] hover:text-secondary transition-colors text-left group"
-                    >
-                      <div className={`w-8 h-8 rounded-lg bg-primary/5 ${item.color} flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors`}>
-                        <item.icon className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-[13px] leading-tight">{item.label}</p>
-                        <p className="text-[11px] text-slate-400 font-normal mt-0.5">{item.sublabel}</p>
-                      </div>
-                    </button>
-                  ))}
+                      <div className="my-1.5 mx-3 border-t border-slate-100/80" />
 
-                  <div className="my-1.5 mx-4 border-t border-slate-100" />
+                      <button
+                        onClick={() => handleNavClick('/join-us')}
+                        className="w-full flex items-center gap-3.5 px-3 py-3 rounded-xl text-primary/80 hover:bg-primary/[0.04] hover:text-secondary transition-all duration-200 text-left group"
+                      >
+                        <div className="w-9 h-9 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0 group-hover:bg-secondary/15 transition-colors duration-200">
+                          <UserPlus className="w-[18px] h-[18px]" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-[14px] leading-tight">Join Us / मिशन से जुड़ें</p>
+                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">Become a community advocate</p>
+                        </div>
+                      </button>
 
-                  {/* Join Us */}
-                  <button
-                    onClick={() => handleNavClick('/join-us')}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-secondary/[0.04] hover:text-secondary transition-colors text-left group"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-secondary/5 text-secondary flex items-center justify-center shrink-0 group-hover:bg-secondary/10 transition-colors">
-                      <UserPlus className="w-4 h-4" />
+                      <button
+                        onClick={() => {
+                          setActiveDropdown(null);
+                          onOpenEnquiry();
+                        }}
+                        className="w-full flex items-center gap-3.5 px-3 py-3 rounded-xl text-primary/80 hover:bg-primary/[0.04] hover:text-secondary transition-all duration-200 text-left group"
+                      >
+                        <div className="w-9 h-9 rounded-xl bg-primary/[0.06] text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/[0.1] transition-colors duration-200">
+                          <PhoneCall className="w-[18px] h-[18px]" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-[14px] leading-tight">Contact Us</p>
+                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">Patient helpline & enquiry</p>
+                        </div>
+                      </button>
                     </div>
-                    <div>
-                      <p className="font-semibold text-[13px] leading-tight">Join Us / मिशन से जुड़ें</p>
-                      <p className="text-[11px] text-slate-400 font-normal mt-0.5">Become a community advocate</p>
-                    </div>
-                  </button>
-
-                  {/* Contact Us */}
-                  <button
-                    onClick={() => {
-                      setActiveDropdown(null);
-                      onOpenEnquiry();
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-secondary/[0.04] hover:text-secondary transition-colors text-left group"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-primary/5 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
-                      <PhoneCall className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-[13px] leading-tight">Contact Us</p>
-                      <p className="text-[11px] text-slate-400 font-normal mt-0.5">Patient helpline & enquiry</p>
-                    </div>
-                  </button>
-                </div>
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Actions (Desktop) */}
-          <div className="hidden lg:flex items-center space-x-2.5">
+          {/* RIGHT: Actions (Desktop) */}
+          <div className="hidden lg:flex items-center space-x-3 shrink-0 z-10">
             {loggedInVolunteer ? (
               <>
                 <button
                   onClick={() => navigate('/volunteer/dashboard')}
-                  className="px-3.5 py-2 rounded-xl bg-primary/[0.06] text-primary text-sm font-semibold hover:bg-primary/10 transition-all cursor-pointer inline-flex items-center space-x-2"
+                  className="px-5 py-2.5 rounded-full bg-primary/[0.06] text-primary text-[14px] font-semibold hover:bg-primary/[0.1] transition-all duration-200 cursor-pointer inline-flex items-center space-x-2.5 border border-primary/10 focus:outline-none"
                 >
-                  <div className="w-6 h-6 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-full bg-primary text-white text-[11px] font-bold flex items-center justify-center">
                     {volunteerInitials}
                   </div>
                   <span>Dashboard</span>
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="px-3 py-2 rounded-xl bg-red-50 text-red-600 border border-red-100 text-sm font-semibold hover:bg-red-100 transition-all cursor-pointer inline-flex items-center space-x-1.5"
+                  className="w-10 h-10 rounded-full bg-red-50 text-red-500 border border-red-100/80 flex items-center justify-center hover:bg-red-100 transition-all duration-200 cursor-pointer focus:outline-none"
                   title="Logout"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Logout</span>
+                  <LogOut className="w-4 h-4" />
                 </button>
               </>
             ) : loggedInHospital ? (
               <>
                 <button
                   onClick={() => navigate('/hospital/dashboard')}
-                  className="px-3.5 py-2 rounded-xl bg-primary/10 text-primary border border-primary/20 text-sm font-semibold hover:bg-primary/20 transition-all cursor-pointer inline-flex items-center space-x-1.5"
+                  className="px-5 py-2.5 rounded-full bg-primary/[0.06] text-primary border border-primary/10 text-[14px] font-semibold hover:bg-primary/[0.1] transition-all duration-200 cursor-pointer inline-flex items-center space-x-2 focus:outline-none"
                 >
-                  <Building2 className="w-3.5 h-3.5 text-primary" />
+                  <Building2 className="w-4 h-4 text-primary" />
                   <span>Hospital Portal</span>
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="px-3 py-2 rounded-xl bg-red-50 text-red-600 border border-red-100 text-sm font-semibold hover:bg-red-100 transition-all cursor-pointer inline-flex items-center space-x-1.5"
+                  className="w-10 h-10 rounded-full bg-red-50 text-red-500 border border-red-100/80 flex items-center justify-center hover:bg-red-100 transition-all duration-200 cursor-pointer focus:outline-none"
                   title="Logout"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Logout</span>
+                  <LogOut className="w-4 h-4" />
                 </button>
               </>
             ) : (
-              <div 
-                className="relative py-2" 
+              <div
+                className="relative"
                 key="login-dropdown"
                 onMouseEnter={() => setActiveDropdown('login')}
                 onMouseLeave={() => setActiveDropdown(null)}
               >
                 <button
                   onClick={() => setActiveDropdown(activeDropdown === 'login' ? null : 'login')}
-                  className="w-11 h-11 rounded-full bg-white border-[1.5px] border-primary flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all shadow-sm focus:outline-none cursor-pointer"
+                  className="w-10 h-10 xl:w-11 xl:h-11 rounded-full bg-white border border-slate-200/80 flex items-center justify-center text-primary/70 hover:text-primary hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200 shadow-[0_1px_4px_rgba(22,58,95,0.04)] focus:outline-none cursor-pointer"
                 >
-                  <User className="w-5 h-5" />
+                  <User className="w-[18px] h-[18px]" />
                 </button>
 
                 {/* Profile Login Dropdown */}
                 {activeDropdown === 'login' && (
-                  <div className="absolute top-[100%] right-0 pt-1 z-50 w-64">
-                    <div className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.1),0_4px_16px_rgba(0,0,0,0.05)] border border-outline-variant/20 py-2 animate-fade-in-slide">
-                      <p className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 mb-2">
-                      Sign In Access
-                    </p>
-                    <button
-                      onClick={() => handleNavClick('/volunteer/login')}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-primary hover:bg-secondary/[0.04] hover:text-secondary transition-colors text-left group"
-                    >
-                      <User className="w-4 h-4" />
-                      <span>Volunteer Login</span>
-                    </button>
-                    <button
-                      onClick={() => handleNavClick('/hospital/login')}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-primary hover:bg-secondary/[0.04] hover:text-secondary transition-colors text-left group"
-                    >
-                      <Building2 className="w-4 h-4" />
-                      <span>Hospital Login</span>
-                    </button>
-                    <button
-                      onClick={() => handleNavClick('/patient/login')}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-primary hover:bg-secondary/[0.04] hover:text-secondary transition-colors text-left group"
-                    >
-                      <HeartPulse className="w-4 h-4" />
-                      <span>Patient Login</span>
-                    </button>
+                  <div className="absolute top-[100%] right-0 pt-3 z-50 w-60">
+                    <div className="bg-white rounded-2xl shadow-[0_20px_48px_rgba(22,58,95,0.12),0_4px_12px_rgba(22,58,95,0.04)] border border-slate-100/60 p-2 animate-fade-in-slide">
+                      <p className="px-3.5 py-2 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 border-b border-slate-100/80 mb-1.5">
+                        Sign In Access
+                      </p>
+                      <button
+                        onClick={() => handleNavClick('/volunteer/login')}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[14px] font-semibold text-primary/80 hover:bg-primary/[0.04] hover:text-secondary rounded-xl transition-colors duration-200 text-left group"
+                      >
+                        <User className="w-4 h-4 text-slate-400 group-hover:text-secondary transition-colors duration-200" />
+                        <span>Volunteer Login</span>
+                      </button>
+                      <button
+                        onClick={() => handleNavClick('/hospital/login')}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[14px] font-semibold text-primary/80 hover:bg-primary/[0.04] hover:text-secondary rounded-xl transition-colors duration-200 text-left group"
+                      >
+                        <Building2 className="w-4 h-4 text-slate-400 group-hover:text-secondary transition-colors duration-200" />
+                        <span>Hospital Login</span>
+                      </button>
+                      <button
+                        onClick={() => handleNavClick('/patient/login')}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[14px] font-semibold text-primary/80 hover:bg-primary/[0.04] hover:text-secondary rounded-xl transition-colors duration-200 text-left group"
+                      >
+                        <HeartPulse className="w-4 h-4 text-slate-400 group-hover:text-secondary transition-colors duration-200" />
+                        <span>Patient Login</span>
+                      </button>
                     </div>
                   </div>
                 )}
@@ -414,252 +422,316 @@ export default function Navbar({
             )}
             <button
               onClick={onOpenVolunteer}
-              className="btn-primary !py-2.5 !px-5 !text-[13px] !rounded-xl"
+              className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-full font-semibold text-[14px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(22,58,95,0.25)] hover:bg-[#112d4a] focus:outline-none"
             >
-              <Heart className="w-3.5 h-3.5" />
+              <Heart className="w-4 h-4" />
               Become a Volunteer
             </button>
           </div>
 
           {/* Mobile Actions */}
-          <div className="lg:hidden flex items-center space-x-2">
+          <div className="lg:hidden flex items-center space-x-2.5">
             <button
               onClick={() => onOpenEnquiry()}
-              className="px-3 py-1.5 rounded-xl bg-primary text-white text-[12px] font-semibold hover:opacity-95 transition-opacity shadow-sm"
+              className="px-3.5 py-2 rounded-full bg-primary text-white text-[12px] font-semibold hover:opacity-95 transition-opacity shadow-sm"
             >
               Enquiry
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl text-on-surface hover:bg-surface-variant/50 focus:outline-none transition-colors"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-primary/[0.05] focus:outline-none transition-colors"
               aria-label="Toggle Menu"
             >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              <Menu className="w-5 h-5" />
             </button>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Menu Overlay */}
+      {/* ═══════════════════════════════════════════
+          MOBILE OFF-CANVAS DRAWER
+          ═══════════════════════════════════════════ */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-[9999] lg:hidden">
-          {/* Backdrop */}
+          {/* Dark Overlay + Backdrop Blur */}
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-md animate-fade-in"
+            className="absolute inset-0 bg-black/45 backdrop-blur-[7px] animate-fade-in"
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          {/* Menu Panel */}
-          <div className="absolute top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl animate-slide-in-right overflow-y-auto">
-            {/* Mobile Menu Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant/10">
-              <div className="flex items-center gap-2.5">
+          {/* Drawer Panel — slides from LEFT */}
+          <div className="absolute top-0 left-0 h-full w-[88%] max-w-[380px] bg-white shadow-[4px_0_30px_rgba(0,0,0,0.12)] rounded-r-3xl animate-slide-in-left flex flex-col overflow-hidden">
+
+            {/* ── Drawer Header ── */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100/80 shrink-0">
+              <button
+                onClick={() => handleNavClick('/')}
+                className="flex items-center gap-3 focus:outline-none"
+              >
                 <img
                   src="/brand-logo.jpeg"
                   alt="Cancer Aware Bharat"
-                  className="w-9 h-9 rounded-full object-cover border border-primary/10"
+                  className="w-10 h-10 rounded-full object-cover shadow-[0_2px_8px_rgba(22,58,95,0.12)]"
                 />
-                <span className="font-outfit text-base font-bold text-primary">Cancer Aware Bharat</span>
-              </div>
+                <div className="flex flex-col">
+                  <span className="font-outfit text-[17px] font-bold text-primary leading-tight">Cancer Aware Bharat</span>
+                  <span className="text-[9px] font-semibold text-primary/45 tracking-[0.06em] uppercase mt-0.5">कैंसर जागरूकता अभियान</span>
+                </div>
+              </button>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2 rounded-xl hover:bg-surface-container transition-colors"
+                className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-slate-100 transition-colors duration-200"
                 aria-label="Close menu"
               >
-                <X className="w-5 h-5 text-on-surface-variant" />
+                <X className="w-5 h-5 text-slate-500" />
               </button>
             </div>
 
-            {/* Menu Links */}
-            <div className="px-4 py-4 space-y-1">
-              <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/50">Navigation</p>
-              {[
-                { path: '/', label: 'Home', icon: Home },
-                { path: '/about', label: 'About Us', icon: Users },
-                { path: '/mission', label: 'Our Mission / हमारा मिशन', icon: Target },
-                { path: '/events', label: 'Events & Camps', icon: Calendar },
-                { path: '/hospitals', label: 'Health Centres', icon: Building2 },
-                { path: '/blogs', label: 'Educational Blogs', icon: BookOpen },
-                { path: '/gallery', label: 'Media & Impact Gallery', icon: Images },
-                { path: '/doctors', label: 'Our Doctors', icon: Stethoscope },
-                { path: '/join-us', label: 'Join Us / मिशन से जुड़ें', icon: UserPlus },
-              ].map(item => {
-                if (item.label === 'Events & Camps') {
-                  return (
-                    <div key="mobile-events-dropdown" className="space-y-1">
-                      <button
-                        onClick={() => setActiveMobileDropdown(activeMobileDropdown === 'events' ? null : 'events')}
-                        className={`flex items-center justify-between w-full text-left py-2.5 px-3 rounded-xl text-sm transition-all ${
-                          location.pathname === '/events'
-                            ? 'bg-primary/[0.06] text-primary font-semibold'
-                            : 'text-on-surface-variant hover:bg-surface-container-low hover:text-secondary'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Calendar className={`w-4 h-4 shrink-0 ${location.pathname === '/events' ? 'text-primary' : 'text-on-surface-variant/60'}`} />
-                          Events & Camps
-                        </div>
-                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${activeMobileDropdown === 'events' ? 'rotate-180' : ''}`} />
-                      </button>
-                      
-                      {activeMobileDropdown === 'events' && (
-                        <div className="pl-10 space-y-1 animate-fade-in-slide">
-                          <button
-                            onClick={() => handleNavClick('/events')}
-                            className={`flex items-center gap-3 w-full text-left py-2 px-3 rounded-xl text-sm transition-all ${
-                              location.pathname === '/events' ? 'text-primary font-semibold' : 'text-on-surface-variant hover:text-secondary'
-                            }`}
-                          >
-                            Event Details
-                          </button>
-                          <button
-                            onClick={() => handleNavClick('/gallery')}
-                            className={`flex items-center gap-3 w-full text-left py-2 px-3 rounded-xl text-sm transition-all text-on-surface-variant hover:text-secondary`}
-                          >
-                            Event Gallery
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
+            {/* ── Scrollable Content ── */}
+            <div className="flex-1 overflow-y-auto overscroll-contain">
 
-                if (item.label === 'Educational Blogs') {
-                  return (
-                    <div key="mobile-blogs-dropdown" className="space-y-1">
-                      <button
-                        onClick={() => setActiveMobileDropdown(activeMobileDropdown === 'blogs' ? null : 'blogs')}
-                        className={`flex items-center justify-between w-full text-left py-2.5 px-3 rounded-xl text-sm transition-all ${
-                          location.pathname === '/blogs' || location.pathname === '/news'
-                            ? 'bg-primary/[0.06] text-primary font-semibold'
-                            : 'text-on-surface-variant hover:bg-surface-container-low hover:text-secondary'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <BookOpen className={`w-4 h-4 shrink-0 ${location.pathname === '/blogs' || location.pathname === '/news' ? 'text-primary' : 'text-on-surface-variant/60'}`} />
-                          Blogs
-                        </div>
-                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${activeMobileDropdown === 'blogs' ? 'rotate-180' : ''}`} />
-                      </button>
-                      
-                      {activeMobileDropdown === 'blogs' && (
-                        <div className="pl-10 space-y-1 animate-fade-in-slide">
-                          <button
-                            onClick={() => handleNavClick('/blogs')}
-                            className={`flex items-center gap-3 w-full text-left py-2 px-3 rounded-xl text-sm transition-all ${
-                              location.pathname === '/blogs' ? 'text-primary font-semibold' : 'text-on-surface-variant hover:text-secondary'
-                            }`}
-                          >
-                            Articles
-                          </button>
-                          <button
-                            onClick={() => handleNavClick('/news')}
-                            className={`flex items-center gap-3 w-full text-left py-2 px-3 rounded-xl text-sm transition-all ${
-                              location.pathname === '/news' ? 'text-primary font-semibold' : 'text-on-surface-variant hover:text-secondary'
-                            }`}
-                          >
-                            News
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                return (
+              {/* Navigation Links */}
+              <div className="px-5 pt-5 pb-3">
+                {[
+                  { path: '/', label: 'Home', icon: Home },
+                  { path: '/about', label: 'About Us', icon: Users },
+                  { path: '/mission', label: 'Our Mission', icon: Target },
+                ].map(item => (
                   <button
                     key={item.path}
                     onClick={() => handleNavClick(item.path)}
-                    className={`flex items-center gap-3 w-full text-left py-2.5 px-3 rounded-xl text-sm transition-all ${
+                    className={`flex items-center gap-4 w-full text-left h-[58px] px-3 border-b border-slate-100/60 transition-all duration-200 ${
                       location.pathname === item.path
-                        ? 'bg-primary/[0.06] text-primary font-semibold'
-                        : 'text-on-surface-variant hover:bg-surface-container-low hover:text-secondary'
+                        ? 'text-secondary font-semibold'
+                        : 'text-primary/80 hover:text-secondary'
                     }`}
                   >
-                    <item.icon className={`w-4 h-4 shrink-0 ${location.pathname === item.path ? 'text-primary' : 'text-on-surface-variant/60'}`} />
-                    {item.label}
-                    {location.pathname === item.path && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
+                    <item.icon className={`w-[18px] h-[18px] shrink-0 ${location.pathname === item.path ? 'text-secondary' : 'text-primary/40'}`} />
+                    <span className="text-[15px]">{item.label}</span>
+                    {location.pathname === item.path && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-secondary" />}
                   </button>
-                );
-              })}
+                ))}
+
+                {/* Events Accordion */}
+                <div>
+                  <button
+                    onClick={() => setActiveMobileDropdown(activeMobileDropdown === 'events' ? null : 'events')}
+                    className={`flex items-center justify-between w-full text-left h-[58px] px-3 border-b border-slate-100/60 transition-all duration-200 ${
+                      location.pathname === '/events' || location.pathname === '/gallery'
+                        ? 'text-secondary font-semibold'
+                        : 'text-primary/80 hover:text-secondary'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <Calendar className={`w-[18px] h-[18px] shrink-0 ${location.pathname === '/events' || location.pathname === '/gallery' ? 'text-secondary' : 'text-primary/40'}`} />
+                      <span className="text-[15px]">Events & Camps</span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-primary/40 transition-transform duration-300 ${activeMobileDropdown === 'events' ? 'rotate-180 text-secondary' : ''}`} />
+                  </button>
+                  <div className={`overflow-hidden transition-all duration-300 ease-out ${activeMobileDropdown === 'events' ? 'max-h-[140px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className="pl-14 pr-3 py-2 space-y-1 bg-slate-50/50">
+                      <button
+                        onClick={() => handleNavClick('/events')}
+                        className={`w-full text-left py-2.5 px-3 rounded-xl text-[14px] transition-all duration-200 ${
+                          location.pathname === '/events' ? 'text-secondary font-semibold' : 'text-primary/70 hover:text-secondary'
+                        }`}
+                      >
+                        Event Details
+                      </button>
+                      <button
+                        onClick={() => handleNavClick('/gallery')}
+                        className={`w-full text-left py-2.5 px-3 rounded-xl text-[14px] transition-all duration-200 ${
+                          location.pathname === '/gallery' ? 'text-secondary font-semibold' : 'text-primary/70 hover:text-secondary'
+                        }`}
+                      >
+                        Event Gallery
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Health Centres */}
+                <button
+                  onClick={() => handleNavClick('/hospitals')}
+                  className={`flex items-center gap-4 w-full text-left h-[58px] px-3 border-b border-slate-100/60 transition-all duration-200 ${
+                    location.pathname === '/hospitals'
+                      ? 'text-secondary font-semibold'
+                      : 'text-primary/80 hover:text-secondary'
+                  }`}
+                >
+                  <Building2 className={`w-[18px] h-[18px] shrink-0 ${location.pathname === '/hospitals' ? 'text-secondary' : 'text-primary/40'}`} />
+                  <span className="text-[15px]">Health Centres</span>
+                  {location.pathname === '/hospitals' && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-secondary" />}
+                </button>
+
+                {/* Blogs Accordion */}
+                <div>
+                  <button
+                    onClick={() => setActiveMobileDropdown(activeMobileDropdown === 'blogs' ? null : 'blogs')}
+                    className={`flex items-center justify-between w-full text-left h-[58px] px-3 border-b border-slate-100/60 transition-all duration-200 ${
+                      location.pathname === '/blogs' || location.pathname === '/news'
+                        ? 'text-secondary font-semibold'
+                        : 'text-primary/80 hover:text-secondary'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <BookOpen className={`w-[18px] h-[18px] shrink-0 ${location.pathname === '/blogs' || location.pathname === '/news' ? 'text-secondary' : 'text-primary/40'}`} />
+                      <span className="text-[15px]">Blogs</span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-primary/40 transition-transform duration-300 ${activeMobileDropdown === 'blogs' ? 'rotate-180 text-secondary' : ''}`} />
+                  </button>
+                  <div className={`overflow-hidden transition-all duration-300 ease-out ${activeMobileDropdown === 'blogs' ? 'max-h-[140px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className="pl-14 pr-3 py-2 space-y-1 bg-slate-50/50">
+                      <button
+                        onClick={() => handleNavClick('/blogs')}
+                        className={`w-full text-left py-2.5 px-3 rounded-xl text-[14px] transition-all duration-200 ${
+                          location.pathname === '/blogs' ? 'text-secondary font-semibold' : 'text-primary/70 hover:text-secondary'
+                        }`}
+                      >
+                        Articles
+                      </button>
+                      <button
+                        onClick={() => handleNavClick('/news')}
+                        className={`w-full text-left py-2.5 px-3 rounded-xl text-[14px] transition-all duration-200 ${
+                          location.pathname === '/news' ? 'text-secondary font-semibold' : 'text-primary/70 hover:text-secondary'
+                        }`}
+                      >
+                        News
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* More Accordion */}
+                <div>
+                  <button
+                    onClick={() => setActiveMobileDropdown(activeMobileDropdown === 'more' ? null : 'more')}
+                    className={`flex items-center justify-between w-full text-left h-[58px] px-3 border-b border-slate-100/60 transition-all duration-200 text-primary/80 hover:text-secondary`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <ArrowRight className={`w-[18px] h-[18px] shrink-0 text-primary/40 transition-transform duration-300 ${activeMobileDropdown === 'more' ? 'rotate-90' : ''}`} />
+                      <span className="text-[15px]">More</span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-primary/40 transition-transform duration-300 ${activeMobileDropdown === 'more' ? 'rotate-180 text-secondary' : ''}`} />
+                  </button>
+                  <div className={`overflow-hidden transition-all duration-300 ease-out ${activeMobileDropdown === 'more' ? 'max-h-[280px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className="pl-14 pr-3 py-2 space-y-1 bg-slate-50/50">
+                      {[
+                        { path: '/doctors', label: 'Our Doctors' },
+                        { path: '/cancer-awareness', label: 'Cancer Awareness' },
+                        { path: '/join-us', label: 'Join Us' },
+                      ].map(sub => (
+                        <button
+                          key={sub.path}
+                          onClick={() => handleNavClick(sub.path)}
+                          className={`w-full text-left py-2.5 px-3 rounded-xl text-[14px] transition-all duration-200 ${
+                            location.pathname === sub.path ? 'text-secondary font-semibold' : 'text-primary/70 hover:text-secondary'
+                          }`}
+                        >
+                          {sub.label}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          onOpenEnquiry();
+                        }}
+                        className="w-full text-left py-2.5 px-3 rounded-xl text-[14px] text-primary/70 hover:text-secondary transition-all duration-200"
+                      >
+                        Contact Us
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Auth Section ── */}
+              <div className="px-5 py-4 border-t border-slate-100/80">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-3 px-1">Account</p>
+                {loggedInVolunteer ? (
+                  <div className="space-y-2.5">
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate('/volunteer/dashboard');
+                      }}
+                      className="w-full h-[48px] rounded-xl bg-primary/[0.06] text-primary font-semibold text-[14px] flex items-center justify-center gap-2.5 transition-all duration-200 hover:bg-primary/[0.1]"
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      My Dashboard
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        localStorage.removeItem('aware_bharat_logged_in_volunteer');
+                        navigate('/');
+                      }}
+                      className="w-full h-[44px] rounded-xl border border-red-100/80 text-red-500 font-semibold text-[14px] flex items-center justify-center gap-2 transition-all duration-200 hover:bg-red-50"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {[
+                      { path: '/volunteer/login', label: 'Volunteer Login', icon: User },
+                      { path: '/hospital/login', label: 'Hospital Login', icon: Building2 },
+                      { path: '/patient/login', label: 'Patient Login', icon: HeartPulse },
+                    ].map(portal => (
+                      <button
+                        key={portal.path}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          navigate(portal.path);
+                        }}
+                        className="w-full h-[46px] rounded-xl bg-slate-50 hover:bg-primary/[0.05] text-primary/80 hover:text-primary font-semibold text-[14px] flex items-center justify-center gap-2.5 transition-all duration-200 border border-slate-100/60"
+                      >
+                        <portal.icon className="w-4 h-4 text-primary/50" />
+                        {portal.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ── CTA Button ── */}
+              <div className="px-5 pb-4">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenVolunteer();
+                  }}
+                  className="w-full h-[52px] bg-primary text-white rounded-full font-semibold text-[15px] flex items-center justify-center gap-2.5 transition-all duration-200 hover:bg-[#112d4a] hover:shadow-[0_4px_16px_rgba(22,58,95,0.3)] active:scale-[0.98]"
+                >
+                  <Heart className="w-4.5 h-4.5" />
+                  Become a Volunteer
+                </button>
+              </div>
             </div>
 
-            {/* Mobile Auth Section */}
-            <div className="px-4 py-4 border-t border-outline-variant/10 space-y-2">
-              <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/50">Account</p>
-              {loggedInVolunteer ? (
-                <>
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      navigate('/volunteer/dashboard');
-                    }}
-                    className="w-full py-2.5 px-4 rounded-xl bg-primary/[0.06] text-primary text-center font-semibold text-sm flex items-center justify-center space-x-2"
+            {/* ── Social Footer ── */}
+            <div className="shrink-0 px-6 py-4 border-t border-slate-100/80 bg-slate-50/50">
+              <div className="flex items-center justify-center gap-4">
+                {[
+                  { icon: Facebook, label: 'Facebook', href: '#' },
+                  { icon: Instagram, label: 'Instagram', href: '#' },
+                  { icon: Linkedin, label: 'LinkedIn', href: '#' },
+                  { icon: Youtube, label: 'YouTube', href: '#' },
+                ].map(social => (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-full bg-white border border-slate-100/80 flex items-center justify-center text-primary/50 hover:text-secondary hover:border-secondary/30 hover:shadow-[0_2px_8px_rgba(212,175,55,0.15)] transition-all duration-200"
+                    aria-label={social.label}
                   >
-                    <LayoutDashboard className="w-4 h-4" />
-                    <span>My Dashboard</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      localStorage.removeItem('aware_bharat_logged_in_volunteer');
-                      navigate('/');
-                    }}
-                    className="w-full py-2.5 px-4 rounded-xl border border-red-100 text-red-600 text-center font-semibold text-sm flex items-center justify-center space-x-2"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Logout</span>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/50">Login Portals</p>
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      navigate('/volunteer/login');
-                    }}
-                    className="w-full py-2.5 px-4 rounded-xl bg-surface-variant/40 text-primary text-center font-semibold text-sm flex items-center justify-center space-x-2"
-                  >
-                    <User className="w-4 h-4" />
-                    <span>Volunteer Login</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      navigate('/hospital/login');
-                    }}
-                    className="w-full py-2.5 px-4 rounded-xl bg-surface-variant/40 text-primary text-center font-semibold text-sm flex items-center justify-center space-x-2"
-                  >
-                    <Building2 className="w-4 h-4" />
-                    <span>Hospital Login</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      navigate('/patient/login');
-                    }}
-                    className="w-full py-2.5 px-4 rounded-xl bg-surface-variant/40 text-primary text-center font-semibold text-sm flex items-center justify-center space-x-2"
-                  >
-                    <HeartPulse className="w-4 h-4" />
-                    <span>Patient Login</span>
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Mobile CTA */}
-            <div className="px-4 pb-6">
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenVolunteer();
-                }}
-                className="w-full btn-primary !justify-center !rounded-xl !py-3"
-              >
-                <Heart className="w-4 h-4" />
-                Become a Volunteer
-              </button>
+                    <social.icon className="w-[18px] h-[18px]" />
+                  </a>
+                ))}
+              </div>
+              <p className="text-center text-[10px] text-slate-400 mt-3">© 2024 Cancer Aware Bharat</p>
             </div>
           </div>
         </div>
