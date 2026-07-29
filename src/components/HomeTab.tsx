@@ -366,34 +366,62 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
       </section>
 
       {/* ═══════════════════════════════════════════
-          SECTION 4: WHY CHOOSE US
+          SECTION 9: ACTIVE SCREENING CAMPS
           ═══════════════════════════════════════════ */}
-      <section className="bg-white py-16 md:py-20">
+      <section className="gradient-light py-16 md:py-20">
         <div className="section-container">
           <RevealSection>
-            <div className="section-header">
-              <span className="section-badge">Why Cancer Aware Bharat</span>
-              <h2 className="section-title text-2xl md:text-3xl">What Sets Us Apart</h2>
-              <p className="section-subtitle">
-                Trusted by thousands of families for compassionate, accessible, and expert cancer care navigation.
-              </p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
+              <div>
+                <span className="section-badge mb-3">Upcoming Events</span>
+                <h2 className="section-title text-2xl md:text-3xl">Active Screening Camps</h2>
+                <p className="text-sm text-on-surface-variant mt-1">Don't postpone your check-ups. Register in 30 seconds.</p>
+              </div>
+              <button
+                onClick={() => navigate('/events')}
+                className="btn-secondary !py-2 !px-4 !text-xs shrink-0"
+              >
+                All Events & Camps <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </RevealSection>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {[
-              { icon: Shield, title: 'Trusted Network', desc: 'Partnered with NABH-accredited oncology centers across India', color: 'text-primary bg-primary/8' },
-              { icon: Stethoscope, title: 'Expert Guidance', desc: 'Access to oncologists, nutritionists, and trained caseworkers', color: 'text-primary-container bg-slate-50' },
-              { icon: MapPin, title: 'Pan-India Reach', desc: 'Operating across 6+ states with plans for nationwide coverage', color: 'text-secondary bg-slate-50' },
-              { icon: Heart, title: 'Zero Cost Support', desc: 'All screening camps and navigation services are completely free', color: 'text-rose-500 bg-rose-50' },
-            ].map((item, i) => (
-              <RevealSection key={i} delay={i * 100}>
-                <div className="card-subtle p-6 h-full text-center">
-                  <div className={`w-14 h-14 rounded-2xl ${item.color} flex items-center justify-center mx-auto mb-4`}>
-                    <item.icon className="w-6 h-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {INITIAL_EVENTS.slice(0, 2).map((camp, i) => (
+              <RevealSection key={camp.id} delay={i * 120}>
+                <div className="card-premium overflow-hidden flex flex-col h-full">
+                  <div className="h-48 relative bg-surface-container-highest overflow-hidden">
+                    <img src={camp.image} alt={camp.title} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+                    <div className="absolute top-3 left-3">
+                      <span className="glass text-primary text-[10px] font-bold px-3 py-1.5 rounded-full shadow-sm">{camp.type}</span>
+                    </div>
                   </div>
-                  <h3 className="font-outfit font-bold text-on-surface text-[15px] mb-2">{item.title}</h3>
-                  <p className="text-sm text-on-surface-variant leading-relaxed">{item.desc}</p>
+                  <div className="p-5 md:p-6 flex flex-col flex-1">
+                    <h3 className="font-outfit text-base font-bold text-on-surface mb-2 line-clamp-1">{camp.title}</h3>
+                    <p className="text-xs font-semibold text-primary flex items-center gap-1.5 mb-2">
+                      <Calendar className="w-3.5 h-3.5" /> {camp.date} • {camp.time}
+                    </p>
+                    <p className="text-xs text-on-surface-variant line-clamp-2 leading-relaxed flex-1">{camp.description}</p>
+
+                    {/* Capacity Bar */}
+                    <div className="mt-4 pt-4 border-t border-outline-variant/10">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] text-on-surface-variant">
+                          <strong className="text-primary">{camp.capacity - camp.registeredCount}</strong> slots remaining
+                        </span>
+                        <span className="text-[10px] text-on-surface-variant/60">{camp.registeredCount}/{camp.capacity}</span>
+                      </div>
+                      <div className="h-1.5 bg-outline-variant/15 rounded-full overflow-hidden mb-3">
+                        <div
+                          className="h-full bg-primary/70 rounded-full transition-all"
+                          style={{ width: `${(camp.registeredCount / camp.capacity) * 100}%` }}
+                        />
+                      </div>
+                      <button onClick={onOpenEnquiry} className="btn-primary !py-2 !px-4 !text-xs !rounded-lg w-full justify-center">
+                        Register Now <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </RevealSection>
             ))}
@@ -658,62 +686,34 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
       </section>
 
       {/* ═══════════════════════════════════════════
-          SECTION 9: ACTIVE SCREENING CAMPS
+          SECTION 4: WHY CHOOSE US
           ═══════════════════════════════════════════ */}
-      <section className="gradient-light py-16 md:py-20">
+      <section className="bg-white py-16 md:py-20">
         <div className="section-container">
           <RevealSection>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
-              <div>
-                <span className="section-badge mb-3">Upcoming Events</span>
-                <h2 className="section-title text-2xl md:text-3xl">Active Screening Camps</h2>
-                <p className="text-sm text-on-surface-variant mt-1">Don't postpone your check-ups. Register in 30 seconds.</p>
-              </div>
-              <button
-                onClick={() => navigate('/events')}
-                className="btn-secondary !py-2 !px-4 !text-xs shrink-0"
-              >
-                All Events & Camps <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+            <div className="section-header">
+              <span className="section-badge">Why Cancer Aware Bharat</span>
+              <h2 className="section-title text-2xl md:text-3xl">What Sets Us Apart</h2>
+              <p className="section-subtitle">
+                Trusted by thousands of families for compassionate, accessible, and expert cancer care navigation.
+              </p>
             </div>
           </RevealSection>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {INITIAL_EVENTS.slice(0, 2).map((camp, i) => (
-              <RevealSection key={camp.id} delay={i * 120}>
-                <div className="card-premium overflow-hidden flex flex-col h-full">
-                  <div className="h-48 relative bg-surface-container-highest overflow-hidden">
-                    <img src={camp.image} alt={camp.title} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
-                    <div className="absolute top-3 left-3">
-                      <span className="glass text-primary text-[10px] font-bold px-3 py-1.5 rounded-full shadow-sm">{camp.type}</span>
-                    </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { icon: Shield, title: 'Trusted Network', desc: 'Partnered with NABH-accredited oncology centers across India', color: 'text-primary bg-primary/8' },
+              { icon: Stethoscope, title: 'Expert Guidance', desc: 'Access to oncologists, nutritionists, and trained caseworkers', color: 'text-primary-container bg-slate-50' },
+              { icon: MapPin, title: 'Pan-India Reach', desc: 'Operating across 6+ states with plans for nationwide coverage', color: 'text-secondary bg-slate-50' },
+              { icon: Heart, title: 'Zero Cost Support', desc: 'All screening camps and navigation services are completely free', color: 'text-rose-500 bg-rose-50' },
+            ].map((item, i) => (
+              <RevealSection key={i} delay={i * 100}>
+                <div className="card-subtle p-6 h-full text-center">
+                  <div className={`w-14 h-14 rounded-2xl ${item.color} flex items-center justify-center mx-auto mb-4`}>
+                    <item.icon className="w-6 h-6" />
                   </div>
-                  <div className="p-5 md:p-6 flex flex-col flex-1">
-                    <h3 className="font-outfit text-base font-bold text-on-surface mb-2 line-clamp-1">{camp.title}</h3>
-                    <p className="text-xs font-semibold text-primary flex items-center gap-1.5 mb-2">
-                      <Calendar className="w-3.5 h-3.5" /> {camp.date} • {camp.time}
-                    </p>
-                    <p className="text-xs text-on-surface-variant line-clamp-2 leading-relaxed flex-1">{camp.description}</p>
-
-                    {/* Capacity Bar */}
-                    <div className="mt-4 pt-4 border-t border-outline-variant/10">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[11px] text-on-surface-variant">
-                          <strong className="text-primary">{camp.capacity - camp.registeredCount}</strong> slots remaining
-                        </span>
-                        <span className="text-[10px] text-on-surface-variant/60">{camp.registeredCount}/{camp.capacity}</span>
-                      </div>
-                      <div className="h-1.5 bg-outline-variant/15 rounded-full overflow-hidden mb-3">
-                        <div
-                          className="h-full bg-primary/70 rounded-full transition-all"
-                          style={{ width: `${(camp.registeredCount / camp.capacity) * 100}%` }}
-                        />
-                      </div>
-                      <button onClick={onOpenEnquiry} className="btn-primary !py-2 !px-4 !text-xs !rounded-lg w-full justify-center">
-                        Register Now <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
+                  <h3 className="font-outfit font-bold text-on-surface text-[15px] mb-2">{item.title}</h3>
+                  <p className="text-sm text-on-surface-variant leading-relaxed">{item.desc}</p>
                 </div>
               </RevealSection>
             ))}
