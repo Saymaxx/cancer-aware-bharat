@@ -12,8 +12,13 @@ class Notification(Base):
     __tablename__ = "notifications"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    target_role: Mapped[str] = mapped_column(String(20), nullable=False)  # admin/superadmin/hospital/patient/volunteer
-    target_hospital_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("hospitals.id"))
+    # Every dashboard polls GET /notifications every 20s, filtered on
+    # target_role (and target_hospital_id for hospital accounts) -- both were
+    # unindexed, forcing a full table scan on every single poll from every
+    # logged-in session. Mirrors the same reasoning as the patient_enquiries
+    # status/hospital_id indexes added in 0002_phase1_hardening.
+    target_role: Mapped[str] = mapped_column(String(20), nullable=False, index=True)  # admin/superadmin/hospital/patient/volunteer
+    target_hospital_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("hospitals.id"), index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     enquiry_id: Mapped[str | None] = mapped_column(String(50))
