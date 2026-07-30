@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Minus, Send, Bot, Paperclip, UploadCloud, CheckCircle2, ChevronDown } from 'lucide-react';
+import { X, Minus, Send, Bot, Paperclip, UploadCloud, CheckCircle2, ChevronDown, ArrowUpRight } from 'lucide-react';
+import PatientEnquiryForm from './PatientEnquiryForm';
 
 interface ChatAssistantProps {
   isOpen: boolean;
@@ -48,6 +49,7 @@ export default function ChatAssistant({ isOpen, onClose }: ChatAssistantProps) {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isFinished, setIsFinished] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
@@ -221,14 +223,26 @@ export default function ChatAssistant({ isOpen, onClose }: ChatAssistantProps) {
                   <Bot className="w-4.5 h-4.5 text-primary" />
                 </div>
               )}
-              <div 
-                className={`px-4 py-3 max-w-[80%] whitespace-pre-wrap text-[14px] leading-relaxed shadow-sm ${
-                  msg.sender === 'user' 
-                    ? 'bg-primary text-white rounded-2xl rounded-tr-sm' 
-                    : 'bg-white text-slate-800 rounded-2xl rounded-tl-sm border border-slate-100'
-                }`}
-              >
-                {msg.text}
+              <div className="flex flex-col gap-2 max-w-[80%]">
+                <div 
+                  className={`px-4 py-3 whitespace-pre-wrap text-[14px] leading-relaxed shadow-sm ${
+                    msg.sender === 'user' 
+                      ? 'bg-primary text-white rounded-2xl rounded-tr-sm' 
+                      : 'bg-white text-slate-800 rounded-2xl rounded-tl-sm border border-slate-100'
+                  }`}
+                >
+                  {msg.text}
+                </div>
+                {/* Proceed with Form Chip */}
+                {msg.sender === 'bot' && msg.text === 'May I know your full name?' && !isFormOpen && (
+                  <button
+                    onClick={() => setIsFormOpen(true)}
+                    className="group self-start px-4 py-2 bg-[#183A63] text-white rounded-full flex items-center justify-center gap-1.5 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300 ease-out mt-1"
+                  >
+                    <span className="font-medium text-xs">Proceed with Form</span>
+                    <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -421,6 +435,16 @@ export default function ChatAssistant({ isOpen, onClose }: ChatAssistantProps) {
           animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
       `}</style>
+
+      {/* Integrated Smart Form */}
+      <PatientEnquiryForm 
+        isOpen={isFormOpen} 
+        onClose={() => {
+          setIsFormOpen(false);
+          // Auto-close chat or complete it if they submitted the form
+          // For now just close the modal
+        }} 
+      />
     </div>
   );
 }
