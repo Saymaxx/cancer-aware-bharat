@@ -25,4 +25,8 @@ class Volunteer(Base):
     area: Mapped[str | None] = mapped_column(String(200))
     available_days: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
     motivation: Mapped[str | None] = mapped_column(Text)
+    # New registrations start Pending; the migration that added this column
+    # backfilled every pre-existing volunteer to Approved so their login
+    # access wasn't retroactively revoked by introducing this gate.
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="Pending Approval")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

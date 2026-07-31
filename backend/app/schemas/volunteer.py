@@ -26,4 +26,9 @@ class VolunteerOut(CamelModel):
     area: str | None = None
     available_days: list[str] = []
     motivation: str | None = None
+    status: str
     created_at: datetime
+
+
+class VolunteerRejectIn(CamelModel):
+    reason: str = Field(min_length=1, max_length=2000)

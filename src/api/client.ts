@@ -244,6 +244,7 @@ export interface ApiVolunteer {
   area: string | null;
   availableDays: string[];
   motivation: string | null;
+  status: 'Pending Approval' | 'Approved' | 'Rejected';
   createdAt: string;
 }
 
@@ -253,6 +254,21 @@ export function registerVolunteer(payload: RegisterVolunteerPayload): Promise<Ap
 
 export function getMyVolunteerProfile(token: string): Promise<ApiVolunteer> {
   return request<ApiVolunteer>('/volunteers/me', {}, token);
+}
+
+export function listVolunteers(token: string): Promise<ApiVolunteer[]> {
+  return request<ApiVolunteer[]>('/volunteers', {}, token);
+}
+
+export function approveVolunteer(id: string, token: string): Promise<ApiVolunteer> {
+  return request<ApiVolunteer>(`/volunteers/${id}/approve`, { method: 'POST' }, token);
+}
+
+export function rejectVolunteer(id: string, token: string, reason: string): Promise<ApiVolunteer> {
+  return request<ApiVolunteer>(`/volunteers/${id}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  }, token);
 }
 
 // Revokes the token server-side (see backend/app/routers/auth.py logout).
@@ -492,6 +508,62 @@ export function completeEnquiryTreatment(id: string, token: string, remarks?: st
 
 export function listHospitals(): Promise<ApiHospital[]> {
   return request<ApiHospital[]>('/hospitals');
+}
+
+export interface ApiHospitalPartnerRequest {
+  id: string;
+  hospitalName: string;
+  contactName: string;
+  designation: string | null;
+  email: string;
+  phone: string;
+  city: string;
+  specialties: string | null;
+  motivation: string | null;
+  status: 'Pending' | 'Recommended' | 'Approved' | 'Rejected';
+  decisionNotes: string | null;
+  createdAt: string;
+}
+
+export function listPartnerRequests(token: string): Promise<ApiHospitalPartnerRequest[]> {
+  return request<ApiHospitalPartnerRequest[]>('/hospitals/partner-requests/all', {}, token);
+}
+
+export function recommendPartnerRequest(id: string, token: string, notes?: string): Promise<ApiHospitalPartnerRequest> {
+  return request<ApiHospitalPartnerRequest>(`/hospitals/partner-requests/${id}/recommend`, {
+    method: 'POST',
+    body: JSON.stringify({ notes }),
+  }, token);
+}
+
+export interface ApproveHospitalPayload {
+  region: string;
+  state: string;
+  type: string;
+  address: string;
+  lat: number;
+  lng: number;
+  notes?: string;
+}
+
+export interface ApiHospitalApprovalResult {
+  hospital: ApiHospital;
+  loginEmail: string;
+  tempPassword: string;
+}
+
+export function approvePartnerRequest(id: string, token: string, payload: ApproveHospitalPayload): Promise<ApiHospitalApprovalResult> {
+  return request<ApiHospitalApprovalResult>(`/hospitals/partner-requests/${id}/approve`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }, token);
+}
+
+export function rejectPartnerRequest(id: string, token: string, reason: string): Promise<ApiHospitalPartnerRequest> {
+  return request<ApiHospitalPartnerRequest>(`/hospitals/partner-requests/${id}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  }, token);
 }
 
 // ---------------- Notifications ----------------

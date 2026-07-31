@@ -372,3 +372,59 @@ export function DeclineApplicationModal({
     </div>
   );
 }
+
+// 5. REJECT VOLUNTEER MODAL
+export function RejectVolunteerModal({
+  onClose,
+  rejectReason,
+  setRejectReason,
+  onReject,
+}: {
+  onClose: () => void;
+  rejectReason: string;
+  setRejectReason: (val: string) => void;
+  onReject: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reject-volunteer-modal-title"
+    >
+      <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4 text-xs">
+        <h3 id="reject-volunteer-modal-title" className="font-bold text-slate-900 text-sm">Reject Volunteer Application</h3>
+        <p className="text-slate-600">Provide a reason explaining why this volunteer application is being rejected.</p>
+
+        <div>
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Rejection Reason *</label>
+          <textarea
+            rows={3}
+            required
+            value={rejectReason}
+            onChange={e => setRejectReason(e.target.value)}
+            className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none text-xs"
+            placeholder="e.g. Unable to verify contact details..."
+          />
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onReject}
+            className="flex-1 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 cursor-pointer"
+          >
+            Reject Volunteer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

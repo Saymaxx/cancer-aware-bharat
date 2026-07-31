@@ -15,6 +15,7 @@ from app.models.volunteer import Volunteer
 from app.schemas.auth import LoginIn, TokenOut
 from app.schemas.volunteer import VolunteerOut, VolunteerRegisterIn
 from app.services.audit import record_event
+from app.services.notifications import notify
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -59,6 +60,15 @@ def volunteer_login(request: Request, payload: LoginIn, db: DbSession):
         record_event(db, "login_failure", role="volunteer", detail=payload.email, ip_address=get_client_ip(request))
         db.commit()
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
+    if volunteer.status != "Approved":
+        record_event(db, "login_failure", role="volunteer", actor_id=volunteer.id, detail=f"status={volunteer.status}", ip_address=get_client_ip(request))
+        db.commit()
+        detail = (
+            "Your volunteer application is still pending admin approval"
+            if volunteer.status == "Pending Approval"
+            else "Your volunteer application was not approved"
+        )
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail)
     token = create_access_token(subject=str(volunteer.id), role="volunteer")
     record_event(db, "login_success", role="volunteer", actor_id=volunteer.id, ip_address=get_client_ip(request))
     db.commit()
@@ -121,6 +131,8 @@ def volunteer_register(request: Request, payload: VolunteerRegisterIn, db: DbSes
         motivation=payload.motivation,
     )
     db.add(volunteer)
+    notify(db, "admin", "New Volunteer Registration",
+           f"{payload.name} registered as a volunteer and is awaiting approval.")
     db.commit()
     db.refresh(volunteer)
     return volunteer

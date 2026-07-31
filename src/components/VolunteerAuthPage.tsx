@@ -136,22 +136,16 @@ export default function VolunteerAuthPage({}: VolunteerAuthPageProps) {
 
     setIsSubmitting(true);
     try {
-      const created = await registerVolunteer({
+      // Registration no longer auto-logs-in: new volunteers start Pending
+      // Approval and can't sign in until an admin approves them (see
+      // backend/app/routers/auth.py's volunteer_login gate).
+      await registerVolunteer({
         name: registerForm.fullName,
         email: registerForm.email.trim(),
         phone: registerForm.phone,
         password: registerForm.password,
         area: registerForm.city,
         motivation: `Interested domain: ${registerForm.domain}`,
-      });
-      const token = await loginVolunteer(registerForm.email.trim(), registerForm.password);
-      setVolunteerSession({
-        fullName: registerForm.fullName,
-        email: registerForm.email,
-        volunteerId: created.volunteerId,
-        city: registerForm.city,
-        domain: registerForm.domain,
-        accessToken: token.accessToken,
       });
       setLoggedInUser(registerForm.fullName);
       setSubmitSuccess(true);
@@ -171,15 +165,17 @@ export default function VolunteerAuthPage({}: VolunteerAuthPageProps) {
 
   const passwordStrength = getPasswordStrength(registerForm.password);
 
-  // Success — auto-redirect to dashboard
+  // Login redirects straight to the dashboard. Registration doesn't --
+  // the new account starts Pending Approval and can't sign in yet, so
+  // there's nothing to redirect to.
   useEffect(() => {
-    if (submitSuccess) {
+    if (submitSuccess && mode === 'login') {
       const timer = setTimeout(() => {
         navigate('/volunteer/dashboard');
       }, 1200);
       return () => clearTimeout(timer);
     }
-  }, [submitSuccess, navigate]);
+  }, [submitSuccess, mode, navigate]);
 
   if (submitSuccess) {
     return (
@@ -195,21 +191,31 @@ export default function VolunteerAuthPage({}: VolunteerAuthPageProps) {
           </div>
 
           <h2 className="font-headline-lg text-3xl text-primary mb-3">
-            {mode === 'login' ? 'Welcome Back!' : 'Registration Successful!'}
+            {mode === 'login' ? 'Welcome Back!' : 'Application Submitted!'}
           </h2>
           <p className="font-body-md text-on-surface-variant mb-6 max-w-sm mx-auto leading-relaxed">
             {mode === 'login' ? (
               <>Welcome back, <strong className="text-on-surface">{loggedInUser}</strong>. Redirecting to your dashboard...</>
             ) : (
-              <>Congratulations, <strong className="text-on-surface">{loggedInUser}</strong>! Setting up your volunteer dashboard...</>
+              <>Thanks, <strong className="text-on-surface">{loggedInUser}</strong>! Your volunteer application is pending admin approval. You'll be able to sign in once it's reviewed.</>
             )}
           </p>
-          
-          {/* Loading spinner */}
-          <div className="flex items-center justify-center space-x-2">
-            <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-            <span className="text-sm text-on-surface-variant font-medium">Loading dashboard...</span>
-          </div>
+
+          {mode === 'login' ? (
+            /* Loading spinner */
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+              <span className="text-sm text-on-surface-variant font-medium">Loading dashboard...</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => { setSubmitSuccess(false); switchMode('login'); }}
+              className="px-6 py-2.5 rounded-xl bg-primary text-white font-semibold text-sm hover:opacity-95 transition-all cursor-pointer"
+            >
+              Back to Sign In
+            </button>
+          )}
         </div>
       </div>
     );

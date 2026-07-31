@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { listEnquiries, listHospitals, listMyPatientEnquiries, listNotifications } from './client';
+import { listEnquiries, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listVolunteers } from './client';
 import { mapApiEnquiry, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -61,6 +61,43 @@ export function useApiNotifications(token: string | null) {
   return {
     // Notifications are non-critical; fail silently rather than blocking the dashboard.
     notifications: (query.data ?? []).map(mapApiNotification),
+    refetch: query.refetch,
+  };
+}
+
+/** Hospital partner requests visible to admin/superadmin. Returned raw
+ * (not mapped) -- AdminDashboard and SuperAdminDashboard each project this
+ * into their own pre-existing local display shape. */
+export function usePartnerRequests(token: string | null) {
+  const query = useQuery({
+    queryKey: ['partner-requests', token],
+    queryFn: () => listPartnerRequests(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    partnerRequests: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load hospital partner requests' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Volunteers visible to admin/superadmin, including their approval status.
+ * Returned raw -- AdminDashboard projects this into its own local display shape. */
+export function useVolunteers(token: string | null) {
+  const query = useQuery({
+    queryKey: ['volunteers', token],
+    queryFn: () => listVolunteers(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    volunteers: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load volunteers' : null,
     refetch: query.refetch,
   };
 }

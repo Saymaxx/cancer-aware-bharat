@@ -25,7 +25,7 @@ export interface AdminVolunteer {
   phone: string;
   domain: string;
   city: string;
-  status: 'Pending Approval' | 'Approved' | 'Suspended';
+  status: 'Pending Approval' | 'Approved' | 'Rejected' | 'Suspended';
   assignedCampaignsCount: number;
   hoursLogged: number;
   attendanceRate: number; // percentage

@@ -42,6 +42,7 @@ export default function VolunteersTab({
             <option value="All">All Verification Status</option>
             <option value="Pending Approval">Pending Approval</option>
             <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
           </select>
           <button
             onClick={handleExportVolunteersCSV}
@@ -108,7 +109,7 @@ export default function VolunteersTab({
                       </>
                     ) : (
                       <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg">
-                        Active Node
+                        {vol.status === 'Rejected' ? 'Rejected' : 'Active Node'}
                       </span>
                     )}
                   </td>

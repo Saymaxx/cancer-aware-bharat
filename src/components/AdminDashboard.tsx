@@ -5,8 +5,8 @@ import {
   DollarSign, BookOpen, MessageSquare, Terminal, Menu, Stethoscope,
 } from 'lucide-react';
 import { enquiryStore } from '../enquiryStore';
-import { useApiEnquiries, useApiNotifications } from '../api/hooks';
-import { adminApproveEnquiry, adminRejectEnquiry, ApiError, getStaffSession } from '../api/client';
+import { useApiEnquiries, useApiNotifications, usePartnerRequests, useVolunteers } from '../api/hooks';
+import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, BlogArticle } from '../types';
 import { INITIAL_BLOGS } from '../data';
@@ -17,8 +17,8 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { csvCell, downloadCsv } from '../utils/csvExport';
 
 import {
-  INITIAL_KPI_METRICS, INITIAL_PATIENTS, INITIAL_ADMIN_VOLUNTEERS,
-  INITIAL_HOSPITAL_REQUESTS, INITIAL_CAMPAIGN_REQUESTS, INITIAL_ADMIN_DONATIONS,
+  INITIAL_KPI_METRICS, INITIAL_PATIENTS,
+  INITIAL_CAMPAIGN_REQUESTS, INITIAL_ADMIN_DONATIONS,
   INITIAL_ADMIN_FEEDBACKS, type Patient, type AdminVolunteer, type PartnerHospital,
   type CampaignRequest, type AdminDonation, type AdminFeedback
 } from '../adminDashboardData';
@@ -36,8 +36,20 @@ import FeedbackTab from './admin-dashboard/FeedbackTab';
 import NotificationsTab from './admin-dashboard/NotificationsTab';
 import SettingsTab from './admin-dashboard/SettingsTab';
 import {
-  PatientModal, ApproveEnquiryModal, RejectEnquiryModal, DeclineApplicationModal,
+  PatientModal, ApproveEnquiryModal, RejectEnquiryModal, DeclineApplicationModal, RejectVolunteerModal,
 } from './admin-dashboard/Modals';
+
+// HospitalPartnerRequest.status (backend) -> PartnerHospital.status (this
+// dashboard's pre-existing display shape) -- 'Recommended'/'Approved' map
+// onto labels the UI already had before this was wired to a real API.
+function partnerRequestStatusLabel(status: string): PartnerHospital['status'] {
+  switch (status) {
+    case 'Approved': return 'Active Partner';
+    case 'Recommended': return 'Recommended to Super Admin';
+    case 'Rejected': return 'Declined by Admin';
+    default: return 'Pending Tie-up';
+  }
+}
 
 export default function AdminDashboard({ onPageChange, onLogout }: { onPageChange?: (page: string) => void; onLogout: () => void }) {
   const toast = useToast();
@@ -48,6 +60,42 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const apiToken = useMemo(() => getStaffSession()?.accessToken || null, []);
   const { enquiries, refetch: refetchEnquiries } = useApiEnquiries(apiToken);
   const { notifications: adminNotifications } = useApiNotifications(apiToken);
+  const { partnerRequests, refetch: refetchPartnerRequests } = usePartnerRequests(apiToken);
+  const { volunteers: apiVolunteers, refetch: refetchVolunteers } = useVolunteers(apiToken);
+  // domain/city/assignedCampaignsCount/hoursLogged/attendanceRate have no
+  // backend equivalent (no campaign-assignment or hours-tracking feature
+  // exists for volunteers yet) -- left at their honest default rather than
+  // faked, same principle as documentVerified below.
+  const volunteers: AdminVolunteer[] = useMemo(() => apiVolunteers.map(v => ({
+    id: v.id,
+    name: v.name,
+    email: v.email,
+    phone: v.phone,
+    domain: v.area || 'General Volunteer',
+    city: '',
+    status: v.status,
+    assignedCampaignsCount: 0,
+    hoursLogged: 0,
+    attendanceRate: 0,
+    registeredDate: new Date(v.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
+  })), [apiVolunteers]);
+  // documentVerified has no backend field (no document-upload feature
+  // exists for partner requests) -- kept as a local-only overlay, same
+  // "check before recommending" gate the mock version already had, just
+  // no longer persisted to localStorage since the underlying list is now
+  // real and refetched from the server.
+  const [locallyVerifiedHospitalIds, setLocallyVerifiedHospitalIds] = useState<Set<string>>(new Set());
+  const hospitalRequests: PartnerHospital[] = useMemo(() => partnerRequests.map(pr => ({
+    id: pr.id,
+    name: pr.hospitalName,
+    city: pr.city,
+    status: partnerRequestStatusLabel(pr.status),
+    appliedDate: new Date(pr.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
+    documentVerified: locallyVerifiedHospitalIds.has(pr.id),
+    contactEmail: pr.email,
+    contactPhone: pr.phone,
+    declineReason: pr.status === 'Rejected' ? (pr.decisionNotes || undefined) : undefined,
+  })), [partnerRequests, locallyVerifiedHospitalIds]);
   const pendingAdminCount = useMemo(() => enquiries.filter(e => e.status === 'Pending Admin Review').length, [enquiries]);
 
   // Admin Enquiry Modals state
@@ -65,41 +113,6 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
       try { return JSON.parse(stored); } catch (e) { console.error(e); }
     }
     return INITIAL_PATIENTS;
-  });
-  const [volunteers, setVolunteers] = useState<AdminVolunteer[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_volunteers');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) { console.error(e); }
-    }
-    return INITIAL_ADMIN_VOLUNTEERS;
-  });
-  const [hospitalRequests, setHospitalRequests] = useState<PartnerHospital[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_hospital_requests');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        const mapped: PartnerHospital[] = parsed.map((h: any) => ({
-          id: h.id,
-          name: h.name || h.hospitalName,
-          city: h.city,
-          status: h.status === 'Approved' ? 'Active Partner' : h.status === 'Recommended by Admin' || h.status === 'Recommended to Super Admin' ? 'Recommended to Super Admin' : 'Pending Tie-up',
-          appliedDate: h.appliedDate || new Date().toLocaleDateString(),
-          documentVerified: h.documentVerified ?? (h.documents ? h.documents.every((d: any) => d.verified) : true),
-          contactEmail: h.contactEmail || h.email || 'info@hospital.org',
-          contactPhone: h.contactPhone || h.phone || '+91 11 0000 0000',
-        }));
-        // Merge with initial requests
-        INITIAL_HOSPITAL_REQUESTS.forEach(init => {
-          if (!mapped.some(m => m.id === init.id)) {
-            mapped.push(init);
-          }
-        });
-        return mapped;
-      } catch (e) {
-        console.error('Failed to parse hospital requests', e);
-      }
-    }
-    return INITIAL_HOSPITAL_REQUESTS;
   });
   const [campaignRequests, setCampaignRequests] = useState<CampaignRequest[]>(() => {
     const stored = localStorage.getItem('aware_bharat_campaign_requests');
@@ -313,22 +326,35 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   // ==========================================
   // VOLUNTEER UTILITIES
   // ==========================================
-  const handleApproveVolunteer = (id: string) => {
-    setVolunteers(prev => {
-      const updated = prev.map(v => v.id === id ? { ...v, status: 'Approved' as const } : v);
-      localStorage.setItem('aware_bharat_volunteers', JSON.stringify(updated));
-      return updated;
-    });
-    toast.success('Volunteer Approved', 'Volunteer granted active status.');
+  const [showRejectVolunteerModal, setShowRejectVolunteerModal] = useState<string | null>(null);
+  const [rejectVolunteerReason, setRejectVolunteerReason] = useState('');
+
+  const handleApproveVolunteer = async (id: string) => {
+    if (!apiToken) return;
+    try {
+      await approveVolunteer(id, apiToken);
+      toast.success('Volunteer Approved', 'Volunteer granted active status.');
+      refetchVolunteers();
+    } catch (err) {
+      toast.error('Approval Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   const handleRejectVolunteer = (id: string) => {
-    setVolunteers(prev => {
-      const updated = prev.filter(v => v.id !== id);
-      localStorage.setItem('aware_bharat_volunteers', JSON.stringify(updated));
-      return updated;
-    });
-    toast.info('Volunteer Declined');
+    setShowRejectVolunteerModal(id);
+  };
+
+  const handleConfirmRejectVolunteer = async () => {
+    if (!rejectVolunteerReason.trim() || !apiToken || !showRejectVolunteerModal) return;
+    try {
+      await rejectVolunteer(showRejectVolunteerModal, apiToken, rejectVolunteerReason);
+      setShowRejectVolunteerModal(null);
+      setRejectVolunteerReason('');
+      toast.info('Volunteer Declined');
+      refetchVolunteers();
+    } catch (err) {
+      toast.error('Rejection Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   // ==========================================
@@ -368,63 +394,34 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   // ==========================================
   // HOSPITAL UTILITIES
   // ==========================================
-  const handleRecommendHospital = (id: string) => {
-    setHospitalRequests(prev => {
-      const updated = prev.map(h => h.id === id ? { ...h, status: 'Recommended to Super Admin' as const } : h);
-      const stored = localStorage.getItem('aware_bharat_hospital_requests');
-      if (stored) {
-        try {
-          const list = JSON.parse(stored);
-          const updatedList = list.map((item: any) => item.id === id ? {
-            ...item,
-            status: 'Recommended by Admin',
-            recommendedBy: 'Dr. Ramesh Sharma (ADM-001)',
-            recommendationNotes: 'Primary accreditation documents verified by Regional Admin. Recommended for Super Admin board clearance.'
-          } : item);
-          localStorage.setItem('aware_bharat_hospital_requests', JSON.stringify(updatedList));
-        } catch (e) { console.error(e); }
-      }
-      return updated;
-    });
-    toast.success('Hospital Recommended', 'Hospital application forwarded to Super Admin board.');
+  const handleRecommendHospital = async (id: string) => {
+    if (!apiToken) return;
+    try {
+      await recommendPartnerRequest(id, apiToken);
+      toast.success('Hospital Recommended', 'Hospital application forwarded to Super Admin board.');
+      refetchPartnerRequests();
+    } catch (err) {
+      toast.error('Recommend Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
-  const handleDeclineHospitalByAdmin = (id: string) => {
-    if (!adminDeclineReason.trim()) return;
-    setHospitalRequests(prev => {
-      const updated = prev.map(h => h.id === id ? { ...h, status: 'Declined by Admin' as const, declineReason: adminDeclineReason } : h);
-      const stored = localStorage.getItem('aware_bharat_hospital_requests');
-      if (stored) {
-        try {
-          const list = JSON.parse(stored);
-          const updatedList = list.map((item: any) => item.id === id ? {
-            ...item,
-            status: 'Declined by Admin',
-            rejectionReason: `Declined by Regional Coordinator: ${adminDeclineReason}`
-          } : item);
-          localStorage.setItem('aware_bharat_hospital_requests', JSON.stringify(updatedList));
-        } catch (e) { console.error(e); }
-      }
-      return updated;
-    });
-    setShowAdminDeclineModal(null);
-    setAdminDeclineReason('');
-    toast.warning('Hospital Declined', 'Application marked as declined.');
+  const handleDeclineHospitalByAdmin = async (id: string) => {
+    if (!adminDeclineReason.trim() || !apiToken) return;
+    try {
+      await rejectPartnerRequest(id, apiToken, adminDeclineReason);
+      setShowAdminDeclineModal(null);
+      setAdminDeclineReason('');
+      toast.warning('Hospital Declined', 'Application marked as declined.');
+      refetchPartnerRequests();
+    } catch (err) {
+      toast.error('Decline Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   const handleVerifyDocument = (id: string) => {
-    setHospitalRequests(prev => {
-      const updated = prev.map(h => h.id === id ? { ...h, documentVerified: true } : h);
-      const stored = localStorage.getItem('aware_bharat_hospital_requests');
-      if (stored) {
-        try {
-          const list = JSON.parse(stored);
-          const updatedList = list.map((item: any) => item.id === id ? { ...item, documentVerified: true } : item);
-          localStorage.setItem('aware_bharat_hospital_requests', JSON.stringify(updatedList));
-        } catch (e) { console.error(e); }
-      }
-      return updated;
-    });
+    // No backend field exists for this (see hospitalRequests mapping above)
+    // -- purely a local UI gate before the real "Recommend" call is allowed.
+    setLocallyVerifiedHospitalIds(prev => new Set(prev).add(id));
     toast.success('Documents Verified', 'Hospital accreditation documents verified.');
   };
 
@@ -973,6 +970,16 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
           adminDeclineReason={adminDeclineReason}
           setAdminDeclineReason={setAdminDeclineReason}
           onDecline={() => handleDeclineHospitalByAdmin(showAdminDeclineModal)}
+        />
+      )}
+
+      {/* Reject Volunteer Modal */}
+      {showRejectVolunteerModal && (
+        <RejectVolunteerModal
+          onClose={() => { setShowRejectVolunteerModal(null); setRejectVolunteerReason(''); }}
+          rejectReason={rejectVolunteerReason}
+          setRejectReason={setRejectVolunteerReason}
+          onReject={handleConfirmRejectVolunteer}
         />
       )}
 
