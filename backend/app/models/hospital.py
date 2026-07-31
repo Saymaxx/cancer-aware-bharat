@@ -1,11 +1,13 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, Float, Text, DateTime, func
+from sqlalchemy import CheckConstraint, String, Float, Text, DateTime, func
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+PARTNER_REQUEST_STATUSES = ("Pending", "Recommended", "Approved", "Rejected")
 
 
 class Hospital(Base):
@@ -46,6 +48,17 @@ class HospitalPartnerRequest(Base):
     """Application submitted by a hospital wanting to join the network."""
 
     __tablename__ = "hospital_partner_requests"
+    __table_args__ = (
+        # This table had zero status enforcement before Phase B added the
+        # recommend/approve/reject workflow -- a typo'd manual UPDATE could
+        # silently make a request invisible to every dashboard filter, same
+        # class of bug the enquiry/user status CHECK constraints (see
+        # migration 0005) already guard against.
+        CheckConstraint(
+            "status IN ('" + "', '".join(PARTNER_REQUEST_STATUSES) + "')",
+            name="ck_hospital_partner_requests_status",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     hospital_name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -56,5 +69,11 @@ class HospitalPartnerRequest(Base):
     city: Mapped[str] = mapped_column(String(120), nullable=False)
     specialties: Mapped[str | None] = mapped_column(Text)
     motivation: Mapped[str | None] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(String(20), default="Pending")  # 'Pending' | 'Approved'
+    status: Mapped[str] = mapped_column(String(20), default="Pending")  # see PARTNER_REQUEST_STATUSES
+    # Freeform remarks from whichever action (recommend/approve/reject) most
+    # recently touched this request -- mirrors the enquiry workflow's
+    # decision-remarks pattern, just without a full per-step timeline table
+    # (out of scope for this pass; the request only ever has one live status
+    # at a time, unlike an enquiry's multi-hop journey).
+    decision_notes: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

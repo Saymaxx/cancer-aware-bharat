@@ -239,6 +239,120 @@ export function RejectHospitalModal({
   );
 }
 
+// 3b. APPROVE HOSPITAL MODAL -- collects the fields HospitalPartnerRequest
+// never gathered but a real Hospital row requires (region/state/type/
+// address/lat/lng), matching backend/app/schemas/hospital.py's
+// HospitalApproveIn exactly.
+export function ApproveHospitalModal({
+  hospitalName,
+  onClose,
+  region,
+  setRegion,
+  stateValue,
+  setStateValue,
+  hospitalType,
+  setHospitalType,
+  address,
+  setAddress,
+  lat,
+  setLat,
+  lng,
+  setLng,
+  notes,
+  setNotes,
+  onSubmit,
+  submitting,
+}: {
+  hospitalName: string;
+  onClose: () => void;
+  region: string;
+  setRegion: (val: string) => void;
+  stateValue: string;
+  setStateValue: (val: string) => void;
+  hospitalType: string;
+  setHospitalType: (val: string) => void;
+  address: string;
+  setAddress: (val: string) => void;
+  lat: string;
+  setLat: (val: string) => void;
+  lng: string;
+  setLng: (val: string) => void;
+  notes: string;
+  setNotes: (val: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  submitting: boolean;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="approve-hospital-modal-title"
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4 my-8" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center border-b pb-3">
+          <div>
+            <h3 id="approve-hospital-modal-title" className="text-base font-bold text-slate-900">Approve & Activate Hospital</h3>
+            <p className="text-xs text-slate-500 mt-0.5">{hospitalName}</p>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="text-slate-400 hover:text-slate-600 cursor-pointer"><X className="w-5 h-5" /></button>
+        </div>
+        <form onSubmit={onSubmit} className="space-y-3.5 text-xs">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="font-bold text-slate-600 block mb-1">Region *</label>
+              <select required value={region} onChange={e => setRegion(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs">
+                <option value="">Select region</option>
+                <option value="north">North</option>
+                <option value="south">South</option>
+                <option value="east">East</option>
+                <option value="west">West</option>
+              </select>
+            </div>
+            <div>
+              <label className="font-bold text-slate-600 block mb-1">Center Type *</label>
+              <select required value={hospitalType} onChange={e => setHospitalType(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs">
+                <option value="">Select type</option>
+                <option value="Center of Excellence">Center of Excellence</option>
+                <option value="Community Partner">Community Partner</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="font-bold text-slate-600 block mb-1">State *</label>
+            <input required value={stateValue} onChange={e => setStateValue(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs" placeholder="e.g. Delhi" />
+          </div>
+          <div>
+            <label className="font-bold text-slate-600 block mb-1">Full Address *</label>
+            <input required value={address} onChange={e => setAddress(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs" placeholder="Street, area, city, PIN" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="font-bold text-slate-600 block mb-1">Latitude *</label>
+              <input required type="number" step="any" value={lat} onChange={e => setLat(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs" placeholder="e.g. 28.6139" />
+            </div>
+            <div>
+              <label className="font-bold text-slate-600 block mb-1">Longitude *</label>
+              <input required type="number" step="any" value={lng} onChange={e => setLng(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs" placeholder="e.g. 77.2090" />
+            </div>
+          </div>
+          <div>
+            <label className="font-bold text-slate-600 block mb-1">Notes (optional)</label>
+            <textarea rows={2} value={notes} onChange={e => setNotes(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs resize-none" placeholder="Any internal notes for this approval..." />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">Cancel</button>
+            <button type="submit" disabled={submitting} className="flex-1 py-2.5 bg-primary-container text-white rounded-xl text-sm font-bold hover:bg-slate-700 cursor-pointer disabled:opacity-60">
+              {submitting ? 'Activating...' : 'Approve & Activate'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // 4. HOSPITAL APPROVED / CREDENTIALS RESULT MODAL
 export function HospitalApprovedModal({
   result,
