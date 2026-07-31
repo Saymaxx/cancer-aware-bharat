@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, HeartPulse, FileText, ArrowRight, CheckCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import PrescriptionPreview from './PrescriptionPreview';
+import { ApiError, submitEnquiry } from '../api/client';
 
 interface PatientEnquiryFormProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export default function PatientEnquiryForm({ isOpen, onClose }: PatientEnquiryFo
   const [isSuccess, setIsSuccess] = useState(false);
   const [showPrescription, setShowPrescription] = useState(false);
   const [patientId, setPatientId] = useState<string | null>(null);
+  const [referenceNumber, setReferenceNumber] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,53 +73,42 @@ export default function PatientEnquiryForm({ isOpen, onClose }: PatientEnquiryFo
     isAddressValid &&
     isSymptomsValid;
 
-  console.log({
-    fullName: formData.fullName,
-    age: formData.age,
-    gender: formData.gender,
-    phone: formData.phone,
-    address: formData.address,
-    comment: formData.symptoms,
-    isFormValid: isValid,
-    isSubmitting
-  });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Temporarily bypassed validation to debug submit flow
-    // if (!isValid) return;
+    if (!isValid) {
+      setSubmitError('Please fill in all required fields correctly before submitting.');
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
-      const scriptUrl = "https://script.google.com/macros/s/AKfycbzkJqgKEowbxt-wE-EoTAVnsR8XdCTRi_l3OTOwQaH0HQQZnIBgt2bMgKTUOeuJY7Gc0Q/exec";
-      
-      const submitData = new FormData();
-      submitData.append("name", formData.fullName);
-      submitData.append("age", formData.age);
-      submitData.append("gender", formData.gender);
-      submitData.append("phone", formData.phone);
-      submitData.append("address", formData.address);
-      submitData.append("comment", formData.symptoms);
-
-      const response = await fetch(scriptUrl, {
-        method: "POST",
-        body: submitData
+      // This was previously posting directly to a hardcoded Google Apps
+      // Script URL, bypassing the real backend/database entirely -- no
+      // record of it ever reached Postgres or any dashboard. Routed through
+      // the same submitEnquiry() call EnquiryModal.tsx already uses so it
+      // lands in the real enquiry pipeline instead. This quick chatbot-form
+      // never asks for a city or an enquiry "reason" the way the full
+      // enquiry form does, so address doubles as city and reason gets a
+      // fixed label identifying where it came from.
+      const created = await submitEnquiry({
+        patientName: formData.fullName.trim(),
+        age: Number(formData.age),
+        gender: formData.gender,
+        phone: formData.phone.trim(),
+        address: formData.address.trim(),
+        city: formData.address.trim(),
+        reason: 'General Enquiry (Chatbot)',
+        symptoms: formData.symptoms.trim(),
+        notes: formData.symptoms.trim(),
       });
 
-      // Handle standard apps script response
-      let result: any = { patientId: `CAB-${Math.floor(Math.random() * 10000000)}` }; // Fallback ID if parsing fails
-      try {
-        result = await response.json();
-      } catch (err) {
-        console.warn("Could not parse JSON from Apps Script", err);
-      }
-      
-      setPatientId(result.patientId || result.id || `CAB-${Math.floor(Math.random() * 10000000)}`);
+      setPatientId(created.enquiryId);
+      setReferenceNumber(created.referenceNumber);
       setIsSubmitting(false);
       setIsSuccess(true);
-      
+
       // Removed form clear from here so prescription preview can access the data.
       // Form clearing is now handled by the 'New Inquiry' button.
 
@@ -146,8 +137,7 @@ export default function PatientEnquiryForm({ isOpen, onClose }: PatientEnquiryFo
         }
       }());
     } catch (error) {
-      console.error("Submit error:", error);
-      setSubmitError("Unable to submit enquiry. Please try again.");
+      setSubmitError(error instanceof ApiError ? error.message : 'Unable to submit enquiry. Please check your connection and try again.');
       setIsSubmitting(false);
     }
   };
@@ -222,8 +212,11 @@ export default function PatientEnquiryForm({ isOpen, onClose }: PatientEnquiryFo
                     </p>
                     {patientId && (
                       <div className="bg-slate-100 px-6 py-3 rounded-lg mb-6 border border-slate-200">
-                        <span className="text-slate-500 text-sm font-semibold uppercase tracking-wider block mb-1">Patient ID:</span>
+                        <span className="text-slate-500 text-sm font-semibold uppercase tracking-wider block mb-1">Enquiry ID:</span>
                         <span className="text-primary font-bold text-lg">{patientId}</span>
+                        {referenceNumber && (
+                          <span className="text-slate-500 text-xs font-mono block mt-1">Ref: {referenceNumber}</span>
+                        )}
                       </div>
                     )}
                     
@@ -245,9 +238,10 @@ export default function PatientEnquiryForm({ isOpen, onClose }: PatientEnquiryFo
                         Close
                       </button>
                       <button
-                        onClick={() => { 
-                          setIsSuccess(false); 
+                        onClick={() => {
+                          setIsSuccess(false);
                           setPatientId(null);
+                          setReferenceNumber(null);
                           setFormData({
                             fullName: '',
                             age: '',
