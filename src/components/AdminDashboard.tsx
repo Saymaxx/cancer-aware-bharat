@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { enquiryStore } from '../enquiryStore';
 import { useApiEnquiries, useApiNotifications, usePartnerRequests, useVolunteers } from '../api/hooks';
-import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer } from '../api/client';
+import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, BlogArticle } from '../types';
 import { INITIAL_BLOGS } from '../data';
@@ -458,21 +458,20 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   // ==========================================
   // ANNOUNCEMENTS & BLOG UTILITIES
   // ==========================================
-  const handleSendAnnouncement = (e: React.FormEvent) => {
+  const handleSendAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!announcementTitle || !announcementMessage) return;
+    if (!announcementTitle || !announcementMessage || !apiToken) return;
 
-    enquiryStore.addNotification({
-      targetRole: 'volunteer',
-      title: announcementTitle,
-      message: announcementMessage
-    });
-
-    setAnnouncementTitle('');
-    setAnnouncementMessage('');
-    setNotifSuccessToast(true);
-    setTimeout(() => setNotifSuccessToast(false), 3000);
-    toast.success('Broadcast Alert Sent', 'Notification dispatched to volunteer network.');
+    try {
+      const result = await broadcastNotification(apiToken, 'Volunteers', announcementTitle, announcementMessage);
+      setAnnouncementTitle('');
+      setAnnouncementMessage('');
+      setNotifSuccessToast(true);
+      setTimeout(() => setNotifSuccessToast(false), 3000);
+      toast.success('Broadcast Alert Sent', `Notification dispatched to ${result.recipientCount} volunteer(s).`);
+    } catch (err) {
+      toast.error('Broadcast Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   const handlePublishBlog = (e: React.FormEvent) => {

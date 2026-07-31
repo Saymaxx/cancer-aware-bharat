@@ -572,6 +572,20 @@ export function listNotifications(token: string): Promise<ApiNotification[]> {
   return request<ApiNotification[]>('/notifications', {}, token);
 }
 
+export type NotificationAudience = 'All Users' | 'Admins' | 'Volunteers' | 'Hospitals' | 'Patients';
+
+export function broadcastNotification(
+  token: string,
+  audience: NotificationAudience,
+  title: string,
+  message: string,
+): Promise<{ recipientCount: number }> {
+  return request<{ recipientCount: number }>('/notifications/broadcast', {
+    method: 'POST',
+    body: JSON.stringify({ audience, title, message }),
+  }, token);
+}
+
 // ---------------- Patients ----------------
 
 export interface ApiPatient {

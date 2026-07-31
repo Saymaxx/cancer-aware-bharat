@@ -6,13 +6,14 @@ import {
 } from 'lucide-react';
 import { useToast } from './common/Toast';
 import { ApiError, ApiVolunteer, getMyVolunteerProfile } from '../api/client';
+import { useApiNotifications } from '../api/hooks';
 import DashboardSidebar, { SidebarFooterButton } from './common/DashboardSidebar';
 import { useSidebarState } from '../hooks/useSidebarState';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 
 import {
   MOTIVATIONAL_QUOTES, DEFAULT_VOLUNTEER_STATS,
-  MY_ACTIVE_CAMPAIGNS, TODAYS_SCHEDULE, NOTIFICATIONS,
+  MY_ACTIVE_CAMPAIGNS, TODAYS_SCHEDULE,
   TRAINING_RESOURCES,
   type ActiveCampaign, type Notification as NotifType, type ScheduleItem,
   type TrainingResource,
@@ -75,10 +76,30 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
   const [quoteIndex, setQuoteIndex] = useState(Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length));
   const [toastMessage, setToastMessage] = useState('');
 
+  // Real notifications from the backend (broadcasts from Admin/Super Admin,
+  // see POST /notifications/broadcast) -- the backend has no "type"
+  // (campaign/announcement/reminder/achievement) or per-recipient read-state
+  // concept, so every notification is bucketed as 'announcement' and "read"
+  // is tracked as a local-only overlay, same as every other dashboard's
+  // notification panel today (none of them call POST /notifications/{id}/read
+  // either).
+  const { notifications: apiNotifications } = useApiNotifications(volunteer?.accessToken || null);
+  const [locallyReadIds, setLocallyReadIds] = useState<Set<string>>(new Set());
+  const [locallyClearedIds, setLocallyClearedIds] = useState<Set<string>>(new Set());
+  const notifications: NotifType[] = useMemo(() => apiNotifications
+    .filter(n => !locallyClearedIds.has(n.id))
+    .map(n => ({
+      id: n.id,
+      title: n.title,
+      message: n.message,
+      time: n.timestamp,
+      type: 'announcement' as const,
+      read: n.read || locallyReadIds.has(n.id),
+    })), [apiNotifications, locallyReadIds, locallyClearedIds]);
+
   // Data States
   const [myCampaigns, setMyCampaigns] = useState<ActiveCampaign[]>(MY_ACTIVE_CAMPAIGNS);
   const [scheduleList, setScheduleList] = useState<ScheduleItem[]>(TODAYS_SCHEDULE);
-  const [notifications, setNotifications] = useState<NotifType[]>(NOTIFICATIONS);
   const [trainingModules, setTrainingModules] = useState<TrainingResource[]>(TRAINING_RESOURCES);
   const [notifFilter, setNotifFilter] = useState<string>('All');
   const [userStats] = useState(() => {
@@ -152,12 +173,16 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
   };
 
   const markNotifRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setLocallyReadIds(prev => new Set(prev).add(id));
     showToast('Notification marked as read');
   };
 
   const handleClearReadNotifs = () => {
-    setNotifications(prev => prev.filter(n => !n.read));
+    setLocallyClearedIds(prev => {
+      const updated = new Set(prev);
+      notifications.filter(n => n.read).forEach(n => updated.add(n.id));
+      return updated;
+    });
     showToast('Read notifications cleared.');
   };
 
@@ -343,7 +368,11 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
               filteredNotifications={filteredNotifications}
               markNotifRead={markNotifRead}
               markAllRead={() => {
-                setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+                setLocallyReadIds(prev => {
+                  const updated = new Set(prev);
+                  notifications.forEach(n => updated.add(n.id));
+                  return updated;
+                });
                 showToast('All notifications marked as read');
               }}
               handleClearReadNotifs={handleClearReadNotifs}

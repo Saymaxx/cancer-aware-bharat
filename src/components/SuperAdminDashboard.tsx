@@ -5,9 +5,8 @@ import {
   Stethoscope, Crown, UserCog, Layers, PieChart, LayoutDashboard, Megaphone,
   Database, ShieldCheck, FileText,
 } from 'lucide-react';
-import { enquiryStore } from '../enquiryStore';
-import { useApiEnquiries, useApiNotifications, useApiHospitals } from '../api/hooks';
-import { assignHospital, ApiError, getStaffSession } from '../api/client';
+import { useApiEnquiries, useApiNotifications, useApiHospitals, usePartnerRequests } from '../api/hooks';
+import { assignHospital, ApiError, approvePartnerRequest, broadcastNotification, getStaffSession, rejectPartnerRequest, type NotificationAudience } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { INITIAL_BLOGS } from '../data';
 import { PatientEnquiry, Hospital, BlogArticle } from '../types';
@@ -18,7 +17,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { csvCell, downloadCsv } from '../utils/csvExport';
 
 import {
-  INITIAL_ADMIN_ACCOUNTS, INITIAL_HOSPITAL_APPLICATIONS,
+  INITIAL_ADMIN_ACCOUNTS,
   INITIAL_AUDIT_LOGS, INITIAL_CUSTOM_ROLES,
   INITIAL_BACKUP_RECORDS, INITIAL_SENT_NOTIFICATIONS,
   type SuperAdminAccount, type HospitalApplication, type AuditLogEntry,
@@ -49,7 +48,7 @@ import DatabaseTab from './superadmin-dashboard/DatabaseTab';
 import SecurityTab from './superadmin-dashboard/SecurityTab';
 import ProfileTab from './superadmin-dashboard/ProfileTab';
 import {
-  AdminAccountModal, AdminCredentialsModal, RejectHospitalModal,
+  AdminAccountModal, AdminCredentialsModal, ApproveHospitalModal, RejectHospitalModal,
   HospitalApprovedModal, CustomRoleModal, AssignHospitalModal,
 } from './superadmin-dashboard/Modals';
 
@@ -93,6 +92,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     setShowHospitalDetail(null);
     setShowRejectDialog(null);
     setShowApprovalResult(null);
+    setShowApproveModal(null);
     setCreatedAdminCredentials(null);
   });
 
@@ -156,24 +156,42 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     return INITIAL_ADMIN_ACCOUNTS;
   });
 
-  const [hospitals, setHospitals] = useState<HospitalApplication[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_hospital_requests');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        const merged = [...parsed];
-        INITIAL_HOSPITAL_APPLICATIONS.forEach(initApp => {
-          if (!merged.some((h: any) => h.id === initApp.id)) {
-            merged.push(initApp);
-          }
-        });
-        return merged;
-      } catch (e) {
-        console.error('Failed to parse hospital requests', e);
-      }
-    }
-    return INITIAL_HOSPITAL_APPLICATIONS;
-  });
+  const { partnerRequests, refetch: refetchPartnerRequests } = usePartnerRequests(apiToken);
+  // 'Info Requested' has no backend status of its own (no request-info
+  // endpoint exists) -- kept as a local-only overlay, same as
+  // AdminDashboard's documentVerified gate.
+  const [locallyRequestedInfoIds, setLocallyRequestedInfoIds] = useState<Set<string>>(new Set());
+  const hospitals: HospitalApplication[] = useMemo(() => partnerRequests.map(pr => {
+    const status: HospitalApplication['status'] =
+      pr.status === 'Approved' ? 'Approved' :
+      pr.status === 'Rejected' ? 'Rejected' :
+      pr.status === 'Recommended' ? 'Recommended by Admin' :
+      locallyRequestedInfoIds.has(pr.id) ? 'Info Requested' :
+      'Pending Review';
+    return {
+      id: pr.id,
+      name: pr.hospitalName,
+      city: pr.city,
+      state: '',
+      address: '',
+      contactEmail: pr.email,
+      contactPhone: pr.phone,
+      website: '',
+      appliedDate: new Date(pr.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
+      nabhAccredited: false,
+      bedCount: 0,
+      specialties: pr.specialties ? pr.specialties.split(',').map(s => s.trim()).filter(Boolean) : [],
+      documents: [],
+      recommendedBy: (pr.status === 'Recommended' || pr.status === 'Approved') ? 'Regional Admin' : null,
+      recommendationNotes: pr.status === 'Recommended' ? (pr.decisionNotes || null) : null,
+      status,
+      rejectionReason: pr.status === 'Rejected' ? (pr.decisionNotes || undefined) : undefined,
+      // Shown once via the one-time showApprovalResult modal instead of
+      // persisted on the row -- the real temp password is never stored
+      // anywhere after that response.
+      generatedCredentials: undefined,
+    };
+  }), [partnerRequests, locallyRequestedInfoIds]);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(() => {
     const stored = localStorage.getItem('aware_bharat_audit_logs');
     if (stored) {
@@ -284,6 +302,15 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   const [showRejectDialog, setShowRejectDialog] = useState<string | null>(null);
   const [showApprovalResult, setShowApprovalResult] = useState<{ email: string; password: string } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [showApproveModal, setShowApproveModal] = useState<string | null>(null);
+  const [approveRegion, setApproveRegion] = useState('');
+  const [approveStateValue, setApproveStateValue] = useState('');
+  const [approveType, setApproveType] = useState('');
+  const [approveAddress, setApproveAddress] = useState('');
+  const [approveLat, setApproveLat] = useState('');
+  const [approveLng, setApproveLng] = useState('');
+  const [approveNotes, setApproveNotes] = useState('');
+  const [approveSubmitting, setApproveSubmitting] = useState(false);
 
   // Admin form state
   const [formName, setFormName] = useState('');
@@ -445,74 +472,87 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   };
 
   // ---- Hospital Approvals ----
+  // Approving needs region/state/type/address/lat/lng -- fields the partner
+  // request never collected -- so this opens a form instead of acting
+  // immediately; handleApproveSubmit below does the real API call.
   const approveHospital = (id: string) => {
-    const email = hospitals.find(h => h.id === id)?.name.toLowerCase().replace(/\s+/g, '').slice(0, 8) + '@awarebharat.org';
-    const tempPass = 'CAB-' + Math.random().toString(36).substring(2, 8).toUpperCase() + '-TEMP';
-    setHospitals(prev => {
-      const updated = prev.map(h => h.id === id ? { ...h, status: 'Approved' as const, generatedCredentials: { email, tempPassword: tempPass } } : h);
-      localStorage.setItem('aware_bharat_hospital_requests', JSON.stringify(updated));
-      return updated;
-    });
-    logAuditEntry('Hospital Application Approved', `Hospital ID: ${id}`, 'Info');
-    setShowApprovalResult({ email, password: tempPass });
-    showToast('Hospital application approved and credentials generated!');
+    setApproveRegion(''); setApproveStateValue(''); setApproveType(''); setApproveAddress('');
+    setApproveLat(''); setApproveLng(''); setApproveNotes('');
+    setShowApproveModal(id);
   };
 
-  const rejectHospital = (id: string) => {
-    if (!rejectReason.trim()) return;
-    setHospitals(prev => {
-      const updated = prev.map(h => h.id === id ? { ...h, status: 'Rejected' as const, rejectionReason: rejectReason } : h);
-      localStorage.setItem('aware_bharat_hospital_requests', JSON.stringify(updated));
-      return updated;
-    });
-    logAuditEntry('Hospital Application Rejected', `Hospital ID: ${id} (${rejectReason})`, 'Warning');
-    setShowRejectDialog(null);
-    setRejectReason('');
-    showToast('Hospital application rejected.');
+  const handleApproveSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!showApproveModal || !apiToken) return;
+    setApproveSubmitting(true);
+    try {
+      const result = await approvePartnerRequest(showApproveModal, apiToken, {
+        region: approveRegion,
+        state: approveStateValue,
+        type: approveType,
+        address: approveAddress,
+        lat: parseFloat(approveLat),
+        lng: parseFloat(approveLng),
+        notes: approveNotes || undefined,
+      });
+      logAuditEntry('Hospital Application Approved', `Hospital: ${result.hospital.name}`, 'Info');
+      setShowApprovalResult({ email: result.loginEmail, password: result.tempPassword });
+      setShowApproveModal(null);
+      showToast('Hospital application approved and credentials generated!');
+      refetchPartnerRequests();
+    } catch (err) {
+      toast.error('Approval Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    } finally {
+      setApproveSubmitting(false);
+    }
+  };
+
+  const rejectHospital = async (id: string) => {
+    if (!rejectReason.trim() || !apiToken) return;
+    try {
+      await rejectPartnerRequest(id, apiToken, rejectReason);
+      logAuditEntry('Hospital Application Rejected', `Hospital ID: ${id} (${rejectReason})`, 'Warning');
+      setShowRejectDialog(null);
+      setRejectReason('');
+      showToast('Hospital application rejected.');
+      refetchPartnerRequests();
+    } catch (err) {
+      toast.error('Rejection Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   const requestMoreInfo = (id: string) => {
-    setHospitals(prev => {
-      const updated = prev.map(h => h.id === id ? { ...h, status: 'Info Requested' as const } : h);
-      localStorage.setItem('aware_bharat_hospital_requests', JSON.stringify(updated));
-      return updated;
-    });
+    setLocallyRequestedInfoIds(prev => new Set(prev).add(id));
     logAuditEntry('Hospital Info Requested', `Hospital ID: ${id}`, 'Info');
     showToast('Additional information requested from hospital.');
   };
 
   // ---- Notifications ----
-  const sendNotification = (e: React.FormEvent) => {
+  const sendNotification = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!notifTitle || !notifMessage) return;
+    if (!notifTitle || !notifMessage || !apiToken) return;
 
-    let targetRole: 'admin' | 'superadmin' | 'hospital' | 'patient' | 'volunteer' = 'admin';
-    if (notifAudience === 'Volunteers') targetRole = 'volunteer';
-    else if (notifAudience === 'Hospitals') targetRole = 'hospital';
-    else if (notifAudience === 'Patients') targetRole = 'patient';
-    else if (notifAudience === 'Admins') targetRole = 'admin';
+    try {
+      const result = await broadcastNotification(apiToken, notifAudience as NotificationAudience, notifTitle, notifMessage);
 
-    enquiryStore.addNotification({
-      targetRole,
-      title: notifTitle,
-      message: notifMessage
-    });
-
-    const newNotif: SentNotification = {
-      id: 'NOTIF-S' + (sentNotifications.length + 1),
-      title: notifTitle, message: notifMessage, audience: notifAudience,
-      sentAt: new Date().toLocaleString('en-IN'), sentBy: 'board@awarebharat.org',
-      recipientCount: notifAudience === 'All Users' ? 4250 : notifAudience === 'Volunteers' ? 2400 : notifAudience === 'Admins' ? 3 : 500,
-    };
-    setSentNotifications(prev => {
-      const updated = [newNotif, ...prev];
-      localStorage.setItem('aware_bharat_superadmin_sent_notifications', JSON.stringify(updated));
-      return updated;
-    });
-    logAuditEntry(`Broadcast Notification Dispatched (${notifAudience})`, notifTitle, 'Info');
-    setNotifTitle('');
-    setNotifMessage('');
-    showToast(`Notification broadcast to ${notifAudience}!`);
+      const newNotif: SentNotification = {
+        id: 'NOTIF-S' + (sentNotifications.length + 1),
+        title: notifTitle, message: notifMessage, audience: notifAudience,
+        sentAt: new Date().toLocaleString('en-IN'), sentBy: 'board@awarebharat.org',
+        recipientCount: result.recipientCount,
+      };
+      setSentNotifications(prev => {
+        const updated = [newNotif, ...prev];
+        localStorage.setItem('aware_bharat_superadmin_sent_notifications', JSON.stringify(updated));
+        return updated;
+      });
+      logAuditEntry(`Broadcast Notification Dispatched (${notifAudience})`, notifTitle, 'Info');
+      setNotifTitle('');
+      setNotifMessage('');
+      showToast(`Notification broadcast to ${result.recipientCount} recipient(s) in ${notifAudience}!`);
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   // ---- Blog Publishing ----
@@ -1073,6 +1113,30 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
           credentials={createdAdminCredentials}
           onClose={() => setCreatedAdminCredentials(null)}
           showToast={showToast}
+        />
+      )}
+
+      {/* Approve Hospital Form */}
+      {showApproveModal && (
+        <ApproveHospitalModal
+          hospitalName={hospitals.find(h => h.id === showApproveModal)?.name || ''}
+          onClose={() => setShowApproveModal(null)}
+          region={approveRegion}
+          setRegion={setApproveRegion}
+          stateValue={approveStateValue}
+          setStateValue={setApproveStateValue}
+          hospitalType={approveType}
+          setHospitalType={setApproveType}
+          address={approveAddress}
+          setAddress={setApproveAddress}
+          lat={approveLat}
+          setLat={setApproveLat}
+          lng={approveLng}
+          setLng={setApproveLng}
+          notes={approveNotes}
+          setNotes={setApproveNotes}
+          onSubmit={handleApproveSubmit}
+          submitting={approveSubmitting}
         />
       )}
 

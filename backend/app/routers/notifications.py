@@ -4,11 +4,25 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from app.core.limiter import limiter
-from app.deps import DbSession, get_current_claims
+from app.deps import DbSession, require_admin_or_superadmin, get_current_claims
+from app.models.hospital import Hospital
 from app.models.notification import Notification
-from app.schemas.notification import NotificationOut
+from app.schemas.notification import NotificationBroadcastIn, NotificationBroadcastResult, NotificationOut
+from app.services.notifications import notify
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
+
+# "Hospitals" has no single role-wide recipient the way admin/superadmin/
+# volunteer/patient do -- every hospital notification needs its own
+# target_hospital_id (see list_notifications' scoping below), so broadcasting
+# to it fans out to one row per active hospital instead of one shared row.
+AUDIENCE_ROLES: dict[str, tuple[str, ...]] = {
+    "All Users": ("admin", "superadmin", "volunteer", "hospital", "patient"),
+    "Admins": ("admin", "superadmin"),
+    "Volunteers": ("volunteer",),
+    "Hospitals": ("hospital",),
+    "Patients": ("patient",),
+}
 
 
 @router.get("", response_model=list[NotificationOut])
@@ -25,6 +39,28 @@ def list_notifications(
     if role == "hospital":
         query = query.filter(Notification.target_hospital_id == UUID(claims["sub"]))
     return query.order_by(Notification.created_at.desc()).offset(skip).limit(limit).all()
+
+
+@router.post("/broadcast", response_model=NotificationBroadcastResult, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
+def broadcast_notification(
+    request: Request,
+    payload: NotificationBroadcastIn,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_admin_or_superadmin)],
+):
+    recipient_count = 0
+    for role in AUDIENCE_ROLES[payload.audience]:
+        if role == "hospital":
+            hospital_ids = [hid for (hid,) in db.query(Hospital.id).filter(Hospital.is_active.is_(True)).all()]
+            for hospital_id in hospital_ids:
+                notify(db, "hospital", payload.title, payload.message, target_hospital_id=hospital_id)
+            recipient_count += len(hospital_ids)
+        else:
+            notify(db, role, payload.title, payload.message)
+            recipient_count += 1
+    db.commit()
+    return NotificationBroadcastResult(recipient_count=recipient_count)
 
 
 @router.post("/{notification_id}/read", response_model=NotificationOut)
