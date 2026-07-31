@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu, X, Heart, LogIn, LayoutDashboard, LogOut, Building2,
   ChevronDown, Home, Target, Stethoscope, BookOpen, Calendar, UserPlus, PhoneCall,
-  Images, Users, ArrowRight, User, Shield, HeartPulse,
+  Images, Users, ArrowRight, User, Shield,
   Facebook, Instagram, Linkedin, Youtube
 } from 'lucide-react';
 
@@ -408,13 +408,7 @@ export default function Navbar({
                         <Building2 className="w-4 h-4 text-slate-400 group-hover:text-secondary transition-colors duration-200" />
                         <span>Hospital Login</span>
                       </button>
-                      <button
-                        onClick={() => handleNavClick('/patient/login')}
-                        className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[14px] font-semibold text-primary/80 hover:bg-primary/[0.04] hover:text-secondary rounded-xl transition-colors duration-200 text-left group"
-                      >
-                        <HeartPulse className="w-4 h-4 text-slate-400 group-hover:text-secondary transition-colors duration-200" />
-                        <span>Patient Login</span>
-                      </button>
+                      {/* Patient Login is deliberately disabled for now (product decision) */}
                     </div>
                   </div>
                 )}
@@ -677,7 +671,7 @@ export default function Navbar({
                     {[
                       { path: '/volunteer/login', label: 'Volunteer Login', icon: User },
                       { path: '/hospital/login', label: 'Hospital Login', icon: Building2 },
-                      { path: '/patient/login', label: 'Patient Login', icon: HeartPulse },
+                      // Patient Login is deliberately disabled for now (product decision)
                     ].map(portal => (
                       <button
                         key={portal.path}

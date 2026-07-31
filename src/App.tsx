@@ -343,13 +343,19 @@ function AppContent() {
             </main>
           </PublicLayout>
         } />
-        <Route path="/patient/login" element={
+        {/* Patient Portal is deliberately disabled for now (product
+            decision, not removed -- PatientAuthPage/PatientDashboard and
+            the entire backend /patients/* API stay intact underneath).
+            Re-enable by uncommenting this route, the /patient/dashboard
+            route below, and the two "Patient Login" nav entries in
+            Navbar.tsx. */}
+        {/* <Route path="/patient/login" element={
           <PublicLayout {...publicLayoutProps}>
             <main className="flex-grow w-full mx-auto">
               <PatientAuthPage />
             </main>
           </PublicLayout>
-        } />
+        } /> */}
 
         {/* ===== Hidden Admin Auth Pages ===== */}
         <Route path="/admin" element={
@@ -433,7 +439,7 @@ function AppContent() {
           </AuthGuard>
         } />
 
-        <Route path="/patient/dashboard" element={
+        {/* <Route path="/patient/dashboard" element={
           <AuthGuard storageKey="aware_bharat_logged_in_patient" redirectTo="/patient/login">
             <main className="flex-grow w-full mx-auto">
               <Suspense fallback={<PageLoadingFallback />}>
@@ -448,7 +454,7 @@ function AppContent() {
               </Suspense>
             </main>
           </AuthGuard>
-        } />
+        } /> */}
 
         {/* ===== Catch-all ===== */}
         <Route path="*" element={<Navigate to="/" replace />} />
