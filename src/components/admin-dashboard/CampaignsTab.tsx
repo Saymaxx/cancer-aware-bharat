@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar, CheckCircle2 } from 'lucide-react';
+import type { Event } from '../../types';
 
 export default function CampaignsTab({
   campaignSuccessToast,
@@ -12,6 +13,9 @@ export default function CampaignsTab({
   setNewCampaignDate,
   newCampaignLocation,
   setNewCampaignLocation,
+  newCampaignCapacity,
+  setNewCampaignCapacity,
+  events,
 }: {
   campaignSuccessToast: boolean;
   handleAddCampaign: (e: React.FormEvent) => void;
@@ -23,6 +27,9 @@ export default function CampaignsTab({
   setNewCampaignDate: (val: string) => void;
   newCampaignLocation: string;
   setNewCampaignLocation: (val: string) => void;
+  newCampaignCapacity: string;
+  setNewCampaignCapacity: (val: string) => void;
+  events: Event[];
 }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-[fadeInUp_0.4s_ease-out]">
@@ -90,6 +97,19 @@ export default function CampaignsTab({
             />
           </div>
 
+          <div className="space-y-1">
+            <label className="font-bold text-slate-600 block">Registration Capacity</label>
+            <input
+              type="number"
+              min={1}
+              required
+              value={newCampaignCapacity}
+              onChange={e => setNewCampaignCapacity(e.target.value)}
+              placeholder="e.g. 150"
+              className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
+            />
+          </div>
+
           <button
             type="submit"
             className="w-full py-2.5 bg-primary text-white font-bold rounded-lg hover:opacity-95 shadow-sm transition-opacity"
@@ -103,25 +123,25 @@ export default function CampaignsTab({
       <div className="lg:col-span-2 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs">
         <h3 className="text-sm font-bold text-slate-900 mb-4">Active & Ongoing Campaigns</h3>
 
-        <div className="space-y-4">
-          {[
-            { title: 'Free Oral Cancer Screening Drive', date: 'Sat, 26 Jul 2026', type: 'Screening Camp', loc: 'Lions Club, Dwarka', vols: '22 / 30 assigned' },
-            { title: 'Community Blood Donation Camp', date: 'Sun, 27 Jul 2026', type: 'Blood Donation', loc: 'City Hospital, Mumbai', vols: '18 / 20 assigned' },
-            { title: 'Women\'s Breast Health Awareness', date: 'Wed, 30 Jul 2026', type: 'Awareness Drive', loc: 'Sector 12 Center, Noida', vols: '7 / 15 assigned' },
-          ].map((c, i) => (
-            <div key={i} className="p-4 border border-outline-variant/40 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-between text-xs">
-              <div>
-                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold border border-primary/15">{c.type}</span>
-                <h4 className="font-bold text-slate-900 mt-2">{c.title}</h4>
-                <p className="text-slate-500 mt-1">{c.date} • {c.loc}</p>
+        {events.length === 0 ? (
+          <p className="text-xs text-slate-400 py-6 text-center">No campaigns scheduled yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {events.map((c) => (
+              <div key={c.id} className="p-4 border border-outline-variant/40 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-between text-xs">
+                <div>
+                  <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold border border-primary/15">{c.type}</span>
+                  <h4 className="font-bold text-slate-900 mt-2">{c.title}</h4>
+                  <p className="text-slate-500 mt-1">{c.date} • {c.location}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-primary">{c.registeredCount} / {c.capacity} registered</p>
+                  <span className="mt-1 inline-block text-[10px] font-bold text-slate-500">{c.status}</span>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-primary">{c.vols}</p>
-                <button className="mt-2 text-[10px] font-bold text-secondary hover:underline">Manage Vol Allocation</button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
     </div>

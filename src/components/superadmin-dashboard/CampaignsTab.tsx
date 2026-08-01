@@ -41,7 +41,7 @@ export default function CampaignsTab({
                 <th className="px-5 py-3">Schedule Date</th>
                 <th className="px-5 py-3">Drive Type</th>
                 <th className="px-5 py-3">Location Venue</th>
-                <th className="px-5 py-3 text-right">Volunteers Assigned</th>
+                <th className="px-5 py-3 text-right">Registrations</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
@@ -51,7 +51,7 @@ export default function CampaignsTab({
                   <td className="px-5 py-4 text-indigo-700 font-semibold">{c.date}</td>
                   <td className="px-5 py-4 font-medium text-slate-700">{c.type}</td>
                   <td className="px-5 py-4 text-slate-600">{c.loc}</td>
-                  <td className="px-5 py-4 text-right font-bold text-purple-700">{c.vols}</td>
+                  <td className="px-5 py-4 text-right font-bold text-purple-700">{c.registrations}</td>
                 </tr>
               ))}
             </tbody>

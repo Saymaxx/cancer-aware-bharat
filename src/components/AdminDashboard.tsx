@@ -4,9 +4,8 @@ import {
   BarChart3, Settings, LogOut, Bell, FileCheck,
   DollarSign, BookOpen, MessageSquare, Terminal, Menu, Stethoscope,
 } from 'lucide-react';
-import { enquiryStore } from '../enquiryStore';
-import { useApiEnquiries, useApiHospitals, useApiNotifications, useBlogs, useDonations, usePartnerRequests, usePatientRecords, useVolunteerFeedback, useVolunteers } from '../api/hooks';
-import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, createBlog, createPatientRecord, deleteBlog, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, respondToVolunteerFeedback, sendDonationReceipt, updatePatientRecord } from '../api/client';
+import { useApiEnquiries, useApiHospitals, useApiNotifications, useBlogs, useCampaignRequests, useDonations, useEvents, usePartnerRequests, usePatientRecords, useVolunteerFeedback, useVolunteers } from '../api/hooks';
+import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, createBlog, createEvent, createPatientRecord, deleteBlog, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, respondToVolunteerFeedback, scheduleCampaignRequest, sendDonationReceipt, updatePatientRecord } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
@@ -17,7 +16,6 @@ import { csvCell, downloadCsv } from '../utils/csvExport';
 
 import {
   INITIAL_KPI_METRICS,
-  INITIAL_CAMPAIGN_REQUESTS,
   type Patient, type AdminVolunteer, type PartnerHospital,
   type CampaignRequest, type AdminDonation, type AdminFeedback
 } from '../adminDashboardData';
@@ -65,6 +63,8 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const { donations: apiDonations, refetch: refetchDonations } = useDonations(apiToken);
   const { feedback: apiFeedback, refetch: refetchFeedback } = useVolunteerFeedback(apiToken);
   const { blogs, refetch: refetchBlogs } = useBlogs();
+  const { events, refetch: refetchEvents } = useEvents();
+  const { campaignRequests, refetch: refetchCampaignRequests } = useCampaignRequests(apiToken);
   const feedbacks: AdminFeedback[] = useMemo(() => apiFeedback.map(f => ({
     id: f.id,
     volunteerName: f.volunteerName,
@@ -146,14 +146,6 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const [timelineEnquiry, setTimelineEnquiry] = useState<PatientEnquiry | null>(null);
   const [enquiryFilter, setEnquiryFilter] = useState('All');
 
-  // React state for mock DB tables
-  const [campaignRequests, setCampaignRequests] = useState<CampaignRequest[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_campaign_requests');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) {}
-    }
-    return INITIAL_CAMPAIGN_REQUESTS;
-  });
   const [kpiMetrics, setKpiMetrics] = useState(INITIAL_KPI_METRICS);
 
   // Search & Filter states
@@ -177,6 +169,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const [newCampaignType, setNewCampaignType] = useState('Screening Camp');
   const [newCampaignDate, setNewCampaignDate] = useState('');
   const [newCampaignLocation, setNewCampaignLocation] = useState('');
+  const [newCampaignCapacity, setNewCampaignCapacity] = useState('');
   const [campaignSuccessToast, setCampaignSuccessToast] = useState(false);
 
   // Form states (Add Blog Article)
@@ -222,12 +215,12 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     return {
       totalPatients: patients.length + 1415, // offsets mock database base count
       totalVolunteers: volunteers.length + 2395,
-      activeCampaigns: kpiMetrics.activeCampaigns,
+      activeCampaigns: events.filter(e => e.status === 'Scheduled').length,
       donationsReceived: donations.reduce((acc, curr) => acc + curr.amount, 650000),
       pendingHospitalTieups: hospitalRequests.filter(h => h.status === 'Pending Tie-up').length,
       financialAidRequests: patients.filter(p => p.financialAidStatus === 'Pending Review').length,
     };
-  }, [patients, volunteers, hospitalRequests, donations, kpiMetrics.activeCampaigns]);
+  }, [patients, volunteers, hospitalRequests, donations, events]);
 
   // ==========================================
   // PATIENT UTILITIES
@@ -367,31 +360,39 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   // ==========================================
   // CAMPAIGN UTILITIES
   // ==========================================
-  const handleAddCampaign = (e: React.FormEvent) => {
+  const handleAddCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCampaignTitle || !newCampaignDate || !newCampaignLocation) return;
+    if (!newCampaignTitle || !newCampaignDate || !newCampaignLocation || !apiToken) return;
 
-    enquiryStore.addNotification({
-      targetRole: 'volunteer',
-      title: `New Campaign Scheduled: ${newCampaignTitle}`,
-      message: `Operational screening drive scheduled at ${newCampaignLocation} on ${newCampaignDate}. Volunteers invited for participation.`,
-    });
+    // The form collects date/time as one free-text field (e.g. "Sat, 15 Aug
+    // 2026 • 9:00 AM") -- Event stores them separately, so split on the
+    // bullet the placeholder itself suggests, falling back to date-only.
+    const [datePart, timePart] = newCampaignDate.includes('•')
+      ? newCampaignDate.split('•').map(s => s.trim())
+      : [newCampaignDate.trim(), ''];
 
-    setKpiMetrics(prev => ({
-      ...prev,
-      activeCampaigns: prev.activeCampaigns + 1,
-      recentActivities: [
-        { id: 'act-custom-' + Date.now(), text: `New Campaign "${newCampaignTitle}" scheduled`, time: 'Just now', type: 'campaign' },
-        ...prev.recentActivities
-      ]
-    }));
-
-    setNewCampaignTitle('');
-    setNewCampaignDate('');
-    setNewCampaignLocation('');
-    setCampaignSuccessToast(true);
-    setTimeout(() => setCampaignSuccessToast(false), 3000);
-    toast.success('Campaign Scheduled', `Campaign "${newCampaignTitle}" broadcasted to volunteer network.`);
+    try {
+      await createEvent(apiToken, {
+        title: newCampaignTitle,
+        type: newCampaignType,
+        date: datePart,
+        time: timePart,
+        location: newCampaignLocation,
+        description: 'Community campaign scheduled via the Campaigns Scheduler.',
+        category: newCampaignType,
+        capacity: parseInt(newCampaignCapacity, 10) || 0,
+      });
+      await refetchEvents();
+      setNewCampaignTitle('');
+      setNewCampaignDate('');
+      setNewCampaignLocation('');
+      setNewCampaignCapacity('');
+      setCampaignSuccessToast(true);
+      setTimeout(() => setCampaignSuccessToast(false), 3000);
+      toast.success('Campaign Scheduled', `Campaign "${newCampaignTitle}" is now live.`);
+    } catch (err) {
+      toast.error('Scheduling Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   // Decline hospital modal state
@@ -435,16 +436,25 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   // ==========================================
   // CAMPAIGN REQUESTS UTILITIES
   // ==========================================
-  const handleScheduleFromRequest = (req: CampaignRequest) => {
-    setCampaignRequests(prev => {
-      const updated = prev.map(c => c.id === req.id ? { ...c, status: 'Scheduled' as const } : c);
-      localStorage.setItem('aware_bharat_campaign_requests', JSON.stringify(updated));
-      return updated;
-    });
-    setNewCampaignTitle(req.organizationName + ' Screening Camp');
-    setNewCampaignLocation(req.location);
-    setActiveTab('campaigns');
-    toast.info('Request Converted to Camp', 'Pre-filled campaign form in scheduler.');
+  const handleScheduleFromRequest = async (req: CampaignRequest) => {
+    if (!apiToken) return;
+    try {
+      await createEvent(apiToken, {
+        title: `${req.organizationName} Screening Camp`,
+        type: 'Screening Camp',
+        date: req.requestedDate,
+        time: 'TBD',
+        location: req.location,
+        description: `Community campaign requested by ${req.organizationName} (${req.contactPerson}).`,
+        category: 'Community Camps',
+        capacity: req.expectedAttendees,
+      });
+      await scheduleCampaignRequest(req.id, apiToken);
+      await Promise.all([refetchEvents(), refetchCampaignRequests()]);
+      toast.success('Request Converted to Camp', `"${req.organizationName}" is now a scheduled camp.`);
+    } catch (err) {
+      toast.error('Conversion Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   // ==========================================
@@ -793,6 +803,9 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
               setNewCampaignDate={setNewCampaignDate}
               newCampaignLocation={newCampaignLocation}
               setNewCampaignLocation={setNewCampaignLocation}
+              newCampaignCapacity={newCampaignCapacity}
+              setNewCampaignCapacity={setNewCampaignCapacity}
+              events={events}
             />
           )}
 

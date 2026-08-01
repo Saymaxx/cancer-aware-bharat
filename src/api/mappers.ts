@@ -2,8 +2,9 @@
 // interfaces, so AdminDashboard/SuperAdminDashboard/EnquiryTimelineModal
 // keep working unmodified against real data.
 
-import { ApiBlogArticle, ApiEvent, ApiHospital, ApiNotification, ApiPatientEnquiry } from './client';
+import { ApiBlogArticle, ApiCampaignRequest, ApiEvent, ApiHospital, ApiNotification, ApiPatientEnquiry } from './client';
 import { AppNotification, BlogArticle, Event, Hospital, PatientEnquiry } from '../types';
+import { CampaignRequest } from '../adminDashboardData';
 
 function formatTimestamp(iso: string): string {
   try {
@@ -140,6 +141,22 @@ export function mapApiEvent(api: ApiEvent): Event {
     category: api.category,
     registeredCount: api.registeredCount,
     capacity: api.capacity,
+    status: api.status,
+  };
+}
+
+export function mapApiCampaignRequest(api: ApiCampaignRequest): CampaignRequest {
+  return {
+    id: api.id,
+    organizationName: api.organizationName,
+    orgType: api.orgType,
+    contactPerson: api.contactPerson,
+    email: api.email,
+    phone: api.phone,
+    requestedDate: api.requestedDate,
+    location: api.location,
+    expectedAttendees: api.expectedAttendees,
+    status: api.status,
   };
 }
 

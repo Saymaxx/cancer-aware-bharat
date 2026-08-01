@@ -124,12 +124,6 @@ export const INITIAL_HOSPITAL_REQUESTS: PartnerHospital[] = [
   { id: 'REQ-H3', name: 'Apollo Proton Cancer Centre', city: 'Chennai', status: 'Pending Tie-up', appliedDate: 'Jul 15, 2026', documentVerified: true, contactEmail: 'proton@apollohospitals.com', contactPhone: '+91 44 3333 4444' },
 ];
 
-// ---- Mock Campaign Requests ----
-export const INITIAL_CAMPAIGN_REQUESTS: CampaignRequest[] = [
-  { id: 'REQ-C1', organizationName: 'IIT Delhi NSS Unit', orgType: 'College', contactPerson: 'Prof. S. R. Bose', email: 'nss@iitd.ac.in', phone: '+91 11 2659 1000', requestedDate: 'Aug 10, 2026', location: 'Dogra Hall, IIT Delhi Campus', expectedAttendees: 400, status: 'Pending Scheduling' },
-  { id: 'REQ-C2', organizationName: 'Asha Deep Foundation', orgType: 'NGO', contactPerson: 'Savita Devi', email: 'ashadeep@ngo.org', phone: '+91 98112 34567', requestedDate: 'Aug 15, 2026', location: 'Sanjay Colony Community Hall, Okhla', expectedAttendees: 250, status: 'Scheduled' },
-  { id: 'REQ-C3', organizationName: 'Wipro Technologies Office', orgType: 'Corporate', contactPerson: 'HR Employee Engagement', email: 'engage@wipro.com', phone: '+91 80 2844 0011', requestedDate: 'Aug 22, 2026', location: 'Electronic City Wipro Campus', expectedAttendees: 500, status: 'Pending Scheduling' },
-];
 
 // ---- Mock Donations List ----
 export const INITIAL_ADMIN_DONATIONS: AdminDonation[] = [

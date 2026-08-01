@@ -27,6 +27,7 @@ export interface Event {
   category: string;
   registeredCount: number;
   capacity: number;
+  status: 'Scheduled' | 'Completed' | 'Cancelled';
 }
 
 export interface BlogArticle {

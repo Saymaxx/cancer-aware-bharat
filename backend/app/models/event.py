@@ -7,6 +7,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
 
+EVENT_STATUSES = ("Scheduled", "Completed", "Cancelled")
+
 
 class Event(Base):
     __tablename__ = "events"
@@ -22,4 +24,5 @@ class Event(Base):
     category: Mapped[str] = mapped_column(String(100), nullable=False)
     registered_count: Mapped[int] = mapped_column(Integer, default=0)
     capacity: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="Scheduled")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

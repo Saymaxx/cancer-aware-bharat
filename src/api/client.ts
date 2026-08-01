@@ -799,6 +799,7 @@ export interface ApiEvent {
   category: string;
   registeredCount: number;
   capacity: number;
+  status: 'Scheduled' | 'Completed' | 'Cancelled';
 }
 
 export interface EventPayload {
@@ -812,6 +813,7 @@ export interface EventPayload {
   category: string;
   registeredCount?: number;
   capacity: number;
+  status?: ApiEvent['status'];
 }
 
 export function listEvents(): Promise<ApiEvent[]> {
@@ -824,4 +826,28 @@ export function createEvent(token: string, payload: EventPayload): Promise<ApiEv
 
 export function deleteEvent(id: string, token: string): Promise<void> {
   return request<void>(`/events/${id}`, { method: 'DELETE' }, token);
+}
+
+// ---------------- Campaign Requests (Campaigns Scheduler pipeline) ----------------
+
+export interface ApiCampaignRequest {
+  id: string;
+  organizationName: string;
+  orgType: 'School' | 'College' | 'NGO' | 'Corporate' | 'Village Council';
+  contactPerson: string;
+  email: string;
+  phone: string;
+  requestedDate: string;
+  location: string;
+  expectedAttendees: number;
+  status: 'Pending Scheduling' | 'Scheduled' | 'Declined';
+  createdAt: string;
+}
+
+export function listCampaignRequests(token: string): Promise<ApiCampaignRequest[]> {
+  return request<ApiCampaignRequest[]>('/campaign-requests', {}, token);
+}
+
+export function scheduleCampaignRequest(id: string, token: string): Promise<ApiCampaignRequest> {
+  return request<ApiCampaignRequest>(`/campaign-requests/${id}/schedule`, { method: 'POST' }, token);
 }

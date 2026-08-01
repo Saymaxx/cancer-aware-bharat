@@ -65,6 +65,16 @@ class TestCreateEvent:
         body = resp.json()
         assert body["title"] == "Pytest Screening Camp"
         assert body["registeredCount"] == 0
+        assert body["status"] == "Scheduled"
+
+    def test_can_create_with_explicit_status(self, client, admin_token):
+        resp = client.post("/events", json=sample_event_payload(status="Cancelled"), headers=auth_header(admin_token))
+        assert resp.status_code == 201, resp.text
+        assert resp.json()["status"] == "Cancelled"
+
+    def test_rejects_invalid_status(self, client, admin_token):
+        resp = client.post("/events", json=sample_event_payload(status="Bogus"), headers=auth_header(admin_token))
+        assert resp.status_code == 422
 
     def test_superadmin_can_create(self, client, superadmin_token):
         resp = client.post("/events", json=sample_event_payload(title="Superadmin Camp"), headers=auth_header(superadmin_token))

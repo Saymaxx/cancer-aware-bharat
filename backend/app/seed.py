@@ -15,6 +15,7 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.security import hash_password
 from app.models.blog import BlogArticle
+from app.models.campaign_request import CampaignRequest
 from app.models.event import Event
 from app.models.hospital import Hospital
 from app.models.user import User
@@ -117,6 +118,24 @@ BLOGS = [
     ),
 ]
 
+CAMPAIGN_REQUESTS = [
+    dict(
+        organization_name="IIT Delhi NSS Unit", org_type="College", contact_person="Prof. S. R. Bose",
+        email="nss@iitd.ac.in", phone="+91 11 2659 1000", requested_date="Aug 10, 2026",
+        location="Dogra Hall, IIT Delhi Campus", expected_attendees=400, status="Pending Scheduling",
+    ),
+    dict(
+        organization_name="Asha Deep Foundation", org_type="NGO", contact_person="Savita Devi",
+        email="ashadeep@ngo.org", phone="+91 98112 34567", requested_date="Aug 15, 2026",
+        location="Sanjay Colony Community Hall, Okhla", expected_attendees=250, status="Pending Scheduling",
+    ),
+    dict(
+        organization_name="Wipro Technologies Office", org_type="Corporate", contact_person="HR Employee Engagement",
+        email="engage@wipro.com", phone="+91 80 2844 0011", requested_date="Aug 22, 2026",
+        location="Electronic City Wipro Campus", expected_attendees=500, status="Pending Scheduling",
+    ),
+]
+
 
 def run() -> None:
     if settings.is_production:
@@ -150,6 +169,11 @@ def run() -> None:
             if db.query(BlogArticle).filter(BlogArticle.title == b["title"]).first():
                 continue
             db.add(BlogArticle(**b))
+
+        for c in CAMPAIGN_REQUESTS:
+            if db.query(CampaignRequest).filter(CampaignRequest.organization_name == c["organization_name"]).first():
+                continue
+            db.add(CampaignRequest(**c))
 
         db.commit()
         print("Seed complete. Dev credentials use password: ChangeMe123!")

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { listBlogs, listDonations, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientRecords, listVolunteerFeedback, listVolunteers } from './client';
-import { mapApiBlog, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
+import { listBlogs, listCampaignRequests, listDonations, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientRecords, listVolunteerFeedback, listVolunteers } from './client';
+import { mapApiBlog, mapApiCampaignRequest, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
 
@@ -151,6 +151,24 @@ export function useVolunteerFeedback(token: string | null) {
     feedback: query.data ?? [],
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load volunteer feedback' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Organization requests to host a campaign (Campaign Requests inbox). No
+ * public submission form exists yet -- admin review side only. */
+export function useCampaignRequests(token: string | null) {
+  const query = useQuery({
+    queryKey: ['campaign-requests', token],
+    queryFn: () => listCampaignRequests(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    campaignRequests: (query.data ?? []).map(mapApiCampaignRequest),
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load campaign requests' : null,
     refetch: query.refetch,
   };
 }

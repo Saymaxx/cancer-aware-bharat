@@ -5,7 +5,7 @@ import {
   Stethoscope, Crown, UserCog, Layers, PieChart, LayoutDashboard, Megaphone,
   Database, ShieldCheck, FileText,
 } from 'lucide-react';
-import { useApiEnquiries, useApiNotifications, useApiHospitals, useBlogs, usePartnerRequests } from '../api/hooks';
+import { useApiEnquiries, useApiNotifications, useApiHospitals, useBlogs, useEvents, usePartnerRequests } from '../api/hooks';
 import { assignHospital, ApiError, approvePartnerRequest, broadcastNotification, createBlog, deleteBlog, getStaffSession, rejectPartnerRequest, type NotificationAudience } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, Hospital } from '../types';
@@ -64,6 +64,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   const apiToken = useMemo(() => getStaffSession()?.accessToken || null, []);
   const { enquiries, refetch: refetchEnquiries } = useApiEnquiries(apiToken);
   const { notifications: superAdminNotifications } = useApiNotifications(apiToken);
+  const { events } = useEvents();
   const pendingHospitalAssignmentCount = useMemo(() => {
     return enquiries.filter(e =>
       e.status === 'Approved by Admin' ||
@@ -236,17 +237,15 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     }
     return INITIAL_ADMIN_VOLUNTEERS;
   });
-  const [campaigns, setCampaigns] = useState<any[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_campaigns');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) {}
-    }
-    return [
-      { id: 'camp-1', title: 'Free Oral Cancer Screening Drive', date: 'Sat, 26 Jul 2026', type: 'Screening Camp', loc: 'Lions Club, Dwarka', vols: '22 / 30 assigned', status: 'Active' },
-      { id: 'camp-2', title: 'Community Blood Donation Camp', date: 'Sun, 27 Jul 2026', type: 'Blood Donation', loc: 'City Hospital, Mumbai', vols: '18 / 20 assigned', status: 'Active' },
-      { id: 'camp-3', title: 'Women\'s Breast Health Awareness', date: 'Wed, 30 Jul 2026', type: 'Awareness Drive', loc: 'Sector 12 Center, Noida', vols: '7 / 15 assigned', status: 'Upcoming' },
-    ];
-  });
+  const campaigns = useMemo(() => events.map(e => ({
+    id: e.id,
+    title: e.title,
+    date: e.date,
+    type: e.type,
+    loc: e.location,
+    registrations: `${e.registeredCount} / ${e.capacity} registered`,
+    status: e.status,
+  })), [events]);
   const [donations, setDonations] = useState<AdminDonation[]>(() => {
     const stored = localStorage.getItem('aware_bharat_donations');
     if (stored) {
@@ -681,15 +680,15 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
       toast.info('No Campaigns', 'There are no active campaigns to export.');
       return;
     }
-    const headers = ['Campaign ID', 'Title', 'Date', 'Type', 'Location', 'Assigned Volunteers', 'Status'];
+    const headers = ['Campaign ID', 'Title', 'Date', 'Type', 'Location', 'Registrations', 'Status'];
     const rows = campaigns.map(c => [
       c.id,
       csvCell(c.title),
       c.date,
       c.type,
       csvCell(c.loc),
-      csvCell(c.vols),
-      c.status || 'Active'
+      csvCell(c.registrations),
+      c.status
     ]);
     downloadCsv(headers, rows, 'CAB_SuperAdmin_Campaigns');
     toast.success('Export Complete', 'Campaigns CSV downloaded successfully.');
