@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { listEnquiries, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listVolunteers } from './client';
+import { listEnquiries, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientRecords, listVolunteers } from './client';
 import { mapApiEnquiry, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -98,6 +98,24 @@ export function useVolunteers(token: string | null) {
     volunteers: query.data ?? [],
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load volunteers' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Admin-managed patient case records (Patients Manager) -- distinct from
+ * useMyPatientEnquiries, which is a logged-in patient's own enquiries. */
+export function usePatientRecords(token: string | null) {
+  const query = useQuery({
+    queryKey: ['patient-records', token],
+    queryFn: () => listPatientRecords(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    patientRecords: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load patient records' : null,
     refetch: query.refetch,
   };
 }

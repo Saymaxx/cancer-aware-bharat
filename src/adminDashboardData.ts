@@ -4,6 +4,7 @@
 
 export interface Patient {
   id: string;
+  recordId: string;
   name: string;
   age: number;
   gender: 'Male' | 'Female' | 'Other';
@@ -100,11 +101,11 @@ export const INITIAL_KPI_METRICS = {
 
 // ---- Mock Patients List ----
 export const INITIAL_PATIENTS: Patient[] = [
-  { id: 'PAT-001', name: 'Suresh Kumar', age: 48, gender: 'Male', diagnosis: 'Oral Cavity Cancer (Stage II)', hospitalId: 'hosp-1', hospitalName: 'Apex Oncology Institute', assignedVolunteerId: 'V-2026-1022', assignedVolunteerName: 'Rajeshwar Sen', financialAidStatus: 'Approved', financialAidAmount: 50000, status: 'Under Treatment' },
-  { id: 'PAT-002', name: 'Priya Sharma', age: 34, gender: 'Female', diagnosis: 'Breast Cancer (Stage I)', hospitalId: 'hosp-2', hospitalName: 'CareWell Cancer Hospital', assignedVolunteerId: 'V-2026-1405', assignedVolunteerName: 'Meera Iyer', financialAidStatus: 'Disbursed', financialAidAmount: 75000, status: 'Recovered' },
-  { id: 'PAT-003', name: 'Amit Patel', age: 52, gender: 'Male', diagnosis: 'Lung Cancer (Stage III)', hospitalId: 'hosp-4', hospitalName: 'Narayana Health City', financialAidStatus: 'Pending Review', financialAidAmount: 120000, status: 'Under Treatment' },
-  { id: 'PAT-004', name: 'Sunita Devi', age: 41, gender: 'Female', diagnosis: 'Cervical Cancer (Stage II)', hospitalId: 'hosp-3', hospitalName: 'Tata Cancer Care', financialAidStatus: 'Not Requested', status: 'Follow-up' },
-  { id: 'PAT-005', name: 'Rajesh Yadav', age: 60, gender: 'Male', diagnosis: 'Oral Lesion (Benign)', hospitalId: 'hosp-1', hospitalName: 'Apex Oncology Institute', financialAidStatus: 'Not Requested', status: 'Screened - Healthy' },
+  { id: 'PAT-001', recordId: 'PAT-001', name: 'Suresh Kumar', age: 48, gender: 'Male', diagnosis: 'Oral Cavity Cancer (Stage II)', hospitalId: 'hosp-1', hospitalName: 'Apex Oncology Institute', assignedVolunteerId: 'V-2026-1022', assignedVolunteerName: 'Rajeshwar Sen', financialAidStatus: 'Approved', financialAidAmount: 50000, status: 'Under Treatment' },
+  { id: 'PAT-002', recordId: 'PAT-002', name: 'Priya Sharma', age: 34, gender: 'Female', diagnosis: 'Breast Cancer (Stage I)', hospitalId: 'hosp-2', hospitalName: 'CareWell Cancer Hospital', assignedVolunteerId: 'V-2026-1405', assignedVolunteerName: 'Meera Iyer', financialAidStatus: 'Disbursed', financialAidAmount: 75000, status: 'Recovered' },
+  { id: 'PAT-003', recordId: 'PAT-003', name: 'Amit Patel', age: 52, gender: 'Male', diagnosis: 'Lung Cancer (Stage III)', hospitalId: 'hosp-4', hospitalName: 'Narayana Health City', financialAidStatus: 'Pending Review', financialAidAmount: 120000, status: 'Under Treatment' },
+  { id: 'PAT-004', recordId: 'PAT-004', name: 'Sunita Devi', age: 41, gender: 'Female', diagnosis: 'Cervical Cancer (Stage II)', hospitalId: 'hosp-3', hospitalName: 'Tata Cancer Care', financialAidStatus: 'Not Requested', status: 'Follow-up' },
+  { id: 'PAT-005', recordId: 'PAT-005', name: 'Rajesh Yadav', age: 60, gender: 'Male', diagnosis: 'Oral Lesion (Benign)', hospitalId: 'hosp-1', hospitalName: 'Apex Oncology Institute', financialAidStatus: 'Not Requested', status: 'Screened - Healthy' },
 ];
 
 // ---- Mock Volunteers List ----

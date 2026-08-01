@@ -635,3 +635,53 @@ export function updateMyPatientProfile(token: string, payload: { name?: string; 
 export function listMyPatientEnquiries(token: string): Promise<ApiPatientEnquiry[]> {
   return request<ApiPatientEnquiry[]>('/patients/me/enquiries', {}, token);
 }
+
+// ---------------- Patient Records (Patients Manager -- distinct from /patients above,
+// which is the patient login account system) ----------------
+
+export interface ApiPatientRecord {
+  id: string;
+  recordId: string;
+  name: string;
+  age: number;
+  gender: string;
+  diagnosis: string;
+  hospitalId: string | null;
+  hospitalName: string | null;
+  assignedVolunteerId: string | null;
+  assignedVolunteerName: string | null;
+  financialAidStatus: 'Not Requested' | 'Pending Review' | 'Approved' | 'Disbursed' | 'Rejected';
+  financialAidAmount: number | null;
+  reportUrl: string | null;
+  caseStatus: 'Under Treatment' | 'Recovered' | 'Screened - Healthy' | 'Follow-up';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PatientRecordPayload {
+  name: string;
+  age: number;
+  gender: string;
+  diagnosis: string;
+  hospitalId?: string | null;
+  hospitalName?: string | null;
+  financialAidStatus: ApiPatientRecord['financialAidStatus'];
+  financialAidAmount?: number | null;
+  caseStatus: ApiPatientRecord['caseStatus'];
+}
+
+export function listPatientRecords(token: string): Promise<ApiPatientRecord[]> {
+  return request<ApiPatientRecord[]>('/patient-records', {}, token);
+}
+
+export function createPatientRecord(token: string, payload: PatientRecordPayload): Promise<ApiPatientRecord> {
+  return request<ApiPatientRecord>('/patient-records', { method: 'POST', body: JSON.stringify(payload) }, token);
+}
+
+export function updatePatientRecord(id: string, token: string, payload: PatientRecordPayload): Promise<ApiPatientRecord> {
+  return request<ApiPatientRecord>(`/patient-records/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }, token);
+}
+
+export function deletePatientRecord(id: string, token: string): Promise<void> {
+  return request<void>(`/patient-records/${id}`, { method: 'DELETE' }, token);
+}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Heart, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { Patient } from '../../adminDashboardData';
-import type { PatientEnquiry } from '../../types';
+import type { Hospital, PatientEnquiry } from '../../types';
 
 // 1. ADD / EDIT PATIENT RECORD MODAL
 export function PatientModal({
@@ -15,8 +15,9 @@ export function PatientModal({
   setPatientFormGender,
   patientFormDiagnosis,
   setPatientFormDiagnosis,
-  patientFormHospital,
-  setPatientFormHospital,
+  patientFormHospitalId,
+  setPatientFormHospitalId,
+  hospitalOptions,
   patientFormAid,
   setPatientFormAid,
   patientFormAidAmt,
@@ -33,8 +34,9 @@ export function PatientModal({
   setPatientFormGender: (val: 'Male' | 'Female' | 'Other') => void;
   patientFormDiagnosis: string;
   setPatientFormDiagnosis: (val: string) => void;
-  patientFormHospital: string;
-  setPatientFormHospital: (val: string) => void;
+  patientFormHospitalId: string;
+  setPatientFormHospitalId: (val: string) => void;
+  hospitalOptions: Hospital[];
   patientFormAid: 'Not Requested' | 'Pending Review' | 'Approved' | 'Disbursed' | 'Rejected';
   setPatientFormAid: (val: 'Not Requested' | 'Pending Review' | 'Approved' | 'Disbursed' | 'Rejected') => void;
   patientFormAidAmt: string;
@@ -118,14 +120,14 @@ export function PatientModal({
             <div className="space-y-1">
               <label className="font-bold text-slate-600 block">Clinic Partner Assignment</label>
               <select
-                value={patientFormHospital}
-                onChange={e => setPatientFormHospital(e.target.value)}
+                value={patientFormHospitalId}
+                onChange={e => setPatientFormHospitalId(e.target.value)}
                 className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none cursor-pointer"
               >
-                <option value="Apex Oncology Institute">Apex Oncology Institute (Delhi)</option>
-                <option value="CareWell Cancer Hospital">CareWell Cancer Hospital (Mumbai)</option>
-                <option value="Tata Cancer Care & Research Center">Tata Cancer Care (Kolkata)</option>
-                <option value="Narayana Health City">Narayana Health City (Bangalore)</option>
+                <option value="">Unassigned</option>
+                {hospitalOptions.map(h => (
+                  <option key={h.id} value={h.id}>{h.name} ({h.city})</option>
+                ))}
               </select>
             </div>
 

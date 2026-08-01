@@ -82,7 +82,7 @@ export default function PatientsTab({
             <tbody className="divide-y divide-outline-variant/20 text-xs">
               {filteredPatients.map((pat) => (
                 <tr key={pat.id} className="hover:bg-slate-50/55 transition-colors">
-                  <td className="px-6 py-4 font-mono font-bold text-slate-500">{pat.id}</td>
+                  <td className="px-6 py-4 font-mono font-bold text-slate-500">{pat.recordId}</td>
                   <td className="px-6 py-4">
                     <p className="font-bold text-slate-950">{pat.name}</p>
                     <p className="text-[10px] text-slate-400 mt-0.5">{pat.age} yrs • {pat.gender}</p>

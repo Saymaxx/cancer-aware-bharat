@@ -5,8 +5,8 @@ import {
   DollarSign, BookOpen, MessageSquare, Terminal, Menu, Stethoscope,
 } from 'lucide-react';
 import { enquiryStore } from '../enquiryStore';
-import { useApiEnquiries, useApiNotifications, usePartnerRequests, useVolunteers } from '../api/hooks';
-import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer } from '../api/client';
+import { useApiEnquiries, useApiHospitals, useApiNotifications, usePartnerRequests, usePatientRecords, useVolunteers } from '../api/hooks';
+import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, createPatientRecord, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, updatePatientRecord } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, BlogArticle } from '../types';
 import { INITIAL_BLOGS } from '../data';
@@ -17,7 +17,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { csvCell, downloadCsv } from '../utils/csvExport';
 
 import {
-  INITIAL_KPI_METRICS, INITIAL_PATIENTS,
+  INITIAL_KPI_METRICS,
   INITIAL_CAMPAIGN_REQUESTS, INITIAL_ADMIN_DONATIONS,
   INITIAL_ADMIN_FEEDBACKS, type Patient, type AdminVolunteer, type PartnerHospital,
   type CampaignRequest, type AdminDonation, type AdminFeedback
@@ -62,6 +62,24 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const { notifications: adminNotifications } = useApiNotifications(apiToken);
   const { partnerRequests, refetch: refetchPartnerRequests } = usePartnerRequests(apiToken);
   const { volunteers: apiVolunteers, refetch: refetchVolunteers } = useVolunteers(apiToken);
+  const { patientRecords: apiPatientRecords, refetch: refetchPatientRecords } = usePatientRecords(apiToken);
+  const { hospitals: partnerHospitalDirectory } = useApiHospitals();
+  const patients: Patient[] = useMemo(() => apiPatientRecords.map(r => ({
+    id: r.id,
+    recordId: r.recordId,
+    name: r.name,
+    age: r.age,
+    gender: r.gender as Patient['gender'],
+    diagnosis: r.diagnosis,
+    hospitalId: r.hospitalId || '',
+    hospitalName: r.hospitalName || '',
+    assignedVolunteerId: r.assignedVolunteerId || undefined,
+    assignedVolunteerName: r.assignedVolunteerName || undefined,
+    financialAidStatus: r.financialAidStatus,
+    financialAidAmount: r.financialAidAmount ?? undefined,
+    reportUrl: r.reportUrl || undefined,
+    status: r.caseStatus,
+  })), [apiPatientRecords]);
   // domain/city/assignedCampaignsCount/hoursLogged/attendanceRate have no
   // backend equivalent (no campaign-assignment or hours-tracking feature
   // exists for volunteers yet) -- left at their honest default rather than
@@ -107,13 +125,6 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const [enquiryFilter, setEnquiryFilter] = useState('All');
 
   // React state for mock DB tables
-  const [patients, setPatients] = useState<Patient[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_patients');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) { console.error(e); }
-    }
-    return INITIAL_PATIENTS;
-  });
   const [campaignRequests, setCampaignRequests] = useState<CampaignRequest[]>(() => {
     const stored = localStorage.getItem('aware_bharat_campaign_requests');
     if (stored) {
@@ -156,7 +167,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const [patientFormAge, setPatientFormAge] = useState('');
   const [patientFormGender, setPatientFormGender] = useState<'Male' | 'Female' | 'Other'>('Male');
   const [patientFormDiagnosis, setPatientFormDiagnosis] = useState('');
-  const [patientFormHospital, setPatientFormHospital] = useState('Apex Oncology Institute');
+  const [patientFormHospitalId, setPatientFormHospitalId] = useState('');
   const [patientFormAid, setPatientFormAid] = useState<'Not Requested' | 'Pending Review' | 'Approved' | 'Disbursed' | 'Rejected'>('Not Requested');
   const [patientFormAidAmt, setPatientFormAidAmt] = useState('');
 
@@ -227,7 +238,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
       setPatientFormAge(String(patient.age));
       setPatientFormGender(patient.gender);
       setPatientFormDiagnosis(patient.diagnosis);
-      setPatientFormHospital(patient.hospitalName);
+      setPatientFormHospitalId(patient.hospitalId || '');
       setPatientFormAid(patient.financialAidStatus);
       setPatientFormAidAmt(String(patient.financialAidAmount || ''));
     } else {
@@ -236,7 +247,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
       setPatientFormAge('');
       setPatientFormGender('Male');
       setPatientFormDiagnosis('');
-      setPatientFormHospital('Apex Oncology Institute');
+      setPatientFormHospitalId('');
       setPatientFormAid('Not Requested');
       setPatientFormAidAmt('');
     }
@@ -274,52 +285,47 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     toast.success('Export Complete', 'Enquiries CSV downloaded successfully.');
   };
 
-  const handleSavePatient = (e: React.FormEvent) => {
+  const handleSavePatient = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patientFormName || !patientFormAge || !patientFormDiagnosis) return;
+    if (!patientFormName || !patientFormAge || !patientFormDiagnosis || !apiToken) return;
 
-    let updatedList: Patient[];
-    if (editingPatient) {
-      // Edit mode
-      updatedList = patients.map(p => p.id === editingPatient.id ? {
-        ...p,
-        name: patientFormName,
-        age: parseInt(patientFormAge),
-        gender: patientFormGender,
-        diagnosis: patientFormDiagnosis,
-        hospitalName: patientFormHospital,
-        financialAidStatus: patientFormAid,
-        financialAidAmount: patientFormAidAmt ? parseFloat(patientFormAidAmt) : undefined
-      } : p);
-    } else {
-      // Add mode
-      const newPat: Patient = {
-        id: 'PAT-' + String(patients.length + 1).padStart(3, '0'),
-        name: patientFormName,
-        age: parseInt(patientFormAge),
-        gender: patientFormGender,
-        diagnosis: patientFormDiagnosis,
-        hospitalId: 'hosp-custom',
-        hospitalName: patientFormHospital,
-        financialAidStatus: patientFormAid,
-        financialAidAmount: patientFormAidAmt ? parseFloat(patientFormAidAmt) : undefined,
-        status: 'Under Treatment'
-      };
-      updatedList = [...patients, newPat];
+    const selectedHospital = partnerHospitalDirectory.find(h => h.id === patientFormHospitalId);
+    const payload = {
+      name: patientFormName,
+      age: parseInt(patientFormAge),
+      gender: patientFormGender,
+      diagnosis: patientFormDiagnosis,
+      hospitalId: selectedHospital?.id || null,
+      hospitalName: selectedHospital?.name || null,
+      financialAidStatus: patientFormAid,
+      financialAidAmount: patientFormAidAmt ? parseFloat(patientFormAidAmt) : null,
+      caseStatus: (editingPatient?.status || 'Under Treatment') as Patient['status'],
+    };
+
+    try {
+      if (editingPatient) {
+        await updatePatientRecord(editingPatient.id, apiToken, payload);
+      } else {
+        await createPatientRecord(apiToken, payload);
+      }
+      toast.success(editingPatient ? 'Patient Record Updated' : 'New Patient Record Added', `Record for ${patientFormName} saved.`);
+      setShowPatientModal(false);
+      refetchPatientRecords();
+    } catch (err) {
+      toast.error('Save Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
     }
-
-    setPatients(updatedList);
-    localStorage.setItem('aware_bharat_patients', JSON.stringify(updatedList));
-    toast.success(editingPatient ? 'Patient Record Updated' : 'New Patient Record Added', `Record for ${patientFormName} saved.`);
-    setShowPatientModal(false);
   };
 
-  const handleDeletePatient = (id: string) => {
+  const handleDeletePatient = async (id: string) => {
+    if (!apiToken) return;
     if (window.confirm('Are you sure you want to remove this patient record?')) {
-      const updated = patients.filter(p => p.id !== id);
-      setPatients(updated);
-      localStorage.setItem('aware_bharat_patients', JSON.stringify(updated));
-      toast.info('Patient Record Removed');
+      try {
+        await deletePatientRecord(id, apiToken);
+        toast.info('Patient Record Removed');
+        refetchPatientRecords();
+      } catch (err) {
+        toast.error('Delete Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+      }
     }
   };
 
@@ -516,7 +522,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     }
     const headers = ['Patient Code', 'Full Name', 'Age', 'Gender', 'Primary Diagnosis', 'Clinic Partner', 'Financial Aid Status', 'Aid Amount'];
     const rows = patients.map(p => [
-      p.id,
+      p.recordId,
       csvCell(p.name),
       p.age,
       p.gender,
@@ -908,8 +914,9 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
           setPatientFormGender={setPatientFormGender}
           patientFormDiagnosis={patientFormDiagnosis}
           setPatientFormDiagnosis={setPatientFormDiagnosis}
-          patientFormHospital={patientFormHospital}
-          setPatientFormHospital={setPatientFormHospital}
+          patientFormHospitalId={patientFormHospitalId}
+          setPatientFormHospitalId={setPatientFormHospitalId}
+          hospitalOptions={partnerHospitalDirectory}
           patientFormAid={patientFormAid}
           setPatientFormAid={setPatientFormAid}
           patientFormAidAmt={patientFormAidAmt}
