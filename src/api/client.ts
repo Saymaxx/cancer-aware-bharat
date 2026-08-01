@@ -851,3 +851,20 @@ export function listCampaignRequests(token: string): Promise<ApiCampaignRequest[
 export function scheduleCampaignRequest(id: string, token: string): Promise<ApiCampaignRequest> {
   return request<ApiCampaignRequest>(`/campaign-requests/${id}/schedule`, { method: 'POST' }, token);
 }
+
+// ---------------- Audit Logs (SuperAdmin display tab) ----------------
+
+export interface ApiAuditLog {
+  id: string;
+  eventType: string;
+  role: string | null;
+  actorId: string | null;
+  detail: string | null;
+  ipAddress: string | null;
+  severity: 'Info' | 'Warning' | 'Critical';
+  createdAt: string;
+}
+
+export function listAuditLogs(token: string): Promise<ApiAuditLog[]> {
+  return request<ApiAuditLog[]>('/audit-logs', {}, token);
+}

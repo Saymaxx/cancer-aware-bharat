@@ -39,6 +39,13 @@ class TestCreatePatientRecord:
         assert record["caseStatus"] == "Under Treatment"
         assert record["financialAidStatus"] == "Not Requested"
 
+    def test_writes_audit_log_entry(self, client, admin_token, db_session):
+        from app.models.audit_log import AuditLog
+
+        create_sample_record(client, admin_token)
+        entry = db_session.query(AuditLog).filter(AuditLog.event_type == "patient_record_created").first()
+        assert entry is not None
+
     def test_superadmin_can_create(self, client, superadmin_token):
         resp = client.post("/patient-records", json={
             "name": "Superadmin Created Case", "age": 30, "gender": "Male", "diagnosis": "Oral Cavity Cancer",

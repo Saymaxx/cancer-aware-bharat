@@ -7,6 +7,7 @@ from app.core.limiter import limiter
 from app.deps import DbSession, require_admin_or_superadmin
 from app.models.donation import Donation
 from app.schemas.donation import DonationIn, DonationOut
+from app.services.audit import record_event
 
 router = APIRouter(prefix="/donations", tags=["donations"])
 
@@ -39,6 +40,8 @@ def create_donation(
 ):
     donation = Donation(**payload.model_dump())
     db.add(donation)
+    record_event(db, "donation_recorded", role=claims["role"], actor_id=UUID(claims["sub"]),
+                 detail=f"{donation.donor_name}: ₹{donation.amount}")
     db.commit()
     db.refresh(donation)
     return donation

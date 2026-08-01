@@ -20,6 +20,7 @@ from app.schemas.hospital import (
     HospitalRecommendIn,
     HospitalRejectIn,
 )
+from app.services.audit import record_event
 from app.services.notifications import notify
 
 router = APIRouter(prefix="/hospitals", tags=["hospitals"])
@@ -140,6 +141,8 @@ def recommend_partner_request(
 
     notify(db, "superadmin", "Hospital Recommended for Approval",
            f"{_staff_name(db, claims)} recommended {partner_request.hospital_name} for hospital partnership approval.")
+    record_event(db, "hospital_recommended", role=claims["role"], actor_id=UUID(claims["sub"]),
+                 detail=partner_request.hospital_name)
 
     db.commit()
     db.refresh(partner_request)
@@ -196,6 +199,8 @@ def approve_partner_request(
 
     notify(db, "admin", "Hospital Partner Approved",
            f"{_staff_name(db, claims)} approved {partner_request.hospital_name} -- now a live partner hospital.")
+    record_event(db, "hospital_approved", role=claims["role"], actor_id=UUID(claims["sub"]),
+                 detail=partner_request.hospital_name)
 
     db.commit()
     db.refresh(hospital)
@@ -235,6 +240,8 @@ def reject_partner_request(
 
     notify(db, "superadmin", "Hospital Partner Rejected",
            f'{_staff_name(db, claims)} rejected {partner_request.hospital_name}\'s partner application. Reason: "{payload.reason}"')
+    record_event(db, "hospital_rejected", role=claims["role"], actor_id=UUID(claims["sub"]),
+                 detail=partner_request.hospital_name)
 
     db.commit()
     db.refresh(partner_request)

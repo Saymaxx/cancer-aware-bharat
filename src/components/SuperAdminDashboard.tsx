@@ -5,7 +5,7 @@ import {
   Stethoscope, Crown, UserCog, Layers, PieChart, LayoutDashboard, Megaphone,
   Database, ShieldCheck, FileText,
 } from 'lucide-react';
-import { useApiEnquiries, useApiNotifications, useApiHospitals, useBlogs, useEvents, usePartnerRequests } from '../api/hooks';
+import { useApiEnquiries, useApiNotifications, useApiHospitals, useAuditLogs, useBlogs, useEvents, usePartnerRequests } from '../api/hooks';
 import { assignHospital, ApiError, approvePartnerRequest, broadcastNotification, createBlog, deleteBlog, getStaffSession, rejectPartnerRequest, type NotificationAudience } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, Hospital } from '../types';
@@ -17,9 +17,9 @@ import { csvCell, downloadCsv } from '../utils/csvExport';
 
 import {
   INITIAL_ADMIN_ACCOUNTS,
-  INITIAL_AUDIT_LOGS, INITIAL_CUSTOM_ROLES,
+  INITIAL_CUSTOM_ROLES,
   INITIAL_BACKUP_RECORDS, INITIAL_SENT_NOTIFICATIONS,
-  type SuperAdminAccount, type HospitalApplication, type AuditLogEntry,
+  type SuperAdminAccount, type HospitalApplication,
   type CustomRole, type SentNotification
 } from '../superAdminDashboardData';
 
@@ -193,13 +193,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
       generatedCredentials: undefined,
     };
   }), [partnerRequests, locallyRequestedInfoIds]);
-  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_audit_logs');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) {}
-    }
-    return INITIAL_AUDIT_LOGS;
-  });
+  const { auditLogs } = useAuditLogs(apiToken);
   const [roles, setRoles] = useState<CustomRole[]>(() => {
     const stored = localStorage.getItem('aware_bharat_custom_roles');
     if (stored) {
@@ -443,25 +437,6 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     }
   };
 
-  const logAuditEntry = (action: string, target: string, severity: 'Info' | 'Warning' | 'Critical' = 'Info') => {
-    const newEntry: AuditLogEntry = {
-      id: 'LOG-' + Date.now(),
-      timestamp: new Date().toLocaleString('en-IN'),
-      actor: profileName,
-      actorRole: 'Super Admin',
-      action,
-      target,
-      ipAddress: '192.168.1.100',
-      severity,
-      module: 'SuperAdmin'
-    };
-    setAuditLogs(prev => {
-      const updated = [newEntry, ...prev];
-      localStorage.setItem('aware_bharat_audit_logs', JSON.stringify(updated));
-      return updated;
-    });
-  };
-
   // ---- Hospital Approvals ----
   // Approving needs region/state/type/address/lat/lng -- fields the partner
   // request never collected -- so this opens a form instead of acting
@@ -486,7 +461,6 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
         lng: parseFloat(approveLng),
         notes: approveNotes || undefined,
       });
-      logAuditEntry('Hospital Application Approved', `Hospital: ${result.hospital.name}`, 'Info');
       setShowApprovalResult({ email: result.loginEmail, password: result.tempPassword });
       setShowApproveModal(null);
       showToast('Hospital application approved and credentials generated!');
@@ -502,7 +476,6 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     if (!rejectReason.trim() || !apiToken) return;
     try {
       await rejectPartnerRequest(id, apiToken, rejectReason);
-      logAuditEntry('Hospital Application Rejected', `Hospital ID: ${id} (${rejectReason})`, 'Warning');
       setShowRejectDialog(null);
       setRejectReason('');
       showToast('Hospital application rejected.');
@@ -514,7 +487,6 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
   const requestMoreInfo = (id: string) => {
     setLocallyRequestedInfoIds(prev => new Set(prev).add(id));
-    logAuditEntry('Hospital Info Requested', `Hospital ID: ${id}`, 'Info');
     showToast('Additional information requested from hospital.');
   };
 
@@ -537,7 +509,6 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
         localStorage.setItem('aware_bharat_superadmin_sent_notifications', JSON.stringify(updated));
         return updated;
       });
-      logAuditEntry(`Broadcast Notification Dispatched (${notifAudience})`, notifTitle, 'Info');
       setNotifTitle('');
       setNotifMessage('');
       showToast(`Notification broadcast to ${result.recipientCount} recipient(s) in ${notifAudience}!`);
@@ -565,7 +536,6 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
         tags: [newBlogCategory, 'Official Directive', 'Executive'],
       });
       await refetchBlogs();
-      logAuditEntry(`Blog Notice Published ("${newBlogTitle}")`, 'Portal News', 'Info');
       setNewBlogTitle('');
       setNewBlogSummary('');
       toast.success('Notice Published', `"${created.title}" is live on Portal News.`);
@@ -579,7 +549,6 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     try {
       await deleteBlog(id, apiToken);
       await refetchBlogs();
-      logAuditEntry(`Blog Article Deleted (ID: ${id})`, 'Portal News', 'Warning');
       toast.info('Blog Article Removed');
     } catch (err) {
       toast.error('Delete Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
@@ -606,7 +575,6 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
       localStorage.setItem('aware_bharat_custom_roles', JSON.stringify(updated));
       return updated;
     });
-    logAuditEntry(`Custom Role Created (${newRoleName})`, 'RBAC System', 'Info');
     setNewRoleName('');
     setNewRoleDescription('');
     setShowRoleModal(false);
@@ -629,7 +597,6 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
       localStorage.setItem('aware_bharat_backup_records', JSON.stringify(updated));
       return updated;
     });
-    logAuditEntry('Database Full Backup Initiated', 'PostgreSQL Primary Cluster', 'Info');
     toast.success('Backup Completed', 'Full database snapshot saved successfully.');
   };
 

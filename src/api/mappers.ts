@@ -2,9 +2,10 @@
 // interfaces, so AdminDashboard/SuperAdminDashboard/EnquiryTimelineModal
 // keep working unmodified against real data.
 
-import { ApiBlogArticle, ApiCampaignRequest, ApiEvent, ApiHospital, ApiNotification, ApiPatientEnquiry } from './client';
+import { ApiAuditLog, ApiBlogArticle, ApiCampaignRequest, ApiEvent, ApiHospital, ApiNotification, ApiPatientEnquiry } from './client';
 import { AppNotification, BlogArticle, Event, Hospital, PatientEnquiry } from '../types';
 import { CampaignRequest } from '../adminDashboardData';
+import { AuditLogEntry } from '../superAdminDashboardData';
 
 function formatTimestamp(iso: string): string {
   try {
@@ -157,6 +158,33 @@ export function mapApiCampaignRequest(api: ApiCampaignRequest): CampaignRequest 
     location: api.location,
     expectedAttendees: api.expectedAttendees,
     status: api.status,
+  };
+}
+
+// "blog_published" -> "Blog Published" / "Published"
+function humanize(snake: string): string {
+  return snake.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Admin', superadmin: 'Super Admin', hospital: 'Hospital', volunteer: 'Volunteer', patient: 'Patient', staff: 'Staff',
+};
+
+export function mapApiAuditLog(api: ApiAuditLog): AuditLogEntry {
+  // The log records role + a UUID actor_id, not a resolvable display name --
+  // showing the role is honest about what's actually known here rather than
+  // fabricating an identity the backend doesn't track.
+  const roleLabel = api.role ? (ROLE_LABELS[api.role] ?? humanize(api.role)) : 'System';
+  return {
+    id: api.id,
+    timestamp: formatTimestamp(api.createdAt),
+    actor: roleLabel,
+    actorRole: api.role ? `${roleLabel} Account` : 'Automated',
+    action: humanize(api.eventType),
+    target: api.detail ?? '—',
+    ipAddress: api.ipAddress ?? '—',
+    severity: api.severity,
+    module: humanize(api.eventType.split('_')[0]),
   };
 }
 

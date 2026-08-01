@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { listBlogs, listCampaignRequests, listDonations, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientRecords, listVolunteerFeedback, listVolunteers } from './client';
-import { mapApiBlog, mapApiCampaignRequest, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
+import { listAuditLogs, listBlogs, listCampaignRequests, listDonations, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientRecords, listVolunteerFeedback, listVolunteers } from './client';
+import { mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
 
@@ -169,6 +169,24 @@ export function useCampaignRequests(token: string | null) {
     campaignRequests: (query.data ?? []).map(mapApiCampaignRequest),
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load campaign requests' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Real account/security event log (SuperAdmin Audit Logs tab).
+ * Superadmin-only endpoint. */
+export function useAuditLogs(token: string | null) {
+  const query = useQuery({
+    queryKey: ['audit-logs', token],
+    queryFn: () => listAuditLogs(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    auditLogs: (query.data ?? []).map(mapApiAuditLog),
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load audit logs' : null,
     refetch: query.refetch,
   };
 }

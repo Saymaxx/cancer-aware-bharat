@@ -10,6 +10,7 @@ from app.core.security import generate_numeric_id
 from app.deps import DbSession, require_admin_or_superadmin
 from app.models.patient_record import PatientRecord
 from app.schemas.patient_record import PatientRecordIn, PatientRecordOut
+from app.services.audit import record_event
 
 router = APIRouter(prefix="/patient-records", tags=["patient-records"])
 
@@ -46,6 +47,7 @@ def create_patient_record(
         **payload.model_dump(),
     )
     db.add(record)
+    record_event(db, "patient_record_created", role=claims["role"], actor_id=UUID(claims["sub"]), detail=record.name)
     db.commit()
     db.refresh(record)
     return record
@@ -70,6 +72,7 @@ def update_patient_record(
     record = _get_patient_record_or_404(db, record_id)
     for field, value in payload.model_dump().items():
         setattr(record, field, value)
+    record_event(db, "patient_record_updated", role=claims["role"], actor_id=UUID(claims["sub"]), detail=record.name)
     db.commit()
     db.refresh(record)
     return record
@@ -84,5 +87,6 @@ def delete_patient_record(
     claims: Annotated[dict, Depends(require_admin_or_superadmin)],
 ):
     record = _get_patient_record_or_404(db, record_id)
+    record_event(db, "patient_record_deleted", role=claims["role"], actor_id=UUID(claims["sub"]), detail=record.name)
     db.delete(record)
     db.commit()

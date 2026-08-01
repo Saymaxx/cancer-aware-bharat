@@ -36,6 +36,13 @@ class TestCreateDonation:
         assert donation["receiptSent"] is False
         assert donation["amount"] == 5000
 
+    def test_writes_audit_log_entry(self, client, admin_token, db_session):
+        from app.models.audit_log import AuditLog
+
+        create_sample_donation(client, admin_token)
+        entry = db_session.query(AuditLog).filter(AuditLog.event_type == "donation_recorded").first()
+        assert entry is not None
+
     def test_superadmin_can_create(self, client, superadmin_token):
         resp = client.post("/donations", json={
             "donorName": "Superadmin Donor", "donorType": "Corporate", "amount": 100000, "paymentMethod": "Cheque",

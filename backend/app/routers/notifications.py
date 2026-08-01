@@ -8,6 +8,7 @@ from app.deps import DbSession, require_admin_or_superadmin, get_current_claims
 from app.models.hospital import Hospital
 from app.models.notification import Notification
 from app.schemas.notification import NotificationBroadcastIn, NotificationBroadcastResult, NotificationOut
+from app.services.audit import record_event
 from app.services.notifications import notify
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
@@ -59,6 +60,8 @@ def broadcast_notification(
         else:
             notify(db, role, payload.title, payload.message)
             recipient_count += 1
+    record_event(db, "notification_broadcast", role=claims["role"], actor_id=UUID(claims["sub"]),
+                 detail=f"{payload.audience}: {payload.title}")
     db.commit()
     return NotificationBroadcastResult(recipient_count=recipient_count)
 
