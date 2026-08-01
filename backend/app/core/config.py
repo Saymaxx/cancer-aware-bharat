@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 480
     cors_origins: str = DEV_ONLY_CORS_ORIGINS
     upload_dir: str = "./uploads"
+    # Local-disk destination for the logical (row-level JSON) DB dumps the
+    # Database Backup tab triggers -- deliberately not routed through the S3
+    # object-storage backend above, which is scoped to user-uploaded medical
+    # reports, not ops backups.
+    backup_dir: str = "./backups"
     log_level: str = "INFO"
 
     # "local" (default -- writes to upload_dir on this machine's disk, fine

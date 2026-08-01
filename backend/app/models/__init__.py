@@ -13,6 +13,8 @@ from app.models.enquiry import PatientEnquiry, TimelineEvent, AppointmentDetails
 from app.models.notification import Notification
 from app.models.revoked_token import RevokedToken
 from app.models.audit_log import AuditLog
+from app.models.backup_record import BackupRecord
+from app.models.org_settings import OrgSettings
 
 __all__ = [
     "User",
@@ -35,4 +37,6 @@ __all__ = [
     "Notification",
     "RevokedToken",
     "AuditLog",
+    "BackupRecord",
+    "OrgSettings",
 ]

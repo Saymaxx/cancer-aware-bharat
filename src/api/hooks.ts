@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { listAdmins, listAuditLogs, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteers } from './client';
+import { getDatabaseHealth, getOrgSettings, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteers } from './client';
 import { mapApiAdmin, mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiCustomRole, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -300,6 +300,58 @@ export function useAdmins(token: string | null) {
     admins: (query.data ?? []).map(mapApiAdmin),
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load admin accounts' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Real database size/table/record/uptime stats (SuperAdmin Database Backup
+ * tab). Superadmin-only endpoint. */
+export function useDatabaseHealth(token: string | null) {
+  const query = useQuery({
+    queryKey: ['database-health', token],
+    queryFn: () => getDatabaseHealth(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    health: query.data ?? null,
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load database health' : null,
+  };
+}
+
+/** Real backup history (logical JSON dumps written by POST /database/backups).
+ * Superadmin-only endpoint. */
+export function useBackups(token: string | null) {
+  const query = useQuery({
+    queryKey: ['backups', token],
+    queryFn: () => listBackups(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    backups: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load backup history' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Real single-row NGO settings (SuperAdmin System Settings tab).
+ * Superadmin-only endpoint. */
+export function useOrgSettings(token: string | null) {
+  const query = useQuery({
+    queryKey: ['org-settings', token],
+    queryFn: () => getOrgSettings(token as string),
+    enabled: !!token,
+  });
+
+  return {
+    settings: query.data ?? null,
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load organization settings' : null,
     refetch: query.refetch,
   };
 }

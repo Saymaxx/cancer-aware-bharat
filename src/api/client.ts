@@ -977,3 +977,48 @@ export function activateAdmin(id: string, token: string): Promise<ApiAdmin> {
 export function deleteAdmin(id: string, token: string): Promise<void> {
   return request<void>(`/admins/${id}`, { method: 'DELETE' }, token);
 }
+
+export interface ApiDatabaseHealth {
+  totalSizeBytes: number;
+  tablesCount: number;
+  totalRecords: number;
+  uptimeSeconds: number;
+}
+
+export interface ApiBackupRecord {
+  id: string;
+  sizeBytes: number;
+  durationMs: number;
+  initiatedBy: string;
+  createdAt: string;
+}
+
+export function getDatabaseHealth(token: string): Promise<ApiDatabaseHealth> {
+  return request<ApiDatabaseHealth>('/database/health', {}, token);
+}
+
+export function listBackups(token: string): Promise<ApiBackupRecord[]> {
+  return request<ApiBackupRecord[]>('/database/backups', {}, token);
+}
+
+export function createBackup(token: string): Promise<ApiBackupRecord> {
+  return request<ApiBackupRecord>('/database/backups', { method: 'POST' }, token);
+}
+
+export interface ApiOrgSettings {
+  ngoName: string;
+  tagline: string;
+  registrationNo: string;
+  address: string;
+  phone: string;
+  email: string;
+  website: string;
+}
+
+export function getOrgSettings(token: string): Promise<ApiOrgSettings> {
+  return request<ApiOrgSettings>('/org-settings', {}, token);
+}
+
+export function updateOrgSettings(token: string, payload: ApiOrgSettings): Promise<ApiOrgSettings> {
+  return request<ApiOrgSettings>('/org-settings', { method: 'PATCH', body: JSON.stringify(payload) }, token);
+}

@@ -5,8 +5,8 @@ import {
   Stethoscope, Crown, UserCog, Layers, PieChart, LayoutDashboard, Megaphone,
   Database, ShieldCheck, FileText,
 } from 'lucide-react';
-import { useAdmins, useApiEnquiries, useApiNotifications, useApiHospitals, useAuditLogs, useBlogs, useEvents, usePartnerRequests, useRoles } from '../api/hooks';
-import { activateAdmin, assignHospital, ApiError, approvePartnerRequest, broadcastNotification, createAdmin, createBlog, createRole, deleteAdmin as deleteAdminAccount, deleteBlog, getStaffSession, rejectPartnerRequest, suspendAdmin, updateAdmin, type NotificationAudience } from '../api/client';
+import { useAdmins, useApiEnquiries, useApiNotifications, useApiHospitals, useAuditLogs, useBackups, useBlogs, useDatabaseHealth, useDonations, useEvents, useOrgSettings, usePartnerRequests, usePatientRecords, useRoles, useVolunteers } from '../api/hooks';
+import { activateAdmin, assignHospital, ApiError, approvePartnerRequest, broadcastNotification, createAdmin, createBackup, createBlog, createRole, deleteAdmin as deleteAdminAccount, deleteBlog, getStaffSession, rejectPartnerRequest, suspendAdmin, updateAdmin, updateOrgSettings, type ApiOrgSettings, type NotificationAudience } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, Hospital } from '../types';
 import { useToast } from './common/Toast';
@@ -16,13 +16,12 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { csvCell, downloadCsv } from '../utils/csvExport';
 
 import {
-  INITIAL_BACKUP_RECORDS, INITIAL_SENT_NOTIFICATIONS,
+  INITIAL_SENT_NOTIFICATIONS,
   type SuperAdminAccount, type HospitalApplication,
   type SentNotification
 } from '../superAdminDashboardData';
 
 import {
-  INITIAL_PATIENTS, INITIAL_ADMIN_VOLUNTEERS, INITIAL_ADMIN_DONATIONS,
   type Patient, type AdminVolunteer, type AdminDonation
 } from '../adminDashboardData';
 
@@ -59,7 +58,8 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   const [activeTab, setActiveTab] = useState<string>('dashboard');
 
   // Real-time Patient Enquiries & Notifications from the backend API
-  const apiToken = useMemo(() => getStaffSession()?.accessToken || null, []);
+  const staffSession = useMemo(() => getStaffSession(), []);
+  const apiToken = useMemo(() => staffSession?.accessToken || null, [staffSession]);
   const { enquiries, refetch: refetchEnquiries } = useApiEnquiries(apiToken);
   const { notifications: superAdminNotifications } = useApiNotifications(apiToken);
   const { events } = useEvents();
@@ -184,29 +184,65 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     }
     return INITIAL_SENT_NOTIFICATIONS;
   });
-  const [backupRecords, setBackupRecords] = useState(() => {
-    const stored = localStorage.getItem('aware_bharat_backup_records');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) {}
-    }
-    return INITIAL_BACKUP_RECORDS;
-  });
+  const { health: databaseHealth, loading: databaseHealthLoading } = useDatabaseHealth(apiToken);
+  const { backups, refetch: refetchBackups } = useBackups(apiToken);
+  const [creatingBackup, setCreatingBackup] = useState(false);
 
-  // Cross-Platform Unified Data States
-  const [patients, setPatients] = useState<Patient[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_patients');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) {}
+  const { settings: orgSettings, loading: orgSettingsLoading, refetch: refetchOrgSettings } = useOrgSettings(apiToken);
+  const [savingOrgSettings, setSavingOrgSettings] = useState(false);
+  const handleSaveOrgSettings = async (payload: ApiOrgSettings) => {
+    if (!apiToken) return;
+    setSavingOrgSettings(true);
+    try {
+      await updateOrgSettings(apiToken, payload);
+      await refetchOrgSettings();
+      toast.success('Settings Saved', 'Organization information updated successfully.');
+    } catch (err) {
+      toast.error('Save Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    } finally {
+      setSavingOrgSettings(false);
     }
-    return INITIAL_PATIENTS;
-  });
-  const [volunteers, setVolunteers] = useState<AdminVolunteer[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_volunteers');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) {}
-    }
-    return INITIAL_ADMIN_VOLUNTEERS;
-  });
+  };
+
+  // Cross-Platform Unified Data States -- same real-backend mapping AdminDashboard.tsx
+  // uses for its own copies of these tabs (Phases E/F/C), reused here since
+  // SuperAdmin's Patients/Volunteers/Donations tabs are read-only + CSV-export
+  // views of the same underlying data, not separate CRUD surfaces.
+  const { patientRecords: apiPatientRecords } = usePatientRecords(apiToken);
+  const patients: Patient[] = useMemo(() => apiPatientRecords.map(r => ({
+    id: r.id,
+    recordId: r.recordId,
+    name: r.name,
+    age: r.age,
+    gender: r.gender as Patient['gender'],
+    diagnosis: r.diagnosis,
+    hospitalId: r.hospitalId || '',
+    hospitalName: r.hospitalName || '',
+    assignedVolunteerId: r.assignedVolunteerId || undefined,
+    assignedVolunteerName: r.assignedVolunteerName || undefined,
+    financialAidStatus: r.financialAidStatus,
+    financialAidAmount: r.financialAidAmount ?? undefined,
+    reportUrl: r.reportUrl || undefined,
+    status: r.caseStatus,
+  })), [apiPatientRecords]);
+
+  const { volunteers: apiVolunteers } = useVolunteers(apiToken);
+  // domain/city/assignedCampaignsCount/hoursLogged/attendanceRate have no
+  // backend equivalent, same honest-default rationale as AdminDashboard.tsx.
+  const volunteers: AdminVolunteer[] = useMemo(() => apiVolunteers.map(v => ({
+    id: v.id,
+    name: v.name,
+    email: v.email,
+    phone: v.phone,
+    domain: v.area || 'General Volunteer',
+    city: '',
+    status: v.status,
+    assignedCampaignsCount: 0,
+    hoursLogged: 0,
+    attendanceRate: 0,
+    registeredDate: new Date(v.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
+  })), [apiVolunteers]);
+
   const campaigns = useMemo(() => events.map(e => ({
     id: e.id,
     title: e.title,
@@ -216,13 +252,18 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     registrations: `${e.registeredCount} / ${e.capacity} registered`,
     status: e.status,
   })), [events]);
-  const [donations, setDonations] = useState<AdminDonation[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_donations');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) {}
-    }
-    return INITIAL_ADMIN_DONATIONS;
-  });
+
+  const { donations: apiDonations } = useDonations(apiToken);
+  const donations: AdminDonation[] = useMemo(() => apiDonations.map(d => ({
+    id: d.id,
+    donorName: d.donorName,
+    donorType: d.donorType,
+    amount: d.amount,
+    date: new Date(d.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
+    paymentMethod: d.paymentMethod,
+    receiptSent: d.receiptSent,
+    sponsorshipCampaign: d.sponsorshipCampaign || undefined,
+  })), [apiDonations]);
   // UI state
   const [searchTerm, setSearchTerm] = useState('');
   const [hospitalFilter, setHospitalFilter] = useState('All');
@@ -522,22 +563,18 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   };
 
   // ---- Backup Trigger ----
-  const handleCreateBackupNow = () => {
-    const newRecord = {
-      id: 'BK-' + Date.now(),
-      timestamp: new Date().toLocaleString('en-IN'),
-      type: 'Full' as const,
-      size: '48.6 MB',
-      duration: '3m 12s',
-      status: 'Completed' as const,
-      initiatedBy: profileName
-    };
-    setBackupRecords(prev => {
-      const updated = [newRecord, ...prev];
-      localStorage.setItem('aware_bharat_backup_records', JSON.stringify(updated));
-      return updated;
-    });
-    toast.success('Backup Completed', 'Full database snapshot saved successfully.');
+  const handleCreateBackupNow = async () => {
+    if (!apiToken) return;
+    setCreatingBackup(true);
+    try {
+      await createBackup(apiToken);
+      await refetchBackups();
+      toast.success('Backup Completed', 'A full database snapshot was written to disk.');
+    } catch (err) {
+      toast.error('Backup Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    } finally {
+      setCreatingBackup(false);
+    }
   };
 
   // ---- CSV Exports ----
@@ -794,6 +831,13 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
             <OverviewTab
               hospitals={hospitals}
               admins={admins}
+              patients={patients}
+              volunteers={volunteers}
+              donations={donations}
+              activeCampaignsCount={events.filter(e => e.status === 'Scheduled').length}
+              blogCount={blogs.length}
+              auditLogs={auditLogs}
+              apiToken={apiToken}
               setActiveTab={setActiveTab}
             />
           )}
@@ -906,7 +950,15 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
           {/* ===== TAB: REPORTS & EXPORT ===== */}
           {activeTab === 'reports' && (
-            <ReportsTab showToast={showToast} />
+            <ReportsTab
+              patients={patients}
+              volunteers={volunteers}
+              donations={donations}
+              hospitals={hospitals}
+              admins={admins}
+              campaigns={campaigns}
+              showToast={showToast}
+            />
           )}
 
           {/* ===== TAB: GLOBAL ANALYTICS ===== */}
@@ -943,7 +995,12 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
           {/* ===== TAB: SYSTEM SETTINGS ===== */}
           {activeTab === 'settings' && (
-            <SettingsTab />
+            <SettingsTab
+              settings={orgSettings}
+              loading={orgSettingsLoading}
+              saving={savingOrgSettings}
+              onSave={handleSaveOrgSettings}
+            />
           )}
 
           {/* ===== TAB: ROLES & PERMISSIONS ===== */}
@@ -957,15 +1014,17 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
           {/* ===== TAB: DATABASE BACKUP ===== */}
           {activeTab === 'database' && (
             <DatabaseTab
-              backupRecords={backupRecords}
+              health={databaseHealth}
+              healthLoading={databaseHealthLoading}
+              backups={backups}
+              creatingBackup={creatingBackup}
               handleCreateBackupNow={handleCreateBackupNow}
-              showToast={showToast}
             />
           )}
 
           {/* ===== TAB: SECURITY CENTER ===== */}
           {activeTab === 'security' && (
-            <SecurityTab />
+            <SecurityTab staffSession={staffSession} auditLogs={auditLogs} />
           )}
 
           {/* ===== TAB: PROFILE ===== */}
