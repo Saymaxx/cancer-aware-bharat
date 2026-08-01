@@ -718,3 +718,28 @@ export function createDonation(token: string, payload: DonationPayload): Promise
 export function sendDonationReceipt(id: string, token: string): Promise<ApiDonation> {
   return request<ApiDonation>(`/donations/${id}/send-receipt`, { method: 'POST' }, token);
 }
+
+// ---------------- Volunteer Feedback ----------------
+
+export interface ApiVolunteerFeedback {
+  id: string;
+  volunteerId: string | null;
+  volunteerName: string;
+  campaignName: string;
+  rating: number;
+  comment: string;
+  status: 'New' | 'Reviewed' | 'Responded';
+  response: string | null;
+  createdAt: string;
+}
+
+export function listVolunteerFeedback(token: string): Promise<ApiVolunteerFeedback[]> {
+  return request<ApiVolunteerFeedback[]>('/volunteer-feedback', {}, token);
+}
+
+export function respondToVolunteerFeedback(id: string, token: string, response: string): Promise<ApiVolunteerFeedback> {
+  return request<ApiVolunteerFeedback>(`/volunteer-feedback/${id}/respond`, {
+    method: 'POST',
+    body: JSON.stringify({ response }),
+  }, token);
+}

@@ -5,8 +5,8 @@ import {
   DollarSign, BookOpen, MessageSquare, Terminal, Menu, Stethoscope,
 } from 'lucide-react';
 import { enquiryStore } from '../enquiryStore';
-import { useApiEnquiries, useApiHospitals, useApiNotifications, useDonations, usePartnerRequests, usePatientRecords, useVolunteers } from '../api/hooks';
-import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, createPatientRecord, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, sendDonationReceipt, updatePatientRecord } from '../api/client';
+import { useApiEnquiries, useApiHospitals, useApiNotifications, useDonations, usePartnerRequests, usePatientRecords, useVolunteerFeedback, useVolunteers } from '../api/hooks';
+import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, createPatientRecord, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, respondToVolunteerFeedback, sendDonationReceipt, updatePatientRecord } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, BlogArticle } from '../types';
 import { INITIAL_BLOGS } from '../data';
@@ -19,7 +19,7 @@ import { csvCell, downloadCsv } from '../utils/csvExport';
 import {
   INITIAL_KPI_METRICS,
   INITIAL_CAMPAIGN_REQUESTS,
-  INITIAL_ADMIN_FEEDBACKS, type Patient, type AdminVolunteer, type PartnerHospital,
+  type Patient, type AdminVolunteer, type PartnerHospital,
   type CampaignRequest, type AdminDonation, type AdminFeedback
 } from '../adminDashboardData';
 
@@ -64,6 +64,17 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const { volunteers: apiVolunteers, refetch: refetchVolunteers } = useVolunteers(apiToken);
   const { patientRecords: apiPatientRecords, refetch: refetchPatientRecords } = usePatientRecords(apiToken);
   const { donations: apiDonations, refetch: refetchDonations } = useDonations(apiToken);
+  const { feedback: apiFeedback, refetch: refetchFeedback } = useVolunteerFeedback(apiToken);
+  const feedbacks: AdminFeedback[] = useMemo(() => apiFeedback.map(f => ({
+    id: f.id,
+    volunteerName: f.volunteerName,
+    campaignName: f.campaignName,
+    date: new Date(f.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
+    rating: f.rating,
+    comment: f.comment,
+    status: f.status,
+    response: f.response || undefined,
+  })), [apiFeedback]);
   const donations: AdminDonation[] = useMemo(() => apiDonations.map(d => ({
     id: d.id,
     donorName: d.donorName,
@@ -142,13 +153,6 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
       try { return JSON.parse(stored); } catch (e) {}
     }
     return INITIAL_CAMPAIGN_REQUESTS;
-  });
-  const [feedbacks, setFeedbacks] = useState<AdminFeedback[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_volunteer_feedback');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) {}
-    }
-    return INITIAL_ADMIN_FEEDBACKS;
   });
   const [blogs, setBlogs] = useState<BlogArticle[]>(() => {
     const stored = localStorage.getItem('aware_bharat_blogs');
@@ -453,16 +457,17 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   // ==========================================
   // FEEDBACK UTILITIES
   // ==========================================
-  const handleSendFeedbackReply = (id: string) => {
-    if (!feedbackReplyText.trim()) return;
-    setFeedbacks(prev => {
-      const updated = prev.map(f => f.id === id ? { ...f, status: 'Responded' as const, response: feedbackReplyText } : f);
-      localStorage.setItem('aware_bharat_volunteer_feedback', JSON.stringify(updated));
-      return updated;
-    });
-    toast.success('Feedback Replied', 'Response sent to volunteer.');
-    setFeedbackReplyText('');
-    setActiveFeedbackId(null);
+  const handleSendFeedbackReply = async (id: string) => {
+    if (!feedbackReplyText.trim() || !apiToken) return;
+    try {
+      await respondToVolunteerFeedback(id, apiToken, feedbackReplyText);
+      toast.success('Feedback Replied', 'Response sent to volunteer.');
+      setFeedbackReplyText('');
+      setActiveFeedbackId(null);
+      refetchFeedback();
+    } catch (err) {
+      toast.error('Reply Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   // ==========================================

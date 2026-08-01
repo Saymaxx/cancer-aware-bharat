@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { listDonations, listEnquiries, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientRecords, listVolunteers } from './client';
+import { listDonations, listEnquiries, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientRecords, listVolunteerFeedback, listVolunteers } from './client';
 import { mapApiEnquiry, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -133,6 +133,24 @@ export function useDonations(token: string | null) {
     donations: query.data ?? [],
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load donations' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Volunteer feedback entries (admin review side only -- no submission UI
+ * exists yet for volunteers to leave their own feedback). */
+export function useVolunteerFeedback(token: string | null) {
+  const query = useQuery({
+    queryKey: ['volunteer-feedback', token],
+    queryFn: () => listVolunteerFeedback(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    feedback: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load volunteer feedback' : null,
     refetch: query.refetch,
   };
 }
