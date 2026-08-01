@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { listEnquiries, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientRecords, listVolunteers } from './client';
+import { listDonations, listEnquiries, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientRecords, listVolunteers } from './client';
 import { mapApiEnquiry, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -116,6 +116,23 @@ export function usePatientRecords(token: string | null) {
     patientRecords: query.data ?? [],
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load patient records' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Donation ledger entries (Donations Audit). */
+export function useDonations(token: string | null) {
+  const query = useQuery({
+    queryKey: ['donations', token],
+    queryFn: () => listDonations(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    donations: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load donations' : null,
     refetch: query.refetch,
   };
 }

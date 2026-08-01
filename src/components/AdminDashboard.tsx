@@ -5,8 +5,8 @@ import {
   DollarSign, BookOpen, MessageSquare, Terminal, Menu, Stethoscope,
 } from 'lucide-react';
 import { enquiryStore } from '../enquiryStore';
-import { useApiEnquiries, useApiHospitals, useApiNotifications, usePartnerRequests, usePatientRecords, useVolunteers } from '../api/hooks';
-import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, createPatientRecord, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, updatePatientRecord } from '../api/client';
+import { useApiEnquiries, useApiHospitals, useApiNotifications, useDonations, usePartnerRequests, usePatientRecords, useVolunteers } from '../api/hooks';
+import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, createPatientRecord, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, sendDonationReceipt, updatePatientRecord } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, BlogArticle } from '../types';
 import { INITIAL_BLOGS } from '../data';
@@ -18,7 +18,7 @@ import { csvCell, downloadCsv } from '../utils/csvExport';
 
 import {
   INITIAL_KPI_METRICS,
-  INITIAL_CAMPAIGN_REQUESTS, INITIAL_ADMIN_DONATIONS,
+  INITIAL_CAMPAIGN_REQUESTS,
   INITIAL_ADMIN_FEEDBACKS, type Patient, type AdminVolunteer, type PartnerHospital,
   type CampaignRequest, type AdminDonation, type AdminFeedback
 } from '../adminDashboardData';
@@ -63,6 +63,17 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const { partnerRequests, refetch: refetchPartnerRequests } = usePartnerRequests(apiToken);
   const { volunteers: apiVolunteers, refetch: refetchVolunteers } = useVolunteers(apiToken);
   const { patientRecords: apiPatientRecords, refetch: refetchPatientRecords } = usePatientRecords(apiToken);
+  const { donations: apiDonations, refetch: refetchDonations } = useDonations(apiToken);
+  const donations: AdminDonation[] = useMemo(() => apiDonations.map(d => ({
+    id: d.id,
+    donorName: d.donorName,
+    donorType: d.donorType,
+    amount: d.amount,
+    date: new Date(d.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
+    paymentMethod: d.paymentMethod,
+    receiptSent: d.receiptSent,
+    sponsorshipCampaign: d.sponsorshipCampaign || undefined,
+  })), [apiDonations]);
   const { hospitals: partnerHospitalDirectory } = useApiHospitals();
   const patients: Patient[] = useMemo(() => apiPatientRecords.map(r => ({
     id: r.id,
@@ -131,13 +142,6 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
       try { return JSON.parse(stored); } catch (e) {}
     }
     return INITIAL_CAMPAIGN_REQUESTS;
-  });
-  const [donations, setDonations] = useState<AdminDonation[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_donations');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) {}
-    }
-    return INITIAL_ADMIN_DONATIONS;
   });
   const [feedbacks, setFeedbacks] = useState<AdminFeedback[]>(() => {
     const stored = localStorage.getItem('aware_bharat_volunteer_feedback');
@@ -822,11 +826,16 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
               donationsReceived={summaryKpis.donationsReceived}
               donations={donations}
               handleExportDonationsCSV={handleExportDonationsCSV}
-              onEmailReceipt={(donationId) => setDonations(prev => {
-                const updated = prev.map(d => d.id === donationId ? { ...d, receiptSent: true } : d);
-                localStorage.setItem('aware_bharat_donations', JSON.stringify(updated));
-                return updated;
-              })}
+              onEmailReceipt={async (donationId) => {
+                if (!apiToken) return;
+                try {
+                  await sendDonationReceipt(donationId, apiToken);
+                  toast.success('Receipt Sent', 'Donation receipt marked as sent.');
+                  refetchDonations();
+                } catch (err) {
+                  toast.error('Send Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+                }
+              }}
             />
           )}
 

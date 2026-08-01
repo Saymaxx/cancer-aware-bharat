@@ -685,3 +685,36 @@ export function updatePatientRecord(id: string, token: string, payload: PatientR
 export function deletePatientRecord(id: string, token: string): Promise<void> {
   return request<void>(`/patient-records/${id}`, { method: 'DELETE' }, token);
 }
+
+// ---------------- Donations (Donations Audit) ----------------
+
+export interface ApiDonation {
+  id: string;
+  donorName: string;
+  donorType: 'Individual' | 'Corporate' | 'Foundation' | 'NGO';
+  amount: number;
+  paymentMethod: 'UPI' | 'Net Banking' | 'Card' | 'Cheque';
+  receiptSent: boolean;
+  sponsorshipCampaign: string | null;
+  createdAt: string;
+}
+
+export interface DonationPayload {
+  donorName: string;
+  donorType: ApiDonation['donorType'];
+  amount: number;
+  paymentMethod: ApiDonation['paymentMethod'];
+  sponsorshipCampaign?: string | null;
+}
+
+export function listDonations(token: string): Promise<ApiDonation[]> {
+  return request<ApiDonation[]>('/donations', {}, token);
+}
+
+export function createDonation(token: string, payload: DonationPayload): Promise<ApiDonation> {
+  return request<ApiDonation>('/donations', { method: 'POST', body: JSON.stringify(payload) }, token);
+}
+
+export function sendDonationReceipt(id: string, token: string): Promise<ApiDonation> {
+  return request<ApiDonation>(`/donations/${id}/send-receipt`, { method: 'POST' }, token);
+}
