@@ -256,30 +256,6 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
   { id: 'LOG-015', timestamp: 'Jul 15, 2026 — 10:00 AM', actor: 'board@awarebharat.org', actorRole: 'Super Admin', action: 'Password Policy Updated', target: 'Minimum length changed from 8 to 12 characters', ipAddress: '103.25.148.22', severity: 'Warning', module: 'Security' },
 ];
 
-// ---- Custom Roles ----
-export const INITIAL_CUSTOM_ROLES: CustomRole[] = [
-  {
-    id: 'ROLE-001', name: 'Regional Admin', description: 'Full regional management access — patients, volunteers, campaigns, hospital recommendations',
-    permissions: ['dashboard.view', 'patients.view', 'patients.edit', 'volunteers.view', 'volunteers.approve', 'campaigns.view', 'campaigns.create', 'campaigns.edit', 'hospitals.view', 'hospitals.recommend', 'donations.view', 'blogs.view', 'blogs.create', 'events.view', 'notifications.send'],
-    assignedCount: 2, createdDate: 'Jan 10, 2026', isSystem: true,
-  },
-  {
-    id: 'ROLE-002', name: 'Campaign Manager', description: 'Campaign creation and event management with limited volunteer oversight',
-    permissions: ['dashboard.view', 'campaigns.view', 'campaigns.create', 'campaigns.edit', 'events.view', 'events.create', 'events.manage'],
-    assignedCount: 1, createdDate: 'Mar 20, 2026', isSystem: false,
-  },
-  {
-    id: 'ROLE-003', name: 'Finance Manager', description: 'Full access to donations audit, financial aid processing, and report export',
-    permissions: ['dashboard.view', 'donations.view', 'donations.audit', 'donations.export', 'patients.financial_aid', 'reports.view', 'reports.export'],
-    assignedCount: 0, createdDate: 'Apr 05, 2026', isSystem: false,
-  },
-  {
-    id: 'ROLE-004', name: 'Hospital Coordinator', description: 'Hospital partnership management and document verification',
-    permissions: ['dashboard.view', 'hospitals.view', 'hospitals.recommend', 'patients.view'],
-    assignedCount: 0, createdDate: 'May 12, 2026', isSystem: false,
-  },
-];
-
 // ---- Active Sessions ----
 export const INITIAL_ACTIVE_SESSIONS: ActiveSession[] = [
   { id: 'SESS-001', user: 'board@awarebharat.org', role: 'Super Admin', device: 'Windows 11 — Desktop', browser: 'Chrome 127', ipAddress: '103.25.148.22', lastActivity: '2 minutes ago', location: 'New Delhi, India', status: 'Active' },

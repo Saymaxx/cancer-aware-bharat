@@ -868,3 +868,33 @@ export interface ApiAuditLog {
 export function listAuditLogs(token: string): Promise<ApiAuditLog[]> {
   return request<ApiAuditLog[]>('/audit-logs', {}, token);
 }
+
+// ---------------- Custom Roles (persistence only, no permission enforcement) ----------------
+
+export interface ApiCustomRole {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  isSystem: boolean;
+  assignedCount: number;
+  createdAt: string;
+}
+
+export interface CustomRolePayload {
+  name: string;
+  description: string;
+  permissions: string[];
+}
+
+export function listRoles(token: string): Promise<ApiCustomRole[]> {
+  return request<ApiCustomRole[]>('/roles', {}, token);
+}
+
+export function createRole(token: string, payload: CustomRolePayload): Promise<ApiCustomRole> {
+  return request<ApiCustomRole>('/roles', { method: 'POST', body: JSON.stringify(payload) }, token);
+}
+
+export function deleteRole(id: string, token: string): Promise<void> {
+  return request<void>(`/roles/${id}`, { method: 'DELETE' }, token);
+}

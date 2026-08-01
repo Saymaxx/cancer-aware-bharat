@@ -5,8 +5,8 @@ import {
   Stethoscope, Crown, UserCog, Layers, PieChart, LayoutDashboard, Megaphone,
   Database, ShieldCheck, FileText,
 } from 'lucide-react';
-import { useApiEnquiries, useApiNotifications, useApiHospitals, useAuditLogs, useBlogs, useEvents, usePartnerRequests } from '../api/hooks';
-import { assignHospital, ApiError, approvePartnerRequest, broadcastNotification, createBlog, deleteBlog, getStaffSession, rejectPartnerRequest, type NotificationAudience } from '../api/client';
+import { useApiEnquiries, useApiNotifications, useApiHospitals, useAuditLogs, useBlogs, useEvents, usePartnerRequests, useRoles } from '../api/hooks';
+import { assignHospital, ApiError, approvePartnerRequest, broadcastNotification, createBlog, createRole, deleteBlog, getStaffSession, rejectPartnerRequest, type NotificationAudience } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, Hospital } from '../types';
 import { useToast } from './common/Toast';
@@ -17,10 +17,9 @@ import { csvCell, downloadCsv } from '../utils/csvExport';
 
 import {
   INITIAL_ADMIN_ACCOUNTS,
-  INITIAL_CUSTOM_ROLES,
   INITIAL_BACKUP_RECORDS, INITIAL_SENT_NOTIFICATIONS,
   type SuperAdminAccount, type HospitalApplication,
-  type CustomRole, type SentNotification
+  type SentNotification
 } from '../superAdminDashboardData';
 
 import {
@@ -194,13 +193,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     };
   }), [partnerRequests, locallyRequestedInfoIds]);
   const { auditLogs } = useAuditLogs(apiToken);
-  const [roles, setRoles] = useState<CustomRole[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_custom_roles');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) {}
-    }
-    return INITIAL_CUSTOM_ROLES;
-  });
+  const { roles, refetch: refetchRoles } = useRoles(apiToken);
   const [sentNotifications, setSentNotifications] = useState<SentNotification[]>(() => {
     const stored = localStorage.getItem('aware_bharat_superadmin_sent_notifications');
     if (stored) {
@@ -556,29 +549,24 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   };
 
   // ---- Roles Management ----
-  const handleAddRole = (e: React.FormEvent) => {
+  const handleAddRole = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newRoleName.trim()) return;
+    if (!newRoleName.trim() || !apiToken) return;
 
-    const newRole: CustomRole = {
-      id: 'role-' + Date.now(),
-      name: newRoleName,
-      description: newRoleDescription || 'Custom Administrative Role',
-      permissions: ['dashboard.view', 'reports.view'],
-      assignedCount: 0,
-      isSystem: false,
-      createdDate: new Date().toLocaleDateString('en-IN')
-    };
-
-    setRoles(prev => {
-      const updated = [...prev, newRole];
-      localStorage.setItem('aware_bharat_custom_roles', JSON.stringify(updated));
-      return updated;
-    });
-    setNewRoleName('');
-    setNewRoleDescription('');
-    setShowRoleModal(false);
-    toast.success('Role Created', `Custom role "${newRoleName}" saved.`);
+    try {
+      const created = await createRole(apiToken, {
+        name: newRoleName,
+        description: newRoleDescription || 'Custom Administrative Role',
+        permissions: ['dashboard.view', 'reports.view'],
+      });
+      await refetchRoles();
+      setNewRoleName('');
+      setNewRoleDescription('');
+      setShowRoleModal(false);
+      toast.success('Role Created', `Custom role "${created.name}" saved.`);
+    } catch (err) {
+      toast.error('Role Creation Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   // ---- Backup Trigger ----

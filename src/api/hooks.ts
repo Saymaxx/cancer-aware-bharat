@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { listAuditLogs, listBlogs, listCampaignRequests, listDonations, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientRecords, listVolunteerFeedback, listVolunteers } from './client';
-import { mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
+import { listAuditLogs, listBlogs, listCampaignRequests, listDonations, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteers } from './client';
+import { mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiCustomRole, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
 
@@ -233,6 +233,24 @@ export function useEvents() {
     events: (query.data ?? []).map(mapApiEvent),
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load events' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Custom RBAC roles (SuperAdmin Roles & Permissions tab) -- persistence
+ * only, per the confirmed scope decision. Superadmin-only endpoint. */
+export function useRoles(token: string | null) {
+  const query = useQuery({
+    queryKey: ['roles', token],
+    queryFn: () => listRoles(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    roles: (query.data ?? []).map(mapApiCustomRole),
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load roles' : null,
     refetch: query.refetch,
   };
 }

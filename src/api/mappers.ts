@@ -2,14 +2,22 @@
 // interfaces, so AdminDashboard/SuperAdminDashboard/EnquiryTimelineModal
 // keep working unmodified against real data.
 
-import { ApiAuditLog, ApiBlogArticle, ApiCampaignRequest, ApiEvent, ApiHospital, ApiNotification, ApiPatientEnquiry } from './client';
+import { ApiAuditLog, ApiBlogArticle, ApiCampaignRequest, ApiCustomRole, ApiEvent, ApiHospital, ApiNotification, ApiPatientEnquiry } from './client';
 import { AppNotification, BlogArticle, Event, Hospital, PatientEnquiry } from '../types';
 import { CampaignRequest } from '../adminDashboardData';
-import { AuditLogEntry } from '../superAdminDashboardData';
+import { AuditLogEntry, CustomRole } from '../superAdminDashboardData';
 
 function formatTimestamp(iso: string): string {
   try {
     return new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+  } catch {
+    return iso;
+  }
+}
+
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('en-IN', { dateStyle: 'medium' });
   } catch {
     return iso;
   }
@@ -158,6 +166,18 @@ export function mapApiCampaignRequest(api: ApiCampaignRequest): CampaignRequest 
     location: api.location,
     expectedAttendees: api.expectedAttendees,
     status: api.status,
+  };
+}
+
+export function mapApiCustomRole(api: ApiCustomRole): CustomRole {
+  return {
+    id: api.id,
+    name: api.name,
+    description: api.description,
+    permissions: api.permissions,
+    assignedCount: api.assignedCount,
+    createdDate: formatDate(api.createdAt),
+    isSystem: api.isSystem,
   };
 }
 

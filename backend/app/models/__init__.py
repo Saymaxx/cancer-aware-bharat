@@ -8,6 +8,7 @@ from app.models.patient_record import PatientRecord
 from app.models.donation import Donation
 from app.models.volunteer_feedback import VolunteerFeedback
 from app.models.campaign_request import CampaignRequest
+from app.models.custom_role import CustomRole
 from app.models.enquiry import PatientEnquiry, TimelineEvent, AppointmentDetails, UploadedReport
 from app.models.notification import Notification
 from app.models.revoked_token import RevokedToken
@@ -26,6 +27,7 @@ __all__ = [
     "Donation",
     "VolunteerFeedback",
     "CampaignRequest",
+    "CustomRole",
     "PatientEnquiry",
     "TimelineEvent",
     "AppointmentDetails",
