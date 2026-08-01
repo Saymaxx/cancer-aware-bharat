@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Calendar, MapPin, Users, Heart, ChevronDown, ChevronUp, CheckCircle, History, ArrowRight } from 'lucide-react';
-import { INITIAL_EVENTS } from '../data';
-import { Event } from '../types';
+import { useEvents } from '../api/hooks';
 import PremiumSection from './common/PremiumSection';
 
 interface EventsTabProps {
@@ -13,8 +12,7 @@ export default function EventsTab({ onOpenEnquiry }: EventsTabProps) {
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'Blood Donation' | 'Screening Camp' | 'Workshop'>('all');
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
-  // Simulated live slots counter that persists in react state
-  const [liveEvents, setLiveEvents] = useState<Event[]>(INITIAL_EVENTS);
+  const { events: liveEvents } = useEvents();
 
   // Past events data with local camp photos
   const pastEvents = [

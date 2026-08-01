@@ -2,8 +2,8 @@
 // interfaces, so AdminDashboard/SuperAdminDashboard/EnquiryTimelineModal
 // keep working unmodified against real data.
 
-import { ApiHospital, ApiNotification, ApiPatientEnquiry } from './client';
-import { AppNotification, Hospital, PatientEnquiry } from '../types';
+import { ApiBlogArticle, ApiEvent, ApiHospital, ApiNotification, ApiPatientEnquiry } from './client';
+import { AppNotification, BlogArticle, Event, Hospital, PatientEnquiry } from '../types';
 
 function formatTimestamp(iso: string): string {
   try {
@@ -108,6 +108,38 @@ export function mapApiHospital(api: ApiHospital): Hospital {
     lat: api.lat,
     lng: api.lng,
     description: api.description,
+  };
+}
+
+export function mapApiBlog(api: ApiBlogArticle): BlogArticle {
+  return {
+    id: api.id,
+    title: api.title,
+    summary: api.summary,
+    content: api.content,
+    author: api.author,
+    role: api.role ?? '',
+    date: api.date,
+    readTime: api.readTime ?? '',
+    category: api.category as BlogArticle['category'],
+    image: api.image ?? '',
+    tags: api.tags,
+  };
+}
+
+export function mapApiEvent(api: ApiEvent): Event {
+  return {
+    id: api.id,
+    title: api.title,
+    type: api.type as Event['type'],
+    image: api.image ?? '',
+    date: api.date,
+    time: api.time,
+    location: api.location,
+    description: api.description,
+    category: api.category,
+    registeredCount: api.registeredCount,
+    capacity: api.capacity,
   };
 }
 

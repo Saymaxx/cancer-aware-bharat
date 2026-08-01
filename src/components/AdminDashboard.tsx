@@ -5,11 +5,10 @@ import {
   DollarSign, BookOpen, MessageSquare, Terminal, Menu, Stethoscope,
 } from 'lucide-react';
 import { enquiryStore } from '../enquiryStore';
-import { useApiEnquiries, useApiHospitals, useApiNotifications, useDonations, usePartnerRequests, usePatientRecords, useVolunteerFeedback, useVolunteers } from '../api/hooks';
-import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, createPatientRecord, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, respondToVolunteerFeedback, sendDonationReceipt, updatePatientRecord } from '../api/client';
+import { useApiEnquiries, useApiHospitals, useApiNotifications, useBlogs, useDonations, usePartnerRequests, usePatientRecords, useVolunteerFeedback, useVolunteers } from '../api/hooks';
+import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, createBlog, createPatientRecord, deleteBlog, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, respondToVolunteerFeedback, sendDonationReceipt, updatePatientRecord } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
-import { PatientEnquiry, BlogArticle } from '../types';
-import { INITIAL_BLOGS } from '../data';
+import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
 import DashboardSidebar from './common/DashboardSidebar';
 import { useSidebarState } from '../hooks/useSidebarState';
@@ -65,6 +64,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const { patientRecords: apiPatientRecords, refetch: refetchPatientRecords } = usePatientRecords(apiToken);
   const { donations: apiDonations, refetch: refetchDonations } = useDonations(apiToken);
   const { feedback: apiFeedback, refetch: refetchFeedback } = useVolunteerFeedback(apiToken);
+  const { blogs, refetch: refetchBlogs } = useBlogs();
   const feedbacks: AdminFeedback[] = useMemo(() => apiFeedback.map(f => ({
     id: f.id,
     volunteerName: f.volunteerName,
@@ -153,13 +153,6 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
       try { return JSON.parse(stored); } catch (e) {}
     }
     return INITIAL_CAMPAIGN_REQUESTS;
-  });
-  const [blogs, setBlogs] = useState<BlogArticle[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_blogs');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) {}
-    }
-    return INITIAL_BLOGS;
   });
   const [kpiMetrics, setKpiMetrics] = useState(INITIAL_KPI_METRICS);
 
@@ -489,38 +482,40 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     }
   };
 
-  const handlePublishBlog = (e: React.FormEvent) => {
+  const handlePublishBlog = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBlogTitle.trim() || !newBlogSummary.trim()) return;
+    if (!newBlogTitle.trim() || !newBlogSummary.trim() || !apiToken) return;
 
-    const newBlogItem: BlogArticle = {
-      id: 'blog-' + Date.now(),
-      title: newBlogTitle,
-      summary: newBlogSummary,
-      content: newBlogSummary + '\n\nFull guidance and clinical information available on Cancer Aware Bharat medical portal.',
-      category: newBlogCategory,
-      author: newBlogAuthor || 'Dwarka Admin Node',
-      role: 'Regional Medical Lead',
-      date: new Date().toLocaleDateString('en-IN', { month: 'long', day: 'numeric', year: 'numeric' }),
-      readTime: '4 min read',
-      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80',
-      tags: [newBlogCategory, 'Health', 'Awareness']
-    };
-
-    const updated = [newBlogItem, ...blogs];
-    setBlogs(updated);
-    localStorage.setItem('aware_bharat_blogs', JSON.stringify(updated));
-    setNewBlogTitle('');
-    setNewBlogSummary('');
-    toast.success('Blog Article Published', `"${newBlogItem.title}" is now live on Portal News.`);
+    try {
+      const created = await createBlog(apiToken, {
+        title: newBlogTitle,
+        summary: newBlogSummary,
+        content: newBlogSummary + '\n\nFull guidance and clinical information available on Cancer Aware Bharat medical portal.',
+        category: newBlogCategory,
+        author: newBlogAuthor || 'Dwarka Admin Node',
+        role: 'Regional Medical Lead',
+        date: new Date().toLocaleDateString('en-IN', { month: 'long', day: 'numeric', year: 'numeric' }),
+        readTime: '4 min read',
+        image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80',
+        tags: [newBlogCategory, 'Health', 'Awareness'],
+      });
+      await refetchBlogs();
+      setNewBlogTitle('');
+      setNewBlogSummary('');
+      toast.success('Blog Article Published', `"${created.title}" is now live on Portal News.`);
+    } catch (err) {
+      toast.error('Publish Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
-  const handleDeleteBlog = (id: string) => {
-    if (window.confirm('Are you sure you want to remove this published article?')) {
-      const updated = blogs.filter(b => b.id !== id);
-      setBlogs(updated);
-      localStorage.setItem('aware_bharat_blogs', JSON.stringify(updated));
+  const handleDeleteBlog = async (id: string) => {
+    if (!apiToken || !window.confirm('Are you sure you want to remove this published article?')) return;
+    try {
+      await deleteBlog(id, apiToken);
+      await refetchBlogs();
       toast.info('Blog Article Removed');
+    } catch (err) {
+      toast.error('Delete Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
     }
   };
 
@@ -855,6 +850,8 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
               setNewBlogTitle={setNewBlogTitle}
               newBlogSummary={newBlogSummary}
               setNewBlogSummary={setNewBlogSummary}
+              newBlogAuthor={newBlogAuthor}
+              setNewBlogAuthor={setNewBlogAuthor}
               handlePublishBlog={handlePublishBlog}
               blogs={blogs}
               handleDeleteBlog={handleDeleteBlog}

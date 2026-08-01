@@ -1,3 +1,21 @@
+from tests.conftest import auth_header
+
+
+def sample_event_payload(**overrides) -> dict:
+    payload = {
+        "title": "Pytest Screening Camp",
+        "type": "Screening Camp",
+        "date": "2026-09-01",
+        "time": "09:00 AM",
+        "location": "Community Hall, Test City",
+        "description": "A test screening camp.",
+        "category": "Screening Camps",
+        "capacity": 100,
+    }
+    payload.update(overrides)
+    return payload
+
+
 class TestEvents:
     def _create_event(self, db_session):
         from app.models.event import Event
@@ -30,3 +48,74 @@ class TestEvents:
     def test_get_nonexistent_event_returns_404(self, client):
         resp = client.get("/events/00000000-0000-0000-0000-000000000000")
         assert resp.status_code == 404
+
+
+class TestCreateEvent:
+    def test_requires_staff_auth(self, client):
+        resp = client.post("/events", json=sample_event_payload())
+        assert resp.status_code == 401
+
+    def test_hospital_role_cannot_create(self, client, hospital1_token):
+        resp = client.post("/events", json=sample_event_payload(), headers=auth_header(hospital1_token))
+        assert resp.status_code == 403
+
+    def test_admin_can_create(self, client, admin_token):
+        resp = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token))
+        assert resp.status_code == 201, resp.text
+        body = resp.json()
+        assert body["title"] == "Pytest Screening Camp"
+        assert body["registeredCount"] == 0
+
+    def test_superadmin_can_create(self, client, superadmin_token):
+        resp = client.post("/events", json=sample_event_payload(title="Superadmin Camp"), headers=auth_header(superadmin_token))
+        assert resp.status_code == 201, resp.text
+
+    def test_rejects_blank_title(self, client, admin_token):
+        resp = client.post("/events", json=sample_event_payload(title=""), headers=auth_header(admin_token))
+        assert resp.status_code == 422
+
+
+class TestUpdateEvent:
+    def test_admin_can_update(self, client, admin_token):
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        resp = client.patch(
+            f"/events/{created['id']}",
+            json=sample_event_payload(title="Updated Camp Title"),
+            headers=auth_header(admin_token),
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["title"] == "Updated Camp Title"
+
+    def test_update_nonexistent_404s(self, client, admin_token):
+        resp = client.patch(
+            "/events/00000000-0000-0000-0000-000000000000",
+            json=sample_event_payload(),
+            headers=auth_header(admin_token),
+        )
+        assert resp.status_code == 404
+
+    def test_hospital_role_cannot_update(self, client, admin_token, hospital1_token):
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        resp = client.patch(
+            f"/events/{created['id']}",
+            json=sample_event_payload(),
+            headers=auth_header(hospital1_token),
+        )
+        assert resp.status_code == 403
+
+
+class TestDeleteEvent:
+    def test_admin_can_delete(self, client, admin_token):
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        resp = client.delete(f"/events/{created['id']}", headers=auth_header(admin_token))
+        assert resp.status_code == 204
+        assert client.get(f"/events/{created['id']}").status_code == 404
+
+    def test_delete_nonexistent_404s(self, client, admin_token):
+        resp = client.delete("/events/00000000-0000-0000-0000-000000000000", headers=auth_header(admin_token))
+        assert resp.status_code == 404
+
+    def test_hospital_role_cannot_delete(self, client, admin_token, hospital1_token):
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        resp = client.delete(f"/events/{created['id']}", headers=auth_header(hospital1_token))
+        assert resp.status_code == 403

@@ -743,3 +743,85 @@ export function respondToVolunteerFeedback(id: string, token: string, response: 
     body: JSON.stringify({ response }),
   }, token);
 }
+
+// ---------------- Blog Articles ----------------
+
+export interface ApiBlogArticle {
+  id: string;
+  title: string;
+  summary: string;
+  content: string;
+  author: string;
+  role: string | null;
+  date: string;
+  readTime: string | null;
+  category: string;
+  image: string | null;
+  tags: string[];
+}
+
+export interface BlogArticlePayload {
+  title: string;
+  summary: string;
+  content: string;
+  author: string;
+  role?: string | null;
+  date: string;
+  readTime?: string | null;
+  category: string;
+  image?: string | null;
+  tags: string[];
+}
+
+export function listBlogs(): Promise<ApiBlogArticle[]> {
+  return request<ApiBlogArticle[]>('/blogs');
+}
+
+export function createBlog(token: string, payload: BlogArticlePayload): Promise<ApiBlogArticle> {
+  return request<ApiBlogArticle>('/blogs', { method: 'POST', body: JSON.stringify(payload) }, token);
+}
+
+export function deleteBlog(id: string, token: string): Promise<void> {
+  return request<void>(`/blogs/${id}`, { method: 'DELETE' }, token);
+}
+
+// ---------------- Events (public listing + Campaigns Scheduler) ----------------
+
+export interface ApiEvent {
+  id: string;
+  title: string;
+  type: string;
+  image: string | null;
+  date: string;
+  time: string;
+  location: string;
+  description: string;
+  category: string;
+  registeredCount: number;
+  capacity: number;
+}
+
+export interface EventPayload {
+  title: string;
+  type: string;
+  image?: string | null;
+  date: string;
+  time: string;
+  location: string;
+  description: string;
+  category: string;
+  registeredCount?: number;
+  capacity: number;
+}
+
+export function listEvents(): Promise<ApiEvent[]> {
+  return request<ApiEvent[]>('/events');
+}
+
+export function createEvent(token: string, payload: EventPayload): Promise<ApiEvent> {
+  return request<ApiEvent>('/events', { method: 'POST', body: JSON.stringify(payload) }, token);
+}
+
+export function deleteEvent(id: string, token: string): Promise<void> {
+  return request<void>(`/events/${id}`, { method: 'DELETE' }, token);
+}

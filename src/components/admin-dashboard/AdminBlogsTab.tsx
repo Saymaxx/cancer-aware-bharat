@@ -9,6 +9,8 @@ export default function AdminBlogsTab({
   setNewBlogTitle,
   newBlogSummary,
   setNewBlogSummary,
+  newBlogAuthor,
+  setNewBlogAuthor,
   handlePublishBlog,
   blogs,
   handleDeleteBlog,
@@ -19,6 +21,8 @@ export default function AdminBlogsTab({
   setNewBlogTitle: (val: string) => void;
   newBlogSummary: string;
   setNewBlogSummary: (val: string) => void;
+  newBlogAuthor: string;
+  setNewBlogAuthor: (val: string) => void;
   handlePublishBlog: (e: React.FormEvent) => void;
   blogs: BlogArticle[];
   handleDeleteBlog: (id: string) => void;
@@ -68,6 +72,18 @@ export default function AdminBlogsTab({
               onChange={e => setNewBlogSummary(e.target.value)}
               placeholder="Write brief description for public readers..."
               className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary resize-none"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="font-bold text-slate-600 block">Author</label>
+            <input
+              type="text"
+              required
+              value={newBlogAuthor}
+              onChange={e => setNewBlogAuthor(e.target.value)}
+              placeholder="e.g. Dr. Ramesh Sharma"
+              className="w-full px-3 py-2 border border-outline-variant rounded-lg bg-slate-50 outline-none focus:border-primary"
             />
           </div>
 

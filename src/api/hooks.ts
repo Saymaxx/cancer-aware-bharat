@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { listDonations, listEnquiries, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientRecords, listVolunteerFeedback, listVolunteers } from './client';
-import { mapApiEnquiry, mapApiHospital, mapApiNotification } from './mappers';
+import { listBlogs, listDonations, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientRecords, listVolunteerFeedback, listVolunteers } from './client';
+import { mapApiBlog, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
 
@@ -166,5 +166,37 @@ export function useApiHospitals() {
   return {
     hospitals: (query.data ?? []).map(mapApiHospital),
     loading: query.isLoading,
+  };
+}
+
+/** Public blog articles -- used by both the public Blogs page and the
+ * admin/superadmin publisher tabs. */
+export function useBlogs() {
+  const query = useQuery({
+    queryKey: ['blogs'],
+    queryFn: () => listBlogs(),
+  });
+
+  return {
+    blogs: (query.data ?? []).map(mapApiBlog),
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load blog articles' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Public events/campaigns -- used by the public Events page, the homepage
+ * camps carousel, and the Campaigns Scheduler tabs. */
+export function useEvents() {
+  const query = useQuery({
+    queryKey: ['events'],
+    queryFn: () => listEvents(),
+  });
+
+  return {
+    events: (query.data ?? []).map(mapApiEvent),
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load events' : null,
+    refetch: query.refetch,
   };
 }

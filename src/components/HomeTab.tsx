@@ -8,8 +8,7 @@ import {
   ClipboardCheck, UserCheck, Compass, HeartPulse, Droplet, Play,
   Facebook, Instagram, Linkedin, Twitter, Plus, Building, Clock
 } from 'lucide-react';
-import { INITIAL_EVENTS } from '../data';
-import { Event } from '../types';
+import { useEvents } from '../api/hooks';
 import TeamShowcase from './TeamShowcase';
 import PremiumSection from './common/PremiumSection';
 
@@ -156,90 +155,20 @@ function FAQItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boo
 /* ═══════════════════════════════════════════
    UPCOMING CAMPS CAROUSEL COMPONENT
    ═══════════════════════════════════════════ */
-const UPCOMING_CAMPS_DATA = [
-  {
-    id: 'camp-1',
-    title: 'Mega Rural Cancer Screening Camp',
-    image: '/events/event-1.jpeg',
-    category: 'Mega Camp',
-    date: '15 Oct, 2026',
-    time: '09:00 AM - 04:00 PM',
-    city: 'Jaipur, Rajasthan',
-    hospital: 'SMS Medical Hospital',
-    desc: 'Comprehensive screening for oral, breast, and cervical cancer. Open to all rural residents.',
-    status: 'Registration Open',
-    statusColor: 'bg-green-100 text-green-700 border-green-200',
-    capacity: 250,
-    registered: 180,
-    tags: ['Free', 'NABH Partner']
-  },
-  {
-    id: 'camp-2',
-    title: "Women's Breast Cancer Awareness Camp",
-    image: '/events/event-2.jpeg',
-    category: 'Awareness Drive',
-    date: '22 Oct, 2026',
-    time: '10:00 AM - 02:00 PM',
-    city: 'Pune, Maharashtra',
-    hospital: 'Ruby Hall Clinic',
-    desc: 'Specialized awareness and mammography screening for early breast cancer detection.',
-    status: 'Almost Full',
-    statusColor: 'bg-orange-100 text-orange-700 border-orange-200',
-    capacity: 100,
-    registered: 85,
-    tags: ['Women Only', 'Early Detection']
-  },
-  {
-    id: 'camp-3',
-    title: 'Oral Cancer Detection Drive',
-    image: '/events/event-4.jpeg',
-    category: 'Free Camp',
-    date: '05 Nov, 2026',
-    time: '08:00 AM - 01:00 PM',
-    city: 'Ahmedabad, Gujarat',
-    hospital: 'Civil Hospital',
-    desc: 'Targeted tobacco-control awareness and oral cavity screening for high-risk individuals.',
-    status: 'Upcoming',
-    statusColor: 'bg-blue-100 text-blue-700 border-blue-200',
-    capacity: 300,
-    registered: 45,
-    tags: ['Government Supported', 'Volunteer Needed']
-  },
-  {
-    id: 'camp-4',
-    title: 'Blood Donation & Oncology Support',
-    image: '/events/event-5.jpeg',
-    category: 'Medical Camp',
-    date: '12 Nov, 2026',
-    time: '09:00 AM - 05:00 PM',
-    city: 'Lucknow, UP',
-    hospital: 'KGMU',
-    desc: 'Blood donation drive supporting leukemia patients. Join us to save lives.',
-    status: 'Registration Open',
-    statusColor: 'bg-green-100 text-green-700 border-green-200',
-    capacity: 500,
-    registered: 120,
-    tags: ['Blood Donation', 'Free']
-  },
-  {
-    id: 'camp-5',
-    title: 'Community Health Check-up',
-    image: '/dr-ajay-kumar.jpg',
-    category: 'Health Camp',
-    date: '20 Nov, 2026',
-    time: '10:00 AM - 03:00 PM',
-    city: 'Bhopal, MP',
-    hospital: 'AIIMS Bhopal',
-    desc: 'General health check-up including vital signs and basic cancer risk assessment.',
-    status: 'Future Ready',
-    statusColor: 'bg-purple-100 text-purple-700 border-purple-200',
-    capacity: 200,
-    registered: 0,
-    tags: ['General Check-up']
+// The real Event model has no separate "status"/hospital-name field -- these
+// are derived from registeredCount vs. capacity rather than fabricated.
+function deriveCampStatus(registered: number, capacity: number): { label: string; color: string } {
+  if (capacity <= 0 || registered >= capacity) {
+    return { label: 'Fully Booked', color: 'bg-slate-100 text-slate-600 border-slate-200' };
   }
-];
+  if ((capacity - registered) / capacity <= 0.2) {
+    return { label: 'Almost Full', color: 'bg-orange-100 text-orange-700 border-orange-200' };
+  }
+  return { label: 'Registration Open', color: 'bg-green-100 text-green-700 border-green-200' };
+}
 
 function UpcomingCampsCarousel({ onOpenEnquiry }: { onOpenEnquiry: () => void }) {
+  const { events } = useEvents();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const touchStartX = useRef<number>(0);
@@ -261,7 +190,7 @@ function UpcomingCampsCarousel({ onOpenEnquiry }: { onOpenEnquiry: () => void })
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const totalSlides = Math.max(0, UPCOMING_CAMPS_DATA.length - itemsPerView + 1);
+  const totalSlides = Math.max(0, events.length - itemsPerView + 1);
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev >= totalSlides - 1 ? 0 : prev + 1));
@@ -343,22 +272,25 @@ function UpcomingCampsCarousel({ onOpenEnquiry }: { onOpenEnquiry: () => void })
               className="flex transition-transform duration-700 ease-in-out"
               style={{ transform: `translateX(calc(-${currentIndex * (100 / itemsPerView)}%))` }}
             >
-              {UPCOMING_CAMPS_DATA.map((camp) => (
-                <div 
-                  key={camp.id} 
+              {events.map((camp) => {
+                const { label: statusLabel, color: statusColor } = deriveCampStatus(camp.registeredCount, camp.capacity);
+                const percentFull = camp.capacity > 0 ? Math.round((camp.registeredCount / camp.capacity) * 100) : 0;
+                return (
+                <div
+                  key={camp.id}
                   className="shrink-0 px-3"
                   style={{ width: `${100 / itemsPerView}%` }}
                 >
                   <div className="h-full flex flex-col bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:shadow-[0_10px_40px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500 group">
                     {/* Image Area */}
                     <div className="relative h-48 md:h-56 overflow-hidden">
-                      <img 
-                        src={camp.image} 
-                        alt={camp.title} 
+                      <img
+                        src={camp.image || '/events/event-1.jpeg'}
+                        alt={camp.title}
                         className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:-rotate-2 group-hover:-translate-x-1 group-hover:brightness-110"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
-                      
+
                       {/* Top Badges */}
                       <div className="absolute top-4 left-4">
                         <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/95 backdrop-blur-sm text-primary text-[10px] font-bold shadow-sm">
@@ -372,7 +304,7 @@ function UpcomingCampsCarousel({ onOpenEnquiry }: { onOpenEnquiry: () => void })
                       <h3 className="font-outfit text-lg font-bold text-primary mb-4 line-clamp-2 leading-snug group-hover:text-secondary transition-colors">
                         {camp.title}
                       </h3>
-                      
+
                       <div className="space-y-2.5 mb-5">
                         <div className="flex items-center gap-2.5 text-slate-500 text-[13px] font-medium">
                           <Calendar className="w-4 h-4 text-secondary shrink-0" />
@@ -384,37 +316,33 @@ function UpcomingCampsCarousel({ onOpenEnquiry }: { onOpenEnquiry: () => void })
                         </div>
                         <div className="flex items-center gap-2.5 text-slate-500 text-[13px] font-medium">
                           <MapPin className="w-4 h-4 text-secondary shrink-0" />
-                          <span className="truncate">{camp.city}</span>
-                        </div>
-                        <div className="flex items-center gap-2.5 text-slate-500 text-[13px] font-medium">
-                          <Building className="w-4 h-4 text-secondary shrink-0" />
-                          <span className="truncate">{camp.hospital}</span>
+                          <span className="truncate">{camp.location}</span>
                         </div>
                       </div>
 
                       <p className="text-[13px] text-slate-500 line-clamp-2 leading-relaxed mb-6">
-                        {camp.desc}
+                        {camp.description}
                       </p>
 
                       <div className="mt-auto">
                         {/* Status & Progress */}
                         <div className="flex items-center justify-between mb-3">
-                          <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${camp.statusColor}`}>
-                            {camp.status}
+                          <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${statusColor}`}>
+                            {statusLabel}
                           </span>
                           <span className="text-[11px] font-semibold text-slate-500">
-                            {Math.round((camp.registered / camp.capacity) * 100)}% Full
+                            {percentFull}% Full
                           </span>
                         </div>
                         <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-5">
-                          <div 
+                          <div
                             className="h-full bg-secondary rounded-full transition-all duration-1000"
-                            style={{ width: `${(camp.registered / camp.capacity) * 100}%` }}
+                            style={{ width: `${percentFull}%` }}
                           />
                         </div>
 
                         {/* Register Button */}
-                        <button 
+                        <button
                           onClick={onOpenEnquiry}
                           className="w-full h-11 bg-primary text-white text-[13px] font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-primary-container hover:shadow-lg transition-all duration-300 group/btn"
                         >
@@ -424,7 +352,8 @@ function UpcomingCampsCarousel({ onOpenEnquiry }: { onOpenEnquiry: () => void })
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
           

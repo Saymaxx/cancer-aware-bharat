@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, BookOpen, Clock, User, ChevronLeft, Send, CheckCircle, Heart } from 'lucide-react';
-import { INITIAL_BLOGS } from '../data';
+import { useBlogs } from '../api/hooks';
 import { BlogArticle } from '../types';
 import PremiumSection from './common/PremiumSection';
 
@@ -20,22 +20,7 @@ export default function BlogsTab() {
   const [email, setEmail] = useState('');
   const [formError, setFormError] = useState('');
 
-  const [blogs] = useState<BlogArticle[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_blogs');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        const merged = [...parsed];
-        INITIAL_BLOGS.forEach(init => {
-          if (!merged.some(b => b.id === init.id)) {
-            merged.push(init);
-          }
-        });
-        return merged;
-      } catch (e) {}
-    }
-    return INITIAL_BLOGS;
-  });
+  const { blogs } = useBlogs();
 
   const filteredArticles = blogs.filter(art => {
     const matchesSearch = art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

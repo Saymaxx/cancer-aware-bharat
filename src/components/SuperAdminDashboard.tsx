@@ -5,11 +5,10 @@ import {
   Stethoscope, Crown, UserCog, Layers, PieChart, LayoutDashboard, Megaphone,
   Database, ShieldCheck, FileText,
 } from 'lucide-react';
-import { useApiEnquiries, useApiNotifications, useApiHospitals, usePartnerRequests } from '../api/hooks';
-import { assignHospital, ApiError, approvePartnerRequest, broadcastNotification, getStaffSession, rejectPartnerRequest, type NotificationAudience } from '../api/client';
+import { useApiEnquiries, useApiNotifications, useApiHospitals, useBlogs, usePartnerRequests } from '../api/hooks';
+import { assignHospital, ApiError, approvePartnerRequest, broadcastNotification, createBlog, deleteBlog, getStaffSession, rejectPartnerRequest, type NotificationAudience } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
-import { INITIAL_BLOGS } from '../data';
-import { PatientEnquiry, Hospital, BlogArticle } from '../types';
+import { PatientEnquiry, Hospital } from '../types';
 import { useToast } from './common/Toast';
 import DashboardSidebar from './common/DashboardSidebar';
 import { useSidebarState } from '../hooks/useSidebarState';
@@ -157,6 +156,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   });
 
   const { partnerRequests, refetch: refetchPartnerRequests } = usePartnerRequests(apiToken);
+  const { blogs, refetch: refetchBlogs } = useBlogs();
   // 'Info Requested' has no backend status of its own (no request-info
   // endpoint exists) -- kept as a local-only overlay, same as
   // AdminDashboard's documentVerified gate.
@@ -254,14 +254,6 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     }
     return INITIAL_ADMIN_DONATIONS;
   });
-  const [blogs, setBlogs] = useState<BlogArticle[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_blogs');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) {}
-    }
-    return INITIAL_BLOGS;
-  });
-
   // UI state
   const [searchTerm, setSearchTerm] = useState('');
   const [hospitalFilter, setHospitalFilter] = useState('All');
@@ -556,40 +548,42 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   };
 
   // ---- Blog Publishing ----
-  const handlePublishBlogBySuperAdmin = (e: React.FormEvent) => {
+  const handlePublishBlogBySuperAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBlogTitle.trim() || !newBlogSummary.trim()) return;
+    if (!newBlogTitle.trim() || !newBlogSummary.trim() || !apiToken) return;
 
-    const newBlogItem: BlogArticle = {
-      id: 'blog-' + Date.now(),
-      title: newBlogTitle,
-      summary: newBlogSummary,
-      content: newBlogSummary + '\n\nOfficial directive published by Super Admin Executive Board.',
-      category: newBlogCategory,
-      author: 'Executive Board',
-      role: 'Super Admin',
-      date: new Date().toLocaleDateString('en-IN', { month: 'long', day: 'numeric', year: 'numeric' }),
-      readTime: '3 min read',
-      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80',
-      tags: [newBlogCategory, 'Official Directive', 'Executive']
-    };
-
-    const updated = [newBlogItem, ...blogs];
-    setBlogs(updated);
-    localStorage.setItem('aware_bharat_blogs', JSON.stringify(updated));
-    logAuditEntry(`Blog Notice Published ("${newBlogTitle}")`, 'Portal News', 'Info');
-    setNewBlogTitle('');
-    setNewBlogSummary('');
-    toast.success('Notice Published', `"${newBlogItem.title}" is live on Portal News.`);
+    try {
+      const created = await createBlog(apiToken, {
+        title: newBlogTitle,
+        summary: newBlogSummary,
+        content: newBlogSummary + '\n\nOfficial directive published by Super Admin Executive Board.',
+        category: newBlogCategory,
+        author: 'Executive Board',
+        role: 'Super Admin',
+        date: new Date().toLocaleDateString('en-IN', { month: 'long', day: 'numeric', year: 'numeric' }),
+        readTime: '3 min read',
+        image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80',
+        tags: [newBlogCategory, 'Official Directive', 'Executive'],
+      });
+      await refetchBlogs();
+      logAuditEntry(`Blog Notice Published ("${newBlogTitle}")`, 'Portal News', 'Info');
+      setNewBlogTitle('');
+      setNewBlogSummary('');
+      toast.success('Notice Published', `"${created.title}" is live on Portal News.`);
+    } catch (err) {
+      toast.error('Publish Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
-  const handleDeleteBlogBySuperAdmin = (id: string) => {
-    if (window.confirm('Are you sure you want to unpublish this article?')) {
-      const updated = blogs.filter(b => b.id !== id);
-      setBlogs(updated);
-      localStorage.setItem('aware_bharat_blogs', JSON.stringify(updated));
+  const handleDeleteBlogBySuperAdmin = async (id: string) => {
+    if (!apiToken || !window.confirm('Are you sure you want to unpublish this article?')) return;
+    try {
+      await deleteBlog(id, apiToken);
+      await refetchBlogs();
       logAuditEntry(`Blog Article Deleted (ID: ${id})`, 'Portal News', 'Warning');
       toast.info('Blog Article Removed');
+    } catch (err) {
+      toast.error('Delete Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
     }
   };
 
