@@ -298,16 +298,6 @@ export const REPORT_CARDS: ReportCard[] = [
 ];
 
 // ---- Monthly Analytics Data ----
-export const MONTHLY_DONATION_TREND = [
-  { month: 'Jan', amount: 120000 },
-  { month: 'Feb', amount: 95000 },
-  { month: 'Mar', amount: 150000 },
-  { month: 'Apr', amount: 180000 },
-  { month: 'May', amount: 130000 },
-  { month: 'Jun', amount: 210000 },
-  { month: 'Jul', amount: 165000 },
-];
-
 export const MONTHLY_PATIENT_INTAKE = [
   { month: 'Jan', count: 120 },
   { month: 'Feb', count: 150 },
@@ -316,16 +306,6 @@ export const MONTHLY_PATIENT_INTAKE = [
   { month: 'May', count: 240 },
   { month: 'Jun', count: 310 },
   { month: 'Jul', count: 200 },
-];
-
-export const MONTHLY_VOLUNTEER_HOURS = [
-  { month: 'Jan', hours: 480 },
-  { month: 'Feb', hours: 520 },
-  { month: 'Mar', hours: 610 },
-  { month: 'Apr', hours: 580 },
-  { month: 'May', hours: 700 },
-  { month: 'Jun', hours: 850 },
-  { month: 'Jul', hours: 720 },
 ];
 
 // ---- Database Health ----

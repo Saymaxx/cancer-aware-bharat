@@ -960,7 +960,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
           {/* ===== TAB: GLOBAL ANALYTICS ===== */}
           {activeTab === 'analytics' && (
-            <AnalyticsTab />
+            <AnalyticsTab apiToken={apiToken} />
           )}
 
           {/* ===== TAB: AUDIT LOGS ===== */}

@@ -898,3 +898,25 @@ export function createRole(token: string, payload: CustomRolePayload): Promise<A
 export function deleteRole(id: string, token: string): Promise<void> {
   return request<void>(`/roles/${id}`, { method: 'DELETE' }, token);
 }
+
+// ---------------- Analytics ----------------
+// Volunteer hours has no real data source (see backend/app/routers/
+// analytics.py) -- only donations and patient intake are exposed.
+
+export interface ApiMonthlyAmount {
+  month: string;
+  amount: number;
+}
+
+export interface ApiMonthlyCount {
+  month: string;
+  count: number;
+}
+
+export function listDonationsMonthly(token: string): Promise<ApiMonthlyAmount[]> {
+  return request<ApiMonthlyAmount[]>('/analytics/donations-monthly', {}, token);
+}
+
+export function listPatientIntakeMonthly(token: string): Promise<ApiMonthlyCount[]> {
+  return request<ApiMonthlyCount[]>('/analytics/patient-intake-monthly', {}, token);
+}

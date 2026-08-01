@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { listAuditLogs, listBlogs, listCampaignRequests, listDonations, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteers } from './client';
+import { listAuditLogs, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteers } from './client';
 import { mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiCustomRole, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -252,5 +252,36 @@ export function useRoles(token: string | null) {
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load roles' : null,
     refetch: query.refetch,
+  };
+}
+
+/** Real monthly aggregates for the SuperAdmin Analytics tab. Superadmin-
+ * only endpoints -- see backend/app/routers/analytics.py for why volunteer
+ * hours has no equivalent (no real hours-tracking data exists yet). */
+export function useDonationsMonthly(token: string | null) {
+  const query = useQuery({
+    queryKey: ['analytics-donations-monthly', token],
+    queryFn: () => listDonationsMonthly(token as string),
+    enabled: !!token,
+  });
+
+  return {
+    data: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load donation analytics' : null,
+  };
+}
+
+export function usePatientIntakeMonthly(token: string | null) {
+  const query = useQuery({
+    queryKey: ['analytics-patient-intake-monthly', token],
+    queryFn: () => listPatientIntakeMonthly(token as string),
+    enabled: !!token,
+  });
+
+  return {
+    data: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load patient intake analytics' : null,
   };
 }
