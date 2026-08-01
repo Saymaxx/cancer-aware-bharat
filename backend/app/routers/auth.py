@@ -28,6 +28,10 @@ def staff_login(request: Request, payload: LoginIn, db: DbSession):
         record_event(db, "login_failure", role="staff", detail=payload.email, ip_address=get_client_ip(request))
         db.commit()
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
+    if not user.is_active:
+        record_event(db, "login_failure", role="staff", actor_id=user.id, detail="account inactive", ip_address=get_client_ip(request))
+        db.commit()
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "This admin account has been suspended")
     token = create_access_token(subject=str(user.id), role=user.role)
     record_event(db, "login_success", role=user.role, actor_id=user.id, ip_address=get_client_ip(request))
     db.commit()

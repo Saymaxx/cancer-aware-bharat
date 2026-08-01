@@ -1,5 +1,4 @@
 import re
-import secrets
 from typing import Annotated
 from uuid import UUID
 
@@ -7,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response,
 from sqlalchemy.orm import Session
 
 from app.core.limiter import limiter
-from app.core.security import hash_password
+from app.core.security import generate_temp_password, hash_password
 from app.deps import DbSession, require_admin_or_superadmin, require_roles
 from app.models.hospital import Hospital, HospitalPartnerRequest
 from app.models.user import User
@@ -39,10 +38,6 @@ def _generate_unique_login_email(db: Session, hospital_name: str) -> str:
         suffix += 1
         candidate = f"{slug}{suffix}@awarebharat.org"
     return candidate
-
-
-def _generate_temp_password() -> str:
-    return "CAB-" + secrets.token_hex(4).upper() + "-TEMP"
 
 
 @router.get("", response_model=list[HospitalOut])
@@ -172,7 +167,7 @@ def approve_partner_request(
         )
 
     login_email = _generate_unique_login_email(db, partner_request.hospital_name)
-    temp_password = _generate_temp_password()
+    temp_password = generate_temp_password()
     specialties = [s.strip() for s in (partner_request.specialties or "").split(",") if s.strip()]
 
     hospital = Hospital(

@@ -15,8 +15,6 @@ export interface SuperAdminAccount {
   lastLogin: string;
   createdDate: string;
   phone: string;
-  password?: string;
-  passcode?: string;
 }
 
 export interface HospitalApplication {
@@ -155,21 +153,18 @@ export const INITIAL_ADMIN_ACCOUNTS: SuperAdminAccount[] = [
     region: 'North India — Delhi NCR', status: 'Active',
     permissions: ['dashboard.view', 'patients.view', 'patients.edit', 'volunteers.view', 'volunteers.approve', 'campaigns.view', 'campaigns.create', 'hospitals.view', 'hospitals.recommend', 'donations.view', 'blogs.view', 'blogs.create', 'events.view', 'notifications.send'],
     lastLogin: 'Jul 22, 2026 — 09:15 AM', createdDate: 'Jan 15, 2026', phone: '+91 98765 43210',
-    password: 'adminpassword', passcode: '12345',
   },
   {
     id: 'ADM-002', name: 'Meera Iyer', email: 'mumbai@awarebharat.org', role: 'Regional Admin',
     region: 'West India — Mumbai & Pune', status: 'Active',
     permissions: ['dashboard.view', 'patients.view', 'patients.edit', 'volunteers.view', 'volunteers.approve', 'campaigns.view', 'campaigns.create', 'hospitals.view', 'hospitals.recommend', 'donations.view'],
     lastLogin: 'Jul 21, 2026 — 03:42 PM', createdDate: 'Mar 05, 2026', phone: '+91 99112 87654',
-    password: 'adminpassword', passcode: '12345',
   },
   {
     id: 'ADM-003', name: 'Anjali Deshmukh', email: 'south@awarebharat.org', role: 'Campaign Manager',
     region: 'South India — Chennai & Bengaluru', status: 'Suspended',
     permissions: ['dashboard.view', 'campaigns.view', 'campaigns.create', 'campaigns.edit', 'events.view', 'events.create'],
     lastLogin: 'Jul 10, 2026 — 11:20 AM', createdDate: 'Apr 18, 2026', phone: '+91 98301 45678',
-    password: 'adminpassword', passcode: '12345',
   },
 ];
 

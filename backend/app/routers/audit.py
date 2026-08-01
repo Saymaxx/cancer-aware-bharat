@@ -13,7 +13,7 @@ router = APIRouter(prefix="/audit-logs", tags=["audit-logs"])
 # suffix record_event() call sites already use consistently, so the whole
 # real event catalog maps onto the SuperAdmin UI's Info/Warning/Critical
 # filter without needing a column migration for it.
-_CRITICAL_SUFFIXES = ("_rejected", "_declined", "_deleted")
+_CRITICAL_SUFFIXES = ("_rejected", "_declined", "_deleted", "_suspended")
 _WARNING_SUFFIXES = ("_recommended", "_updated")
 
 

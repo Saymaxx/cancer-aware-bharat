@@ -1,4 +1,4 @@
-import { Search, UserPlus, Key, Edit2, UserMinus, UserCheck, Trash2 } from 'lucide-react';
+import { Search, UserPlus, Edit2, UserMinus, UserCheck, Trash2 } from 'lucide-react';
 import type { SuperAdminAccount } from '../../superAdminDashboardData';
 
 export default function AdminsTab({
@@ -6,7 +6,6 @@ export default function AdminsTab({
   setSearchTerm,
   admins,
   openAdminForm,
-  setCreatedAdminCredentials,
   toggleAdminStatus,
   deleteAdmin,
 }: {
@@ -14,7 +13,6 @@ export default function AdminsTab({
   setSearchTerm: (val: string) => void;
   admins: SuperAdminAccount[];
   openAdminForm: (admin?: SuperAdminAccount | null) => void;
-  setCreatedAdminCredentials: (admin: SuperAdminAccount | null) => void;
   toggleAdminStatus: (id: string) => void;
   deleteAdmin: (id: string) => void;
 }) {
@@ -37,8 +35,6 @@ export default function AdminsTab({
               <tr className="bg-slate-50 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-slate-200">
                 <th className="px-5 py-3">Admin Details</th>
                 <th className="px-5 py-3">Role & Region</th>
-                <th className="px-5 py-3">Login Password</th>
-                <th className="px-5 py-3">Passcode</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3 text-right">Actions</th>
               </tr>
@@ -55,19 +51,12 @@ export default function AdminsTab({
                     <p className="text-[10px] font-medium text-slate-500">{admin.region}</p>
                   </td>
                   <td className="px-5 py-4">
-                    <code className="text-xs font-mono bg-slate-100 text-slate-800 px-2 py-1 rounded border border-slate-200">{admin.password || 'adminpassword'}</code>
-                  </td>
-                  <td className="px-5 py-4">
-                    <code className="text-xs font-mono bg-slate-50 text-slate-800 px-2 py-1 rounded border border-slate-200 font-bold">{admin.passcode || '12345'}</code>
-                  </td>
-                  <td className="px-5 py-4">
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${admin.status === 'Active' ? 'bg-slate-50 text-slate-700 border-slate-200' : admin.status === 'Suspended' ? 'bg-slate-50 text-slate-700 border-slate-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
                       {admin.status}
                     </span>
                   </td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => setCreatedAdminCredentials(admin)} className="p-1.5 hover:bg-slate-100 rounded-lg text-primary-container cursor-pointer" title="View Credentials Card"><Key className="w-3.5 h-3.5" /></button>
                       <button onClick={() => openAdminForm(admin)} className="p-1.5 hover:bg-slate-100 rounded-lg text-indigo-600 cursor-pointer" title="Edit"><Edit2 className="w-3.5 h-3.5" /></button>
                       <button onClick={() => toggleAdminStatus(admin.id)} className="p-1.5 hover:bg-slate-100 rounded-lg text-secondary cursor-pointer" title={admin.status === 'Active' ? 'Suspend' : 'Activate'}>
                         {admin.status === 'Active' ? <UserMinus className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}

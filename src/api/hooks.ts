@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { listAuditLogs, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteers } from './client';
-import { mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiCustomRole, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
+import { listAdmins, listAuditLogs, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteers } from './client';
+import { mapApiAdmin, mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiCustomRole, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
 
@@ -283,5 +283,23 @@ export function usePatientIntakeMonthly(token: string | null) {
     data: query.data ?? [],
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load patient intake analytics' : null,
+  };
+}
+
+/** Regional Admin accounts (SuperAdmin Admin Management tab). Superadmin-
+ * only endpoint -- never lists other Super Admins. */
+export function useAdmins(token: string | null) {
+  const query = useQuery({
+    queryKey: ['admins', token],
+    queryFn: () => listAdmins(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    admins: (query.data ?? []).map(mapApiAdmin),
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load admin accounts' : null,
+    refetch: query.refetch,
   };
 }

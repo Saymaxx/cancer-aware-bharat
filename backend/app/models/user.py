@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, String, DateTime, func
+from sqlalchemy import Boolean, CheckConstraint, String, DateTime, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -23,4 +23,9 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(String(20), nullable=False)  # see STAFF_ROLES
+    phone: Mapped[str | None] = mapped_column(String(30))
+    region: Mapped[str | None] = mapped_column(String(120))
+    # Suspending an admin flips this rather than deleting the row -- matches
+    # Hospital.is_active's exact rationale (see hospitals.py login check).
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

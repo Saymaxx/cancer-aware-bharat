@@ -920,3 +920,60 @@ export function listDonationsMonthly(token: string): Promise<ApiMonthlyAmount[]>
 export function listPatientIntakeMonthly(token: string): Promise<ApiMonthlyCount[]> {
   return request<ApiMonthlyCount[]>('/analytics/patient-intake-monthly', {}, token);
 }
+
+// ---------------- Admin Management (regional Admin accounts, not Super Admins) ----------------
+
+export interface ApiAdmin {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  region: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface AdminPayload {
+  name: string;
+  email: string;
+  phone?: string | null;
+  region?: string | null;
+}
+
+export interface AdminUpdatePayload {
+  name: string;
+  phone?: string | null;
+  region?: string | null;
+}
+
+export interface ApiAdminCreateResult {
+  admin: ApiAdmin;
+  // Shown once in this response, never re-fetchable -- same pattern as
+  // hospital approval's temp credentials.
+  loginEmail: string;
+  tempPassword: string;
+}
+
+export function listAdmins(token: string): Promise<ApiAdmin[]> {
+  return request<ApiAdmin[]>('/admins', {}, token);
+}
+
+export function createAdmin(token: string, payload: AdminPayload): Promise<ApiAdminCreateResult> {
+  return request<ApiAdminCreateResult>('/admins', { method: 'POST', body: JSON.stringify(payload) }, token);
+}
+
+export function updateAdmin(id: string, token: string, payload: AdminUpdatePayload): Promise<ApiAdmin> {
+  return request<ApiAdmin>(`/admins/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }, token);
+}
+
+export function suspendAdmin(id: string, token: string): Promise<ApiAdmin> {
+  return request<ApiAdmin>(`/admins/${id}/suspend`, { method: 'POST' }, token);
+}
+
+export function activateAdmin(id: string, token: string): Promise<ApiAdmin> {
+  return request<ApiAdmin>(`/admins/${id}/activate`, { method: 'POST' }, token);
+}
+
+export function deleteAdmin(id: string, token: string): Promise<void> {
+  return request<void>(`/admins/${id}`, { method: 'DELETE' }, token);
+}

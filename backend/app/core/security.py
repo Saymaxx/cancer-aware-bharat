@@ -24,6 +24,13 @@ def generate_numeric_id(digits: int = 7) -> str:
     return "".join(secrets.choice(string.digits) for _ in range(digits))
 
 
+def generate_temp_password() -> str:
+    """Shared by every "auto-generate credentials, shown once" flow
+    (hospital approval, admin creation) -- one place to change the format
+    if it ever needs to."""
+    return "CAB-" + secrets.token_hex(4).upper() + "-TEMP"
+
+
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 

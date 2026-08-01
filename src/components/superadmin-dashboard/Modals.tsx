@@ -1,6 +1,6 @@
 import React from 'react';
-import { X, KeyRound, ShieldCheck, Copy, AlertTriangle, CheckCircle2, Building2 } from 'lucide-react';
-import type { SuperAdminAccount, CustomRole } from '../../superAdminDashboardData';
+import { X, AlertTriangle, CheckCircle2, Building2 } from 'lucide-react';
+import type { SuperAdminAccount } from '../../superAdminDashboardData';
 import type { PatientEnquiry, Hospital } from '../../types';
 
 // 1. ADMIN CREATE/EDIT ACCOUNT MODAL
@@ -13,15 +13,8 @@ export function AdminAccountModal({
   setFormEmail,
   formPhone,
   setFormPhone,
-  formRole,
-  setFormRole,
-  roles,
   formRegion,
   setFormRegion,
-  formPassword,
-  setFormPassword,
-  formPasscode,
-  setFormPasscode,
   onSubmit,
 }: {
   editingAdmin: SuperAdminAccount | null;
@@ -32,15 +25,8 @@ export function AdminAccountModal({
   setFormEmail: (val: string) => void;
   formPhone: string;
   setFormPhone: (val: string) => void;
-  formRole: string;
-  setFormRole: (val: string) => void;
-  roles: CustomRole[];
   formRegion: string;
   setFormRegion: (val: string) => void;
-  formPassword: string;
-  setFormPassword: (val: string) => void;
-  formPasscode: string;
-  setFormPasscode: (val: string) => void;
   onSubmit: (e: React.FormEvent) => void;
 }) {
   return (
@@ -55,7 +41,11 @@ export function AdminAccountModal({
         <div className="flex justify-between items-center border-b pb-3">
           <div>
             <h3 id="admin-account-modal-title" className="text-base font-bold text-slate-900">{editingAdmin ? 'Edit Staff Admin Account' : 'Create New Staff Admin'}</h3>
-            <p className="text-xs text-slate-500">Assign region, role permissions, and administrative login credentials.</p>
+            <p className="text-xs text-slate-500">
+              {editingAdmin
+                ? 'Update this admin’s contact details.'
+                : 'A login password is auto-generated and shown once after creation — share it with the admin securely.'}
+            </p>
           </div>
           <button onClick={onClose} aria-label="Close" className="text-slate-400 hover:text-slate-600 cursor-pointer"><X className="w-5 h-5" /></button>
         </div>
@@ -68,7 +58,15 @@ export function AdminAccountModal({
             </div>
             <div>
               <label className="font-bold text-slate-600 block mb-1">Official Email (Login ID)</label>
-              <input required type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs" placeholder="admin@awarebharat.org" />
+              <input
+                required
+                type="email"
+                disabled={!!editingAdmin}
+                value={formEmail}
+                onChange={e => setFormEmail(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs disabled:opacity-60 disabled:cursor-not-allowed"
+                placeholder="admin@awarebharat.org"
+              />
             </div>
           </div>
 
@@ -78,51 +76,9 @@ export function AdminAccountModal({
               <input value={formPhone} onChange={e => setFormPhone(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs" placeholder="+91 98765 12345" />
             </div>
             <div>
-              <label className="font-bold text-slate-600 block mb-1">Role Assignment</label>
-              <select value={formRole} onChange={e => setFormRole(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none cursor-pointer text-xs">
-                {roles.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
-              </select>
+              <label className="font-bold text-slate-600 block mb-1">Assigned Region / Zone</label>
+              <input value={formRegion} onChange={e => setFormRegion(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs" placeholder="North India — Delhi NCR" />
             </div>
-          </div>
-
-          <div>
-            <label className="font-bold text-slate-600 block mb-1">Assigned Region / Zone</label>
-            <input required value={formRegion} onChange={e => setFormRegion(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs" placeholder="North India — Delhi NCR" />
-          </div>
-
-          {/* Credentials Configuration Box */}
-          <div className="p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-100 space-y-3">
-            <p className="font-bold text-indigo-900 text-xs flex items-center gap-1.5">
-              <KeyRound className="w-4 h-4 text-indigo-600" /> Admin Login Credentials Setup
-            </p>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Assign Login Password</label>
-                <input
-                  required
-                  type="text"
-                  value={formPassword}
-                  onChange={e => setFormPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-indigo-200 rounded-lg bg-white outline-none focus:border-indigo-500 font-mono text-xs text-indigo-950 font-bold"
-                  placeholder="e.g. adminpassword"
-                />
-              </div>
-
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Security Passcode (5 Digits)</label>
-                <input
-                  required
-                  type="text"
-                  maxLength={5}
-                  value={formPasscode}
-                  onChange={e => setFormPasscode(e.target.value)}
-                  className="w-full px-3 py-2 border border-indigo-200 rounded-lg bg-white outline-none focus:border-indigo-500 font-mono text-xs text-indigo-950 font-bold"
-                  placeholder="e.g. 12345"
-                />
-              </div>
-            </div>
-            <p className="text-[10px] text-indigo-700/80">These credentials will be required when logging in on the <strong>Admin Portal Login page</strong>.</p>
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -130,78 +86,6 @@ export function AdminAccountModal({
             <button type="submit" className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 cursor-pointer shadow-sm">{editingAdmin ? 'Save Changes' : 'Create Admin & Generate Credentials'}</button>
           </div>
         </form>
-      </div>
-    </div>
-  );
-}
-
-// 2. CREATED ADMIN CREDENTIALS SUMMARY MODAL
-export function AdminCredentialsModal({
-  credentials,
-  onClose,
-  showToast,
-}: {
-  credentials: SuperAdminAccount;
-  onClose: () => void;
-  showToast: (msg: string) => void;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="admin-credentials-modal-title"
-    >
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-5 animate-[scaleUp_0.2s_ease-out]">
-        <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl bg-slate-50 text-primary-container flex items-center justify-center mx-auto border border-slate-200 shadow-sm">
-            <ShieldCheck className="w-8 h-8" />
-          </div>
-          <h3 id="admin-credentials-modal-title" className="text-lg font-black text-slate-900">Admin Account Credentials</h3>
-          <p className="text-xs text-slate-500">Provide these login credentials to <strong>{credentials.name}</strong> to access the Regional Admin Portal.</p>
-        </div>
-
-        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2.5 text-xs">
-          <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-            <span className="text-slate-500 font-semibold">Admin Name:</span>
-            <span className="font-bold text-slate-900">{credentials.name}</span>
-          </div>
-          <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-            <span className="text-slate-500 font-semibold">Role & Region:</span>
-            <span className="font-bold text-indigo-700">{credentials.role} ({credentials.region})</span>
-          </div>
-          <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-            <span className="text-slate-500 font-semibold">Official Login Email:</span>
-            <code className="font-bold text-slate-900 font-mono select-all bg-white px-2 py-0.5 rounded border">{credentials.email}</code>
-          </div>
-          <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-            <span className="text-slate-500 font-semibold">Password:</span>
-            <code className="font-bold text-indigo-900 font-mono select-all bg-white px-2 py-0.5 rounded border border-indigo-200">{credentials.password || 'adminpassword'}</code>
-          </div>
-          <div className="flex justify-between items-center py-1">
-            <span className="text-slate-500 font-semibold">Security Passcode:</span>
-            <code className="font-bold text-slate-900 font-mono select-all bg-slate-50 px-2 py-0.5 rounded border border-slate-200">{credentials.passcode || '12345'}</code>
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          <button
-            onClick={() => {
-              const text = `CAB Admin Credentials:\nName: ${credentials.name}\nEmail: ${credentials.email}\nPassword: ${credentials.password || 'adminpassword'}\nPasscode: ${credentials.passcode || '12345'}`;
-              navigator.clipboard.writeText(text);
-              showToast('Credentials copied to clipboard!');
-            }}
-            className="flex-1 py-2.5 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            <Copy className="w-4 h-4" /> Copy Details
-          </button>
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 cursor-pointer shadow-sm"
-          >
-            Done
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -357,9 +241,13 @@ export function ApproveHospitalModal({
 export function HospitalApprovedModal({
   result,
   onClose,
+  title = 'Hospital Approved!',
+  description = 'Login credentials have been auto-generated. Share them securely with the hospital.',
 }: {
   result: { email: string; password: string };
   onClose: () => void;
+  title?: string;
+  description?: string;
 }) {
   return (
     <div
@@ -373,8 +261,8 @@ export function HospitalApprovedModal({
         <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 border-2 border-slate-200">
           <CheckCircle2 className="w-8 h-8 text-primary-container" />
         </div>
-        <h3 id="hospital-approved-modal-title" className="text-base font-bold text-slate-900 mb-1">Hospital Approved!</h3>
-        <p className="text-xs text-slate-500 mb-4">Login credentials have been auto-generated. Share them securely with the hospital.</p>
+        <h3 id="hospital-approved-modal-title" className="text-base font-bold text-slate-900 mb-1">{title}</h3>
+        <p className="text-xs text-slate-500 mb-4">{description}</p>
         <div className="bg-slate-900 text-slate-400 p-4 rounded-xl font-mono text-xs text-left space-y-1.5 mb-4">
           <p>Email: <span className="text-white">{result.email}</span></p>
           <p>Temp Password: <span className="text-white">{result.password}</span></p>

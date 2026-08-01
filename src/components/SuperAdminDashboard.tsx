@@ -5,8 +5,8 @@ import {
   Stethoscope, Crown, UserCog, Layers, PieChart, LayoutDashboard, Megaphone,
   Database, ShieldCheck, FileText,
 } from 'lucide-react';
-import { useApiEnquiries, useApiNotifications, useApiHospitals, useAuditLogs, useBlogs, useEvents, usePartnerRequests, useRoles } from '../api/hooks';
-import { assignHospital, ApiError, approvePartnerRequest, broadcastNotification, createBlog, createRole, deleteBlog, getStaffSession, rejectPartnerRequest, type NotificationAudience } from '../api/client';
+import { useAdmins, useApiEnquiries, useApiNotifications, useApiHospitals, useAuditLogs, useBlogs, useEvents, usePartnerRequests, useRoles } from '../api/hooks';
+import { activateAdmin, assignHospital, ApiError, approvePartnerRequest, broadcastNotification, createAdmin, createBlog, createRole, deleteAdmin as deleteAdminAccount, deleteBlog, getStaffSession, rejectPartnerRequest, suspendAdmin, updateAdmin, type NotificationAudience } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, Hospital } from '../types';
 import { useToast } from './common/Toast';
@@ -16,7 +16,6 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { csvCell, downloadCsv } from '../utils/csvExport';
 
 import {
-  INITIAL_ADMIN_ACCOUNTS,
   INITIAL_BACKUP_RECORDS, INITIAL_SENT_NOTIFICATIONS,
   type SuperAdminAccount, type HospitalApplication,
   type SentNotification
@@ -46,7 +45,7 @@ import DatabaseTab from './superadmin-dashboard/DatabaseTab';
 import SecurityTab from './superadmin-dashboard/SecurityTab';
 import ProfileTab from './superadmin-dashboard/ProfileTab';
 import {
-  AdminAccountModal, AdminCredentialsModal, ApproveHospitalModal, RejectHospitalModal,
+  AdminAccountModal, ApproveHospitalModal, RejectHospitalModal,
   HospitalApprovedModal, CustomRoleModal, AssignHospitalModal,
 } from './superadmin-dashboard/Modals';
 
@@ -137,23 +136,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
 
 
-  // Data state
-  const [admins, setAdmins] = useState<SuperAdminAccount[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_staff_accounts');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        const merged = [...parsed];
-        INITIAL_ADMIN_ACCOUNTS.forEach(init => {
-          if (!merged.some(m => m.id === init.id)) {
-            merged.push(init);
-          }
-        });
-        return merged;
-      } catch (e) { console.error('Failed to parse staff accounts', e); }
-    }
-    return INITIAL_ADMIN_ACCOUNTS;
-  });
+  const { admins, refetch: refetchAdmins } = useAdmins(apiToken);
 
   const { partnerRequests, refetch: refetchPartnerRequests } = usePartnerRequests(apiToken);
   const { blogs, refetch: refetchBlogs } = useBlogs();
@@ -294,11 +277,10 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
-  const [formRole, setFormRole] = useState('Regional Admin');
   const [formRegion, setFormRegion] = useState('');
-  const [formPassword, setFormPassword] = useState('adminpassword');
-  const [formPasscode, setFormPasscode] = useState('12345');
-  const [createdAdminCredentials, setCreatedAdminCredentials] = useState<SuperAdminAccount | null>(null);
+  // Shown once via this modal instead of ever being persisted/re-fetchable
+  // -- same pattern as showApprovalResult for hospital approval.
+  const [createdAdminCredentials, setCreatedAdminCredentials] = useState<{ email: string; password: string } | null>(null);
 
   // Custom Role Modal state
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -337,96 +319,66 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
       setFormName(admin.name);
       setFormEmail(admin.email);
       setFormPhone(admin.phone || '');
-      setFormRole(admin.role);
       setFormRegion(admin.region);
-      setFormPassword(admin.password || 'adminpassword');
-      setFormPasscode(admin.passcode || '12345');
     } else {
       setEditingAdmin(null);
       setFormName('');
       setFormEmail('');
       setFormPhone('');
-      setFormRole('Regional Admin');
       setFormRegion('');
-      setFormPassword('adminpassword');
-      setFormPasscode('12345');
     }
     setShowAdminModal(true);
   };
 
-  const saveAdmin = (e: React.FormEvent) => {
+  const saveAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formName || !formEmail || !formRegion || !formPassword || !formPasscode) return;
-    const rolePerms = roles.find(r => r.name === formRole)?.permissions || ['dashboard.view'];
+    if (!formName || !formEmail || !apiToken) return;
 
-    let targetAccount: SuperAdminAccount | null = null;
-
-    setAdmins(prev => {
-      let updated: SuperAdminAccount[];
+    try {
       if (editingAdmin) {
-        targetAccount = {
-          ...editingAdmin,
-          name: formName,
-          email: formEmail,
-          phone: formPhone,
-          role: formRole,
-          region: formRegion,
-          password: formPassword,
-          passcode: formPasscode,
-        };
-        updated = prev.map(a => a.id === editingAdmin.id ? targetAccount! : a);
+        await updateAdmin(editingAdmin.id, apiToken, { name: formName, phone: formPhone || undefined, region: formRegion || undefined });
         showToast(`Admin "${formName}" updated successfully.`);
+        setShowAdminModal(false);
       } else {
-        const newAdmin: SuperAdminAccount = {
-          id: 'ADM-' + String(prev.length + 1).padStart(3, '0'),
-          name: formName,
-          email: formEmail,
-          phone: formPhone,
-          role: formRole,
-          region: formRegion,
-          status: 'Active',
-          permissions: rolePerms,
-          lastLogin: 'Never',
-          createdDate: new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
-          password: formPassword,
-          passcode: formPasscode,
-        };
-        targetAccount = newAdmin;
-        updated = [...prev, newAdmin];
+        const result = await createAdmin(apiToken, { name: formName, email: formEmail, phone: formPhone || undefined, region: formRegion || undefined });
         showToast(`Admin "${formName}" created with credentials!`);
+        setShowAdminModal(false);
+        setCreatedAdminCredentials({ email: result.loginEmail, password: result.tempPassword });
       }
-      localStorage.setItem('aware_bharat_staff_accounts', JSON.stringify(updated));
-      return updated;
-    });
-
-    setShowAdminModal(false);
-    if (!editingAdmin && targetAccount) {
-      setCreatedAdminCredentials(targetAccount);
+      await refetchAdmins();
+    } catch (err) {
+      toast.error('Save Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
     }
   };
 
-  const toggleAdminStatus = (id: string) => {
-    setAdmins(prev => {
-      const updated = prev.map(a => {
-        if (a.id !== id) return a;
-        const newStatus = a.status === 'Active' ? 'Suspended' : 'Active';
-        showToast(`Admin "${a.name}" ${newStatus === 'Active' ? 'activated' : 'suspended'}.`);
-        return { ...a, status: newStatus as 'Active' | 'Suspended' };
-      });
-      localStorage.setItem('aware_bharat_staff_accounts', JSON.stringify(updated));
-      return updated;
-    });
+  const toggleAdminStatus = async (id: string) => {
+    if (!apiToken) return;
+    const admin = admins.find(a => a.id === id);
+    if (!admin) return;
+    try {
+      if (admin.status === 'Active') {
+        await suspendAdmin(id, apiToken);
+        showToast(`Admin "${admin.name}" suspended.`);
+      } else {
+        await activateAdmin(id, apiToken);
+        showToast(`Admin "${admin.name}" activated.`);
+      }
+      await refetchAdmins();
+    } catch (err) {
+      toast.error('Status Change Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
-  const deleteAdmin = (id: string) => {
+  const handleDeleteAdmin = async (id: string) => {
+    if (!apiToken) return;
     const admin = admins.find(a => a.id === id);
-    if (admin && window.confirm(`Permanently delete admin "${admin.name}"? This action cannot be undone.`)) {
-      setAdmins(prev => {
-        const updated = prev.filter(a => a.id !== id);
-        localStorage.setItem('aware_bharat_staff_accounts', JSON.stringify(updated));
-        return updated;
-      });
+    if (!admin || !window.confirm(`Permanently delete admin "${admin.name}"? This action cannot be undone.`)) return;
+    try {
+      await deleteAdminAccount(id, apiToken);
+      await refetchAdmins();
       showToast(`Admin "${admin.name}" has been deleted.`);
+    } catch (err) {
+      toast.error('Delete Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
     }
   };
 
@@ -872,9 +824,8 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
               setSearchTerm={setSearchTerm}
               admins={admins}
               openAdminForm={openAdminForm}
-              setCreatedAdminCredentials={setCreatedAdminCredentials}
               toggleAdminStatus={toggleAdminStatus}
-              deleteAdmin={deleteAdmin}
+              deleteAdmin={handleDeleteAdmin}
             />
           )}
 
@@ -1042,25 +993,19 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
           setFormEmail={setFormEmail}
           formPhone={formPhone}
           setFormPhone={setFormPhone}
-          formRole={formRole}
-          setFormRole={setFormRole}
-          roles={roles}
           formRegion={formRegion}
           setFormRegion={setFormRegion}
-          formPassword={formPassword}
-          setFormPassword={setFormPassword}
-          formPasscode={formPasscode}
-          setFormPasscode={setFormPasscode}
           onSubmit={saveAdmin}
         />
       )}
 
       {/* Created Admin Credentials Summary Modal */}
       {createdAdminCredentials && (
-        <AdminCredentialsModal
-          credentials={createdAdminCredentials}
+        <HospitalApprovedModal
+          result={createdAdminCredentials}
           onClose={() => setCreatedAdminCredentials(null)}
-          showToast={showToast}
+          title="Admin Created!"
+          description="Login credentials have been auto-generated. Share them securely with the new admin."
         />
       )}
 

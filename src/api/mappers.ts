@@ -2,10 +2,10 @@
 // interfaces, so AdminDashboard/SuperAdminDashboard/EnquiryTimelineModal
 // keep working unmodified against real data.
 
-import { ApiAuditLog, ApiBlogArticle, ApiCampaignRequest, ApiCustomRole, ApiEvent, ApiHospital, ApiNotification, ApiPatientEnquiry } from './client';
+import { ApiAdmin, ApiAuditLog, ApiBlogArticle, ApiCampaignRequest, ApiCustomRole, ApiEvent, ApiHospital, ApiNotification, ApiPatientEnquiry } from './client';
 import { AppNotification, BlogArticle, Event, Hospital, PatientEnquiry } from '../types';
 import { CampaignRequest } from '../adminDashboardData';
-import { AuditLogEntry, CustomRole } from '../superAdminDashboardData';
+import { AuditLogEntry, CustomRole, SuperAdminAccount } from '../superAdminDashboardData';
 
 function formatTimestamp(iso: string): string {
   try {
@@ -178,6 +178,28 @@ export function mapApiCustomRole(api: ApiCustomRole): CustomRole {
     assignedCount: api.assignedCount,
     createdDate: formatDate(api.createdAt),
     isSystem: api.isSystem,
+  };
+}
+
+export function mapApiAdmin(api: ApiAdmin): SuperAdminAccount {
+  return {
+    id: api.id,
+    name: api.name,
+    email: api.email,
+    // Fixed label -- this list only ever holds role="admin" accounts (Super
+    // Admins are never listed or manageable here, see backend/app/routers/
+    // admins.py), and there's no real per-admin role-name assignment
+    // mechanism (Phase K's Roles are persistence-only, deliberately never
+    // assigned to anyone).
+    role: 'Admin',
+    region: api.region ?? '',
+    status: api.isActive ? 'Active' : 'Suspended',
+    permissions: [],
+    // No login-history tracking exists yet -- honest placeholder rather
+    // than a fabricated timestamp.
+    lastLogin: 'Not tracked yet',
+    createdDate: formatDate(api.createdAt),
+    phone: api.phone ?? '',
   };
 }
 
