@@ -4,8 +4,8 @@ import {
   BarChart3, Settings, LogOut, Bell, FileCheck,
   DollarSign, BookOpen, MessageSquare, Terminal, Menu, Stethoscope,
 } from 'lucide-react';
-import { useApiEnquiries, useApiHospitals, useApiNotifications, useBlogs, useCampaignRequests, useDonations, useEvents, usePartnerRequests, usePatientRecords, useVolunteerFeedback, useVolunteers } from '../api/hooks';
-import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, createBlog, createEvent, createPatientRecord, deleteBlog, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, respondToVolunteerFeedback, scheduleCampaignRequest, sendDonationReceipt, updatePatientRecord } from '../api/client';
+import { useApiEnquiries, useApiHospitals, useApiNotifications, useBlogs, useCampaignRequests, useDonations, useEvents, usePartnerRequests, usePatientRecords, useStaffMe, useVolunteerFeedback, useVolunteers } from '../api/hooks';
+import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, changeStaffPassword, createBlog, createEvent, createPatientRecord, deleteBlog, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, respondToVolunteerFeedback, scheduleCampaignRequest, sendDonationReceipt, updatePatientRecord, updateStaffMe } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
@@ -187,22 +187,39 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const [activeFeedbackId, setActiveFeedbackId] = useState<string | null>(null);
   const [feedbackReplyText, setFeedbackReplyText] = useState('');
 
-  // Admin Profile settings
-  const [profileName, setProfileName] = useState(() => {
-    const stored = localStorage.getItem('aware_bharat_admin_profile');
-    if (stored) {
-      try { return JSON.parse(stored).profileName; } catch (e) {}
+  // Admin Profile settings (self-service profile: real name/email + password change)
+  const { me: staffMe, loading: staffMeLoading, refetch: refetchStaffMe } = useStaffMe(apiToken);
+  const [savingProfileName, setSavingProfileName] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const handleSaveProfileName = async (name: string) => {
+    if (!apiToken) return;
+    setSavingProfileName(true);
+    try {
+      await updateStaffMe(apiToken, name);
+      await refetchStaffMe();
+      toast.success('Profile Updated', 'Your display name was updated successfully.');
+    } catch (err) {
+      toast.error('Update Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    } finally {
+      setSavingProfileName(false);
     }
-    return 'Dwarka Admin Node';
-  });
-  const [profileEmail, setProfileEmail] = useState(() => {
-    const stored = localStorage.getItem('aware_bharat_admin_profile');
-    if (stored) {
-      try { return JSON.parse(stored).profileEmail; } catch (e) {}
+  };
+
+  const handleChangePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
+    if (!apiToken) return false;
+    setChangingPassword(true);
+    try {
+      await changeStaffPassword(apiToken, currentPassword, newPassword);
+      toast.success('Password Updated', 'Your password was changed successfully.');
+      return true;
+    } catch (err) {
+      toast.error('Password Change Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+      return false;
+    } finally {
+      setChangingPassword(false);
     }
-    return 'dwarka@awarebharat.org';
-  });
-  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  };
 
   // Get active administrative session metadata
   const adminDetails = useMemo(() => {
@@ -905,18 +922,12 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
           ===================================================== */}
           {activeTab === 'settings' && (
             <SettingsTab
-              passwordSuccess={passwordSuccess}
-              profileName={profileName}
-              setProfileName={setProfileName}
-              profileEmail={profileEmail}
-              setProfileEmail={setProfileEmail}
-              onSubmit={e => {
-                e.preventDefault();
-                localStorage.setItem('aware_bharat_admin_profile', JSON.stringify({ profileName, profileEmail }));
-                setPasswordSuccess(true);
-                setTimeout(() => setPasswordSuccess(false), 3000);
-                toast.success('Settings Saved', 'Administrative preferences updated successfully.');
-              }}
+              me={staffMe}
+              loading={staffMeLoading}
+              savingName={savingProfileName}
+              changingPassword={changingPassword}
+              onSaveName={handleSaveProfileName}
+              onChangePassword={handleChangePassword}
             />
           )}
 
