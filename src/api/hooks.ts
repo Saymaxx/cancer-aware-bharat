@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getDatabaseHealth, getOrgSettings, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteers } from './client';
+import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteers } from './client';
 import { mapApiAdmin, mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiCustomRole, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -353,5 +353,20 @@ export function useOrgSettings(token: string | null) {
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load organization settings' : null,
     refetch: query.refetch,
+  };
+}
+
+/** Real email/payment-gateway configuration status (SuperAdmin System
+ * Settings tab). Superadmin-only endpoint. */
+export function useIntegrationStatus(token: string | null) {
+  const query = useQuery({
+    queryKey: ['integration-status', token],
+    queryFn: () => getIntegrationStatus(token as string),
+    enabled: !!token,
+  });
+
+  return {
+    status: query.data ?? null,
+    loading: query.isLoading,
   };
 }

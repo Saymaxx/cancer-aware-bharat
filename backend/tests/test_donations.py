@@ -87,3 +87,128 @@ class TestSendReceipt:
             headers=auth_header(admin_token),
         )
         assert resp.status_code == 404
+
+
+class _FakeRazorpayOrder:
+    def create(self, data):
+        return {"id": "order_FAKE123"}
+
+
+class _FakeRazorpayUtility:
+    def __init__(self, should_fail=False):
+        self.should_fail = should_fail
+
+    def verify_payment_signature(self, params):
+        if self.should_fail:
+            import razorpay
+            raise razorpay.errors.SignatureVerificationError("bad signature")
+
+
+class _FakeRazorpayClient:
+    def __init__(self, should_fail_verification=False):
+        self.order = _FakeRazorpayOrder()
+        self.utility = _FakeRazorpayUtility(should_fail_verification)
+
+
+class TestDonationCheckout:
+    def test_checkout_503s_when_gateway_not_configured(self, client, monkeypatch):
+        from app.core.config import settings
+        monkeypatch.setattr(settings, "razorpay_key_id", None)
+        monkeypatch.setattr(settings, "razorpay_key_secret", None)
+
+        resp = client.post("/donations/checkout", json={
+            "amount": 500, "donorName": "Public Donor", "donorEmail": "donor@example.com",
+        })
+        assert resp.status_code == 503
+
+    def test_checkout_creates_order_when_configured(self, client, monkeypatch):
+        from app.core.config import settings
+        import app.routers.donations as donations_module
+
+        monkeypatch.setattr(settings, "razorpay_key_id", "rzp_test_fake")
+        monkeypatch.setattr(settings, "razorpay_key_secret", "fake_secret")
+        monkeypatch.setattr(donations_module, "_razorpay_client", lambda: _FakeRazorpayClient())
+
+        resp = client.post("/donations/checkout", json={
+            "amount": 500, "donorName": "Public Donor", "donorEmail": "donor@example.com",
+        })
+        assert resp.status_code == 201, resp.text
+        body = resp.json()
+        assert body["orderId"] == "order_FAKE123"
+        assert body["amountPaise"] == 50000
+        assert body["keyId"] == "rzp_test_fake"
+
+    def test_checkout_rejects_zero_amount(self, client, monkeypatch):
+        from app.core.config import settings
+        monkeypatch.setattr(settings, "razorpay_key_id", "rzp_test_fake")
+        monkeypatch.setattr(settings, "razorpay_key_secret", "fake_secret")
+        resp = client.post("/donations/checkout", json={
+            "amount": 0, "donorName": "X", "donorEmail": "x@example.com",
+        })
+        assert resp.status_code == 422
+
+
+class TestDonationVerify:
+    def _verify_payload(self, **overrides):
+        payload = {
+            "razorpayOrderId": "order_FAKE123",
+            "razorpayPaymentId": "pay_FAKE456",
+            "razorpaySignature": "fake_signature",
+            "donorName": "Public Donor",
+            "donorEmail": "donor@example.com",
+            "donorType": "Individual",
+            "amount": 500,
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_verify_503s_when_gateway_not_configured(self, client, monkeypatch):
+        from app.core.config import settings
+        monkeypatch.setattr(settings, "razorpay_key_id", None)
+        monkeypatch.setattr(settings, "razorpay_key_secret", None)
+        resp = client.post("/donations/verify", json=self._verify_payload())
+        assert resp.status_code == 503
+
+    def test_verify_records_real_donation_on_valid_signature(self, client, monkeypatch, db_session):
+        from app.core.config import settings
+        import app.routers.donations as donations_module
+        from app.models.audit_log import AuditLog
+
+        monkeypatch.setattr(settings, "razorpay_key_id", "rzp_test_fake")
+        monkeypatch.setattr(settings, "razorpay_key_secret", "fake_secret")
+        monkeypatch.setattr(donations_module, "_razorpay_client", lambda: _FakeRazorpayClient())
+
+        resp = client.post("/donations/verify", json=self._verify_payload())
+        assert resp.status_code == 201, resp.text
+        body = resp.json()
+        assert body["donorName"] == "Public Donor"
+        assert body["paymentMethod"] == "Razorpay"
+        assert body["amount"] == 500
+
+        entry = db_session.query(AuditLog).filter(AuditLog.event_type == "donation_recorded_online").first()
+        assert entry is not None
+
+    def test_verify_rejects_bad_signature(self, client, monkeypatch):
+        from app.core.config import settings
+        import app.routers.donations as donations_module
+
+        monkeypatch.setattr(settings, "razorpay_key_id", "rzp_test_fake")
+        monkeypatch.setattr(settings, "razorpay_key_secret", "fake_secret")
+        monkeypatch.setattr(donations_module, "_razorpay_client", lambda: _FakeRazorpayClient(should_fail_verification=True))
+
+        resp = client.post("/donations/verify", json=self._verify_payload())
+        assert resp.status_code == 400
+
+    def test_verify_is_idempotent_on_repeat_payment_id(self, client, monkeypatch):
+        from app.core.config import settings
+        import app.routers.donations as donations_module
+
+        monkeypatch.setattr(settings, "razorpay_key_id", "rzp_test_fake")
+        monkeypatch.setattr(settings, "razorpay_key_secret", "fake_secret")
+        monkeypatch.setattr(donations_module, "_razorpay_client", lambda: _FakeRazorpayClient())
+
+        first = client.post("/donations/verify", json=self._verify_payload())
+        assert first.status_code == 201, first.text
+        second = client.post("/donations/verify", json=self._verify_payload())
+        assert second.status_code == 201, second.text
+        assert first.json()["id"] == second.json()["id"]

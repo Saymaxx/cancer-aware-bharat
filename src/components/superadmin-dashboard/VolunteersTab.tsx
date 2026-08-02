@@ -16,10 +16,11 @@ export default function VolunteersTab({
     <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Total Volunteers', value: (volunteers.length + 2390).toLocaleString(), color: 'text-slate-700 bg-slate-50 border-slate-200' },
-          { label: 'Approved & Active', value: String(volunteers.filter(v => v.status === 'Approved').length + 2300), color: 'text-slate-700 bg-slate-50 border-slate-200' },
+          { label: 'Total Volunteers', value: volunteers.length.toLocaleString(), color: 'text-slate-700 bg-slate-50 border-slate-200' },
+          { label: 'Approved & Active', value: String(volunteers.filter(v => v.status === 'Approved').length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
           { label: 'Pending Verification', value: String(volunteers.filter(v => v.status === 'Pending Approval').length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
-          { label: 'Total Hours Logged', value: '4,460h', color: 'text-purple-700 bg-purple-50 border-purple-200' },
+          // Total Hours Logged dropped -- no real hours-tracking data exists
+          // yet (see AnalyticsTab's identical honest-empty-state decision).
         ].map((s, i) => (
           <div key={i} className={`${s.color} rounded-2xl border p-4 text-center`}>
             <p className="text-2xl font-black">{s.value}</p>

@@ -12,9 +12,9 @@ export default function DonationsTab({
     <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Total Donations', value: '₹' + donations.reduce((acc, curr) => acc + curr.amount, 650000).toLocaleString(), color: 'text-slate-700 bg-slate-50 border-slate-200' },
-          { label: 'Individual Donors', value: String(donations.filter(d => d.donorType === 'Individual').length + 140), color: 'text-slate-700 bg-slate-50 border-slate-200' },
-          { label: 'Corporate Sponsors', value: String(donations.filter(d => d.donorType === 'Corporate').length + 6), color: 'text-purple-700 bg-purple-50 border-purple-200' },
+          { label: 'Total Donations', value: '₹' + donations.reduce((acc, curr) => acc + curr.amount, 0).toLocaleString(), color: 'text-slate-700 bg-slate-50 border-slate-200' },
+          { label: 'Individual Donors', value: String(donations.filter(d => d.donorType === 'Individual').length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
+          { label: 'Corporate Sponsors', value: String(donations.filter(d => d.donorType === 'Corporate').length), color: 'text-purple-700 bg-purple-50 border-purple-200' },
           { label: '80G Tax Receipts Sent', value: String(donations.filter(d => d.receiptSent).length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
         ].map((s, i) => (
           <div key={i} className={`${s.color} rounded-2xl border p-4 text-center`}>

@@ -18,7 +18,6 @@ class CustomRoleOut(CamelModel):
     description: str
     permissions: list[str]
     is_system: bool
-    # No assignment mechanism exists -- always 0, never fabricated (see
-    # CustomRole model docstring).
+    # Real count of admins with this role assigned (see User.custom_role_id).
     assigned_count: int = 0
     created_at: datetime

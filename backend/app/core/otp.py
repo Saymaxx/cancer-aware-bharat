@@ -1,13 +1,16 @@
 """OTP generation/verification for patient email verification and password
-reset. No real email/SMS channel is wired up yet -- ConsoleOtpSender logs the
-code server-side instead of sending it anywhere, the same "safe default that
-needs no external account" pattern already used for object storage (see
-app/core/storage.py). Swapping in a real sender later only touches the two
-call sites of get_otp_sender() in app/routers/patients.py.
+reset. ConsoleOtpSender logs the code server-side instead of sending it
+anywhere -- the safe default when EMAIL_BACKEND=console (see
+app/core/config.py). Setting EMAIL_BACKEND=smtp with real SMTP_* credentials
+switches get_otp_sender() to EmailOtpSender, which sends the code as a real
+email via app/services/email.py. Swapping happens only inside
+get_otp_sender() -- its two call sites in app/routers/patients.py never change.
 """
 import hashlib
 import logging
 import secrets
+
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -36,5 +39,18 @@ class ConsoleOtpSender:
         )
 
 
-def get_otp_sender() -> ConsoleOtpSender:
+class EmailOtpSender:
+    def send(self, email: str, code: str, purpose: str) -> None:
+        from app.services.email import get_email_sender
+
+        get_email_sender().send(
+            email,
+            "Your Cancer Aware Bharat verification code",
+            f"Your one-time code for {purpose} is: {code}\n\nThis code expires in {OTP_TTL_MINUTES} minutes.",
+        )
+
+
+def get_otp_sender():
+    if settings.email_backend == "smtp":
+        return EmailOtpSender()
     return ConsoleOtpSender()

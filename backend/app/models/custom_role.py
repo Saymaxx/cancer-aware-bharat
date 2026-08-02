@@ -9,11 +9,12 @@ from app.core.database import Base
 
 
 class CustomRole(Base):
-    """Persisted role name/description/permission-list only -- per the
-    confirmed scope decision, this does NOT enforce anything. Actual access
+    """Persisted role name/description/permission-list, with a real
+    assignment mechanism (User.custom_role_id) -- but per the confirmed
+    scope decision, this still does NOT enforce anything. Actual access
     control stays exactly what it was before this table existed (the plain
-    admin/superadmin claim on the JWT); there's no admin-assignment
-    mechanism, so `assigned_count` is never anything but 0 (see RoleOut)."""
+    admin/superadmin claim on the JWT); assigning a role is a roster/display
+    label only, not a permission grant."""
 
     __tablename__ = "custom_roles"
 

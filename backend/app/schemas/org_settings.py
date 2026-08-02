@@ -13,6 +13,12 @@ class OrgSettingsOut(CamelModel):
     website: str
 
 
+class IntegrationStatusOut(CamelModel):
+    email_configured: bool
+    email_backend: str
+    payment_gateway_configured: bool
+
+
 class OrgSettingsIn(CamelModel):
     ngo_name: str = Field(min_length=1, max_length=200)
     tagline: str = Field(min_length=1, max_length=200)

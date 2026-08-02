@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Building2, Info, Save } from 'lucide-react';
-import type { ApiOrgSettings } from '../../api/client';
+import { Building2, CheckCircle2, Info, Mail, Save, XCircle } from 'lucide-react';
+import type { ApiIntegrationStatus, ApiOrgSettings } from '../../api/client';
 
 export default function SettingsTab({
   settings,
   loading,
   saving,
   onSave,
+  integrationStatus,
 }: {
   settings: ApiOrgSettings | null;
   loading: boolean;
   saving: boolean;
   onSave: (payload: ApiOrgSettings) => void;
+  integrationStatus: ApiIntegrationStatus | null;
 }) {
   const [form, setForm] = useState<ApiOrgSettings | null>(settings);
 
@@ -64,14 +66,40 @@ export default function SettingsTab({
         </div>
       </div>
 
-      {/* Honest empty state -- no real SMTP delivery or payment gateway
-          integration exists in this app, so this section doesn't pretend
-          to have live, editable config for either. */}
+      {/* Real, live status pulled from the backend's own env config -- not
+          editable here (secrets belong in the server's .env, never typed
+          into a form that round-trips through the database). */}
       <div className="bg-white rounded-2xl border border-slate-200/60 p-6 shadow-xs">
-        <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2"><Info className="w-4 h-4 text-slate-400" /> Email &amp; Payment Integration</h3>
-        <p className="text-xs text-slate-500 leading-relaxed">
-          This app doesn't have a real email-delivery (SMTP) or payment-gateway integration configured yet -- account emails and donation records are handled without either. Once those are integrated, their configuration will appear here for real.
-        </p>
+        <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2"><Mail className="w-4 h-4 text-indigo-600" /> Email &amp; Payment Integration</h3>
+        {!integrationStatus ? (
+          <p className="text-xs text-slate-400">Loading...</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60 flex items-center justify-between">
+              <div>
+                <p className="font-bold text-slate-800">Email Delivery</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Account emails, OTPs -- backend: {integrationStatus.emailBackend}</p>
+              </div>
+              {integrationStatus.emailConfigured ? (
+                <span className="flex items-center gap-1 text-primary-container font-bold"><CheckCircle2 className="w-4 h-4" /> Configured</span>
+              ) : (
+                <span className="flex items-center gap-1 text-slate-400 font-bold"><XCircle className="w-4 h-4" /> Not configured</span>
+              )}
+            </div>
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60 flex items-center justify-between">
+              <div>
+                <p className="font-bold text-slate-800">Payment Gateway</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Razorpay -- public donation checkout</p>
+              </div>
+              {integrationStatus.paymentGatewayConfigured ? (
+                <span className="flex items-center gap-1 text-primary-container font-bold"><CheckCircle2 className="w-4 h-4" /> Configured</span>
+              ) : (
+                <span className="flex items-center gap-1 text-slate-400 font-bold"><XCircle className="w-4 h-4" /> Not configured</span>
+              )}
+            </div>
+          </div>
+        )}
+        <p className="text-[10px] text-slate-400 mt-3 flex items-center gap-1"><Info className="w-3 h-3" /> Set with real credentials in the backend's .env (EMAIL_BACKEND/SMTP_* and RAZORPAY_KEY_*), not from this screen.</p>
       </div>
     </div>
   );

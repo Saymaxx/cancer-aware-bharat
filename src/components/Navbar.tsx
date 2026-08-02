@@ -3,18 +3,20 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu, X, Heart, LogIn, LayoutDashboard, LogOut, Building2,
   ChevronDown, Home, Target, Stethoscope, BookOpen, Calendar, UserPlus, PhoneCall,
-  Images, Users, ArrowRight, User, Shield,
+  Images, Users, ArrowRight, User, Shield, Gift,
   Facebook, Instagram, Linkedin, Youtube
 } from 'lucide-react';
 
 interface NavbarProps {
   onOpenVolunteer: () => void;
   onOpenEnquiry: () => void;
+  onOpenDonate: () => void;
 }
 
 export default function Navbar({
   onOpenVolunteer,
-  onOpenEnquiry
+  onOpenEnquiry,
+  onOpenDonate
 }: NavbarProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -415,6 +417,13 @@ export default function Navbar({
               </div>
             )}
             <button
+              onClick={onOpenDonate}
+              className="flex items-center gap-2 px-5 py-2.5 border-2 border-primary text-primary rounded-full font-semibold text-[14px] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/5 focus:outline-none"
+            >
+              <Gift className="w-4 h-4" />
+              Donate
+            </button>
+            <button
               onClick={onOpenVolunteer}
               className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-full font-semibold text-[14px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(22,58,95,0.25)] hover:bg-[#112d4a] focus:outline-none"
             >
@@ -425,6 +434,12 @@ export default function Navbar({
 
           {/* Mobile Actions */}
           <div className="lg:hidden flex items-center space-x-2.5">
+            <button
+              onClick={onOpenDonate}
+              className="px-3.5 py-2 rounded-full border-2 border-primary text-primary text-[12px] font-semibold hover:bg-primary/5 transition-colors"
+            >
+              Donate
+            </button>
             <button
               onClick={() => onOpenEnquiry()}
               className="px-3.5 py-2 rounded-full bg-primary text-white text-[12px] font-semibold hover:opacity-95 transition-opacity shadow-sm"

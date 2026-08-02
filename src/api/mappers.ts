@@ -186,12 +186,12 @@ export function mapApiAdmin(api: ApiAdmin): SuperAdminAccount {
     id: api.id,
     name: api.name,
     email: api.email,
-    // Fixed label -- this list only ever holds role="admin" accounts (Super
-    // Admins are never listed or manageable here, see backend/app/routers/
-    // admins.py), and there's no real per-admin role-name assignment
-    // mechanism (Phase K's Roles are persistence-only, deliberately never
-    // assigned to anyone).
-    role: 'Admin',
+    // Real assigned custom-role name when set (see User.custom_role_id);
+    // "Admin" is just the fallback label for an unassigned account -- this
+    // list only ever holds role="admin" accounts (Super Admins are never
+    // listed or manageable here, see backend/app/routers/admins.py).
+    role: api.customRoleName ?? 'Admin',
+    customRoleId: api.customRoleId,
     region: api.region ?? '',
     status: api.isActive ? 'Active' : 'Suspended',
     permissions: [],

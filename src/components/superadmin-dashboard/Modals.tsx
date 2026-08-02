@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, AlertTriangle, CheckCircle2, Building2 } from 'lucide-react';
-import type { SuperAdminAccount } from '../../superAdminDashboardData';
+import type { SuperAdminAccount, CustomRole } from '../../superAdminDashboardData';
 import type { PatientEnquiry, Hospital } from '../../types';
 
 // 1. ADMIN CREATE/EDIT ACCOUNT MODAL
@@ -15,6 +15,9 @@ export function AdminAccountModal({
   setFormPhone,
   formRegion,
   setFormRegion,
+  roles,
+  formRoleId,
+  setFormRoleId,
   onSubmit,
 }: {
   editingAdmin: SuperAdminAccount | null;
@@ -27,6 +30,9 @@ export function AdminAccountModal({
   setFormPhone: (val: string) => void;
   formRegion: string;
   setFormRegion: (val: string) => void;
+  roles: CustomRole[];
+  formRoleId: string;
+  setFormRoleId: (val: string) => void;
   onSubmit: (e: React.FormEvent) => void;
 }) {
   return (
@@ -79,6 +85,16 @@ export function AdminAccountModal({
               <label className="font-bold text-slate-600 block mb-1">Assigned Region / Zone</label>
               <input value={formRegion} onChange={e => setFormRegion(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs" placeholder="North India — Delhi NCR" />
             </div>
+          </div>
+
+          <div>
+            <label className="font-bold text-slate-600 block mb-1">Role (display label only, see Roles & Permissions)</label>
+            <select value={formRoleId} onChange={e => setFormRoleId(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs">
+              <option value="">Admin (no role assigned)</option>
+              {roles.map(r => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </select>
           </div>
 
           <div className="flex gap-3 pt-2">

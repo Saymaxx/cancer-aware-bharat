@@ -9,6 +9,7 @@ export interface SuperAdminAccount {
   name: string;
   email: string;
   role: string;
+  customRoleId: string | null;
   region: string;
   status: 'Active' | 'Suspended' | 'Deactivated';
   permissions: string[];
@@ -145,28 +146,6 @@ export const SUPER_ADMIN_KPI = {
   systemHealthScore: 97.2,
   monthlyGrowthRate: 8.5,
 };
-
-// ---- Admin Accounts ----
-export const INITIAL_ADMIN_ACCOUNTS: SuperAdminAccount[] = [
-  {
-    id: 'ADM-001', name: 'Dr. Ramesh Sharma', email: 'dwarka@awarebharat.org', role: 'Regional Admin',
-    region: 'North India — Delhi NCR', status: 'Active',
-    permissions: ['dashboard.view', 'patients.view', 'patients.edit', 'volunteers.view', 'volunteers.approve', 'campaigns.view', 'campaigns.create', 'hospitals.view', 'hospitals.recommend', 'donations.view', 'blogs.view', 'blogs.create', 'events.view', 'notifications.send'],
-    lastLogin: 'Jul 22, 2026 — 09:15 AM', createdDate: 'Jan 15, 2026', phone: '+91 98765 43210',
-  },
-  {
-    id: 'ADM-002', name: 'Meera Iyer', email: 'mumbai@awarebharat.org', role: 'Regional Admin',
-    region: 'West India — Mumbai & Pune', status: 'Active',
-    permissions: ['dashboard.view', 'patients.view', 'patients.edit', 'volunteers.view', 'volunteers.approve', 'campaigns.view', 'campaigns.create', 'hospitals.view', 'hospitals.recommend', 'donations.view'],
-    lastLogin: 'Jul 21, 2026 — 03:42 PM', createdDate: 'Mar 05, 2026', phone: '+91 99112 87654',
-  },
-  {
-    id: 'ADM-003', name: 'Anjali Deshmukh', email: 'south@awarebharat.org', role: 'Campaign Manager',
-    region: 'South India — Chennai & Bengaluru', status: 'Suspended',
-    permissions: ['dashboard.view', 'campaigns.view', 'campaigns.create', 'campaigns.edit', 'events.view', 'events.create'],
-    lastLogin: 'Jul 10, 2026 — 11:20 AM', createdDate: 'Apr 18, 2026', phone: '+91 98301 45678',
-  },
-];
 
 // ---- Hospital Applications ----
 export const INITIAL_HOSPITAL_APPLICATIONS: HospitalApplication[] = [

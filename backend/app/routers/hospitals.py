@@ -10,6 +10,7 @@ from app.core.security import generate_temp_password, hash_password
 from app.deps import DbSession, require_admin_or_superadmin, require_roles
 from app.models.hospital import Hospital, HospitalPartnerRequest
 from app.models.user import User
+from app.services.email import get_email_sender
 from app.schemas.hospital import (
     HospitalApprovalResult,
     HospitalApproveIn,
@@ -199,6 +200,11 @@ def approve_partner_request(
 
     db.commit()
     db.refresh(hospital)
+    get_email_sender().send(
+        partner_request.email,
+        "Your Cancer Aware Bharat hospital partner account",
+        f"{partner_request.hospital_name} has been approved as a partner hospital.\n\nLogin email: {login_email}\nTemporary password: {temp_password}\n\nPlease log in and change this password as soon as possible.",
+    )
     # Explicit model_validate rather than passing the ORM object straight
     # into the constructor -- HospitalApprovalResult isn't itself returned
     # via response_model's automatic ORM coercion (it's built by hand here),

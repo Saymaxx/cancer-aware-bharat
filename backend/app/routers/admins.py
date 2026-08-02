@@ -7,9 +7,11 @@ from sqlalchemy.orm import Session
 from app.core.limiter import limiter
 from app.core.security import generate_temp_password, hash_password
 from app.deps import DbSession, require_roles
+from app.models.custom_role import CustomRole
 from app.models.user import User
-from app.schemas.admin import AdminCreateResult, AdminIn, AdminOut, AdminUpdateIn
+from app.schemas.admin import AdminAssignRoleIn, AdminCreateResult, AdminIn, AdminOut, AdminUpdateIn
 from app.services.audit import record_event
+from app.services.email import get_email_sender
 
 router = APIRouter(prefix="/admins", tags=["admins"])
 
@@ -63,6 +65,11 @@ def create_admin(
     record_event(db, "admin_created", role=claims["role"], actor_id=UUID(claims["sub"]), detail=payload.email)
     db.commit()
     db.refresh(admin)
+    get_email_sender().send(
+        payload.email,
+        "Your Cancer Aware Bharat admin account",
+        f"An admin account has been created for you.\n\nLogin email: {payload.email}\nTemporary password: {temp_password}\n\nPlease log in and change this password as soon as possible.",
+    )
     return AdminCreateResult(admin=AdminOut.model_validate(admin), login_email=payload.email, temp_password=temp_password)
 
 
@@ -123,6 +130,30 @@ def activate_admin(
         raise HTTPException(status.HTTP_409_CONFLICT, "Admin is already active")
     admin.is_active = True
     record_event(db, "admin_activated", role=claims["role"], actor_id=UUID(claims["sub"]), detail=admin.email)
+    db.commit()
+    db.refresh(admin)
+    return admin
+
+
+@router.post("/{admin_id}/assign-role", response_model=AdminOut)
+@limiter.limit("30/minute")
+def assign_admin_role(
+    request: Request,
+    admin_id: UUID,
+    payload: AdminAssignRoleIn,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_roles("superadmin"))],
+):
+    admin = _get_admin_or_404(db, admin_id)
+    if payload.role_id is not None:
+        role = db.query(CustomRole).filter(CustomRole.id == payload.role_id).first()
+        if role is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Role not found")
+        admin.custom_role_id = role.id
+        record_event(db, "admin_role_assigned", role=claims["role"], actor_id=UUID(claims["sub"]), detail=f"{admin.email} -> {role.name}")
+    else:
+        admin.custom_role_id = None
+        record_event(db, "admin_role_unassigned", role=claims["role"], actor_id=UUID(claims["sub"]), detail=admin.email)
     db.commit()
     db.refresh(admin)
     return admin

@@ -5,8 +5,8 @@ import {
   Stethoscope, Crown, UserCog, Layers, PieChart, LayoutDashboard, Megaphone,
   Database, ShieldCheck, FileText,
 } from 'lucide-react';
-import { useAdmins, useApiEnquiries, useApiNotifications, useApiHospitals, useAuditLogs, useBackups, useBlogs, useDatabaseHealth, useDonations, useEvents, useOrgSettings, usePartnerRequests, usePatientRecords, useRoles, useVolunteers } from '../api/hooks';
-import { activateAdmin, assignHospital, ApiError, approvePartnerRequest, broadcastNotification, createAdmin, createBackup, createBlog, createRole, deleteAdmin as deleteAdminAccount, deleteBlog, getStaffSession, rejectPartnerRequest, suspendAdmin, updateAdmin, updateOrgSettings, type ApiOrgSettings, type NotificationAudience } from '../api/client';
+import { useAdmins, useApiEnquiries, useApiNotifications, useApiHospitals, useAuditLogs, useBackups, useBlogs, useDatabaseHealth, useDonations, useEvents, useIntegrationStatus, useOrgSettings, usePartnerRequests, usePatientRecords, useRoles, useVolunteers } from '../api/hooks';
+import { activateAdmin, assignAdminRole, assignHospital, ApiError, approvePartnerRequest, broadcastNotification, createAdmin, createBackup, createBlog, createRole, deleteAdmin as deleteAdminAccount, deleteBlog, getStaffSession, rejectPartnerRequest, suspendAdmin, updateAdmin, updateOrgSettings, type ApiOrgSettings, type NotificationAudience } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, Hospital } from '../types';
 import { useToast } from './common/Toast';
@@ -189,6 +189,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   const [creatingBackup, setCreatingBackup] = useState(false);
 
   const { settings: orgSettings, loading: orgSettingsLoading, refetch: refetchOrgSettings } = useOrgSettings(apiToken);
+  const { status: integrationStatus } = useIntegrationStatus(apiToken);
   const [savingOrgSettings, setSavingOrgSettings] = useState(false);
   const handleSaveOrgSettings = async (payload: ApiOrgSettings) => {
     if (!apiToken) return;
@@ -319,6 +320,8 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formRegion, setFormRegion] = useState('');
+  // '' means "no custom role assigned" (the plain "Admin" label).
+  const [formRoleId, setFormRoleId] = useState('');
   // Shown once via this modal instead of ever being persisted/re-fetchable
   // -- same pattern as showApprovalResult for hospital approval.
   const [createdAdminCredentials, setCreatedAdminCredentials] = useState<{ email: string; password: string } | null>(null);
@@ -361,12 +364,14 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
       setFormEmail(admin.email);
       setFormPhone(admin.phone || '');
       setFormRegion(admin.region);
+      setFormRoleId(admin.customRoleId || '');
     } else {
       setEditingAdmin(null);
       setFormName('');
       setFormEmail('');
       setFormPhone('');
       setFormRegion('');
+      setFormRoleId('');
     }
     setShowAdminModal(true);
   };
@@ -376,15 +381,23 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     if (!formName || !formEmail || !apiToken) return;
 
     try {
+      let adminId: string;
       if (editingAdmin) {
         await updateAdmin(editingAdmin.id, apiToken, { name: formName, phone: formPhone || undefined, region: formRegion || undefined });
+        adminId = editingAdmin.id;
         showToast(`Admin "${formName}" updated successfully.`);
         setShowAdminModal(false);
       } else {
         const result = await createAdmin(apiToken, { name: formName, email: formEmail, phone: formPhone || undefined, region: formRegion || undefined });
+        adminId = result.admin.id;
         showToast(`Admin "${formName}" created with credentials!`);
         setShowAdminModal(false);
         setCreatedAdminCredentials({ email: result.loginEmail, password: result.tempPassword });
+      }
+      const currentRoleId = editingAdmin?.customRoleId || '';
+      if (formRoleId !== currentRoleId) {
+        await assignAdminRole(adminId, apiToken, formRoleId || null);
+        await refetchRoles();
       }
       await refetchAdmins();
     } catch (err) {
@@ -1000,6 +1013,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
               loading={orgSettingsLoading}
               saving={savingOrgSettings}
               onSave={handleSaveOrgSettings}
+              integrationStatus={integrationStatus}
             />
           )}
 
@@ -1054,6 +1068,9 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
           setFormPhone={setFormPhone}
           formRegion={formRegion}
           setFormRegion={setFormRegion}
+          roles={roles}
+          formRoleId={formRoleId}
+          setFormRoleId={setFormRoleId}
           onSubmit={saveAdmin}
         />
       )}

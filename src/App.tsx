@@ -19,6 +19,7 @@ import { ToastProvider } from './components/common/Toast';
 import VolunteerModal from './components/VolunteerModal';
 import ChatAssistant from './components/ChatAssistant';
 import SitemapModal from './components/SitemapModal';
+import DonateModal from './components/DonateModal';
 
 // Lazy Loaded Route-Level Pages (Code Splitting & Performance).
 // Previously only the 4 dashboards were split out this way -- every public
@@ -126,11 +127,13 @@ function PublicLayout({
   onOpenVolunteer,
   onOpenEnquiry,
   onOpenSitemap,
+  onOpenDonate,
 }: {
   children: React.ReactNode;
   onOpenVolunteer: () => void;
   onOpenEnquiry: () => void;
   onOpenSitemap: () => void;
+  onOpenDonate: () => void;
 }) {
   const location = useLocation();
   const isAuthPage = ['/admin', '/superadmin', '/volunteer/login', '/hospital/login', '/patient/login'].includes(location.pathname);
@@ -161,6 +164,7 @@ function PublicLayout({
       <Navbar
         onOpenVolunteer={onOpenVolunteer}
         onOpenEnquiry={onOpenEnquiry}
+        onOpenDonate={onOpenDonate}
       />
 
       {/* Page Content -- every route rendered through PublicLayout now
@@ -201,6 +205,7 @@ function AppContent() {
   const [volunteerOpen, setVolunteerOpen] = useState(false);
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [sitemapOpen, setSitemapOpen] = useState(false);
+  const [donateOpen, setDonateOpen] = useState(false);
 
   // To allow pre-selecting a hospital when opening the Enquiry modal
   const [selectedHospitalId, setSelectedHospitalId] = useState<string | undefined>(undefined);
@@ -219,6 +224,7 @@ function AppContent() {
     onOpenVolunteer: () => setVolunteerOpen(true),
     onOpenEnquiry: () => handleOpenEnquiryForHospital(undefined),
     onOpenSitemap: () => setSitemapOpen(true),
+    onOpenDonate: () => setDonateOpen(true),
   };
 
   return (
@@ -476,6 +482,11 @@ function AppContent() {
         onClose={() => setSitemapOpen(false)}
         onOpenVolunteer={() => setVolunteerOpen(true)}
         onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
+      />
+
+      <DonateModal
+        isOpen={donateOpen}
+        onClose={() => setDonateOpen(false)}
       />
     </div>
   );

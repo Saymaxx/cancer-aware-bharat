@@ -64,7 +64,7 @@ export interface AdminDonation {
   donorType: 'Individual' | 'Corporate' | 'Foundation' | 'NGO';
   amount: number;
   date: string;
-  paymentMethod: 'UPI' | 'Net Banking' | 'Card' | 'Cheque';
+  paymentMethod: 'UPI' | 'Net Banking' | 'Card' | 'Cheque' | 'Razorpay';
   receiptSent: boolean;
   sponsorshipCampaign?: string;
 }

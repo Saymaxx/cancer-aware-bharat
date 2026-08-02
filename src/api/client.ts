@@ -693,7 +693,7 @@ export interface ApiDonation {
   donorName: string;
   donorType: 'Individual' | 'Corporate' | 'Foundation' | 'NGO';
   amount: number;
-  paymentMethod: 'UPI' | 'Net Banking' | 'Card' | 'Cheque';
+  paymentMethod: 'UPI' | 'Net Banking' | 'Card' | 'Cheque' | 'Razorpay';
   receiptSent: boolean;
   sponsorshipCampaign: string | null;
   createdAt: string;
@@ -930,6 +930,8 @@ export interface ApiAdmin {
   phone: string | null;
   region: string | null;
   isActive: boolean;
+  customRoleId: string | null;
+  customRoleName: string | null;
   createdAt: string;
 }
 
@@ -956,6 +958,10 @@ export interface ApiAdminCreateResult {
 
 export function listAdmins(token: string): Promise<ApiAdmin[]> {
   return request<ApiAdmin[]>('/admins', {}, token);
+}
+
+export function assignAdminRole(id: string, token: string, roleId: string | null): Promise<ApiAdmin> {
+  return request<ApiAdmin>(`/admins/${id}/assign-role`, { method: 'POST', body: JSON.stringify({ roleId }) }, token);
 }
 
 export function createAdmin(token: string, payload: AdminPayload): Promise<ApiAdminCreateResult> {
@@ -1021,4 +1027,52 @@ export function getOrgSettings(token: string): Promise<ApiOrgSettings> {
 
 export function updateOrgSettings(token: string, payload: ApiOrgSettings): Promise<ApiOrgSettings> {
   return request<ApiOrgSettings>('/org-settings', { method: 'PATCH', body: JSON.stringify(payload) }, token);
+}
+
+export interface ApiIntegrationStatus {
+  emailConfigured: boolean;
+  emailBackend: string;
+  paymentGatewayConfigured: boolean;
+}
+
+export function getIntegrationStatus(token: string): Promise<ApiIntegrationStatus> {
+  return request<ApiIntegrationStatus>('/org-settings/integration-status', {}, token);
+}
+
+// ---------------- Public donation checkout (Razorpay) ----------------
+
+export interface DonationCheckoutPayload {
+  amount: number;
+  donorName: string;
+  donorEmail: string;
+  donorPhone?: string;
+  donorType?: 'Individual' | 'Corporate' | 'Foundation' | 'NGO';
+}
+
+export interface ApiDonationCheckout {
+  orderId: string;
+  amountPaise: number;
+  currency: string;
+  keyId: string;
+}
+
+export interface DonationVerifyPayload {
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+  donorName: string;
+  donorEmail: string;
+  donorPhone?: string;
+  donorType?: 'Individual' | 'Corporate' | 'Foundation' | 'NGO';
+  amount: number;
+  sponsorshipCampaign?: string;
+}
+
+// Public -- no staff token, anyone can start/complete a donation.
+export function createDonationCheckout(payload: DonationCheckoutPayload): Promise<ApiDonationCheckout> {
+  return request<ApiDonationCheckout>('/donations/checkout', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export function verifyDonationCheckout(payload: DonationVerifyPayload): Promise<ApiDonation> {
+  return request<ApiDonation>('/donations/verify', { method: 'POST', body: JSON.stringify(payload) });
 }

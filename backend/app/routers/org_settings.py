@@ -3,10 +3,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
 
+from app.core.config import settings
 from app.core.limiter import limiter
 from app.deps import DbSession, require_roles
 from app.models.org_settings import OrgSettings
-from app.schemas.org_settings import OrgSettingsIn, OrgSettingsOut
+from app.schemas.org_settings import IntegrationStatusOut, OrgSettingsIn, OrgSettingsOut
 from app.services.audit import record_event
 
 router = APIRouter(prefix="/org-settings", tags=["org-settings"])
@@ -30,6 +31,19 @@ def get_org_settings(
     claims: Annotated[dict, Depends(require_roles("superadmin"))],
 ):
     return _get_or_create(db)
+
+
+@router.get("/integration-status", response_model=IntegrationStatusOut)
+@limiter.limit("60/minute")
+def get_integration_status(
+    request: Request,
+    claims: Annotated[dict, Depends(require_roles("superadmin"))],
+):
+    return IntegrationStatusOut(
+        email_configured=settings.email_backend == "smtp" and bool(settings.smtp_host),
+        email_backend=settings.email_backend,
+        payment_gateway_configured=settings.payment_gateway_configured,
+    )
 
 
 @router.patch("", response_model=OrgSettingsOut)

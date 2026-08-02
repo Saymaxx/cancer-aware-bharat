@@ -132,6 +132,54 @@ class TestDeleteAdmin:
         resp = client.delete("/admins/00000000-0000-0000-0000-000000000000", headers=auth_header(superadmin_token))
         assert resp.status_code == 404
 
+
+class TestAssignAdminRole:
+    def test_superadmin_can_assign_and_unassign(self, client, superadmin_token, db_session):
+        from app.models.custom_role import CustomRole
+
+        role = CustomRole(name="Regional Coordinator", description="", permissions=[], is_system=False)
+        db_session.add(role)
+        db_session.flush()
+
+        result = create_sample_admin(client, superadmin_token, email="assign.role@awarebharat.local")
+        admin_id = result["admin"]["id"]
+
+        assign_resp = client.post(f"/admins/{admin_id}/assign-role", json={"roleId": str(role.id)}, headers=auth_header(superadmin_token))
+        assert assign_resp.status_code == 200, assign_resp.text
+        assert assign_resp.json()["customRoleId"] == str(role.id)
+        assert assign_resp.json()["customRoleName"] == "Regional Coordinator"
+
+        roles_listed = client.get("/roles", headers=auth_header(superadmin_token)).json()
+        assigned_role = next(r for r in roles_listed if r["id"] == str(role.id))
+        assert assigned_role["assignedCount"] == 1
+
+        unassign_resp = client.post(f"/admins/{admin_id}/assign-role", json={"roleId": None}, headers=auth_header(superadmin_token))
+        assert unassign_resp.status_code == 200, unassign_resp.text
+        assert unassign_resp.json()["customRoleId"] is None
+        assert unassign_resp.json()["customRoleName"] is None
+
+    def test_rejects_nonexistent_role(self, client, superadmin_token):
+        result = create_sample_admin(client, superadmin_token, email="bad.role@awarebharat.local")
+        admin_id = result["admin"]["id"]
+        resp = client.post(
+            f"/admins/{admin_id}/assign-role",
+            json={"roleId": "00000000-0000-0000-0000-000000000000"},
+            headers=auth_header(superadmin_token),
+        )
+        assert resp.status_code == 404
+
+    def test_admin_role_cannot_assign(self, client, superadmin_token, admin_token, db_session):
+        from app.models.custom_role import CustomRole
+
+        role = CustomRole(name="Blocked Assignment Role", description="", permissions=[], is_system=False)
+        db_session.add(role)
+        db_session.flush()
+
+        result = create_sample_admin(client, superadmin_token, email="admin.cannot.assign@awarebharat.local")
+        admin_id = result["admin"]["id"]
+        resp = client.post(f"/admins/{admin_id}/assign-role", json={"roleId": str(role.id)}, headers=auth_header(admin_token))
+        assert resp.status_code == 403
+
     def test_admin_role_cannot_delete(self, client, superadmin_token, admin_token):
         result = create_sample_admin(client, superadmin_token, email="not.deletable.by.admin@awarebharat.local")
         admin_id = result["admin"]["id"]

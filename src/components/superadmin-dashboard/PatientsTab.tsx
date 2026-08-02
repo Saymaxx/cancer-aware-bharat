@@ -16,9 +16,9 @@ export default function PatientsTab({
     <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Total Patients', value: (patients.length + 1415).toLocaleString(), color: 'text-rose-700 bg-rose-50 border-rose-200' },
-          { label: 'Under Treatment', value: String(patients.filter(p => p.status === 'Under Treatment').length + 380), color: 'text-slate-700 bg-slate-50 border-slate-200' },
-          { label: 'Recovered / Remission', value: String(patients.filter(p => p.status === 'Recovered').length + 890), color: 'text-slate-700 bg-slate-50 border-slate-200' },
+          { label: 'Total Patients', value: patients.length.toLocaleString(), color: 'text-rose-700 bg-rose-50 border-rose-200' },
+          { label: 'Under Treatment', value: String(patients.filter(p => p.status === 'Under Treatment').length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
+          { label: 'Recovered / Remission', value: String(patients.filter(p => p.status === 'Recovered').length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
           { label: 'Financial Aid Pending', value: String(patients.filter(p => p.financialAidStatus === 'Pending Review').length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
         ].map((s, i) => (
           <div key={i} className={`${s.color} rounded-2xl border p-4 text-center`}>

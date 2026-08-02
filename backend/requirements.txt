@@ -12,3 +12,8 @@ bcrypt==4.0.1
 python-multipart==0.0.20
 slowapi==0.1.9
 boto3==1.35.90
+razorpay==1.4.2
+# razorpay's SDK still imports the deprecated pkg_resources, which recent
+# setuptools releases (81+) dropped entirely -- pin below that until
+# razorpay's SDK drops the dependency.
+setuptools<81

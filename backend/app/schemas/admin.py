@@ -13,6 +13,10 @@ class AdminOut(CamelModel):
     phone: str | None = None
     region: str | None = None
     is_active: bool
+    custom_role_id: UUID | None = None
+    # Display label only -- see CustomRole model docstring, no permission
+    # enforcement is tied to this.
+    custom_role_name: str | None = None
     created_at: datetime
 
 
@@ -30,6 +34,11 @@ class AdminUpdateIn(CamelModel):
     name: str = Field(min_length=1, max_length=200)
     phone: str | None = Field(default=None, max_length=30)
     region: str | None = Field(default=None, max_length=120)
+
+
+class AdminAssignRoleIn(CamelModel):
+    # None unassigns -- back to the plain "Admin" label.
+    role_id: UUID | None = None
 
 
 class AdminCreateResult(CamelModel):

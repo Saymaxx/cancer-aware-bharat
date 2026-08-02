@@ -2,10 +2,12 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from sqlalchemy import func
 
 from app.core.limiter import limiter
 from app.deps import DbSession, require_roles
 from app.models.custom_role import CustomRole
+from app.models.user import User
 from app.schemas.custom_role import CustomRoleIn, CustomRoleOut
 from app.services.audit import record_event
 
@@ -21,13 +23,25 @@ def list_roles(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=500, ge=1, le=1000),
 ):
-    return (
+    roles = (
         db.query(CustomRole)
         .order_by(CustomRole.created_at.desc())
         .offset(skip)
         .limit(limit)
         .all()
     )
+    counts = dict(
+        db.query(User.custom_role_id, func.count(User.id))
+        .filter(User.custom_role_id.isnot(None))
+        .group_by(User.custom_role_id)
+        .all()
+    )
+    results = []
+    for role in roles:
+        out = CustomRoleOut.model_validate(role)
+        out.assigned_count = counts.get(role.id, 0)
+        results.append(out)
+    return results
 
 
 @router.post("", response_model=CustomRoleOut, status_code=status.HTTP_201_CREATED)
