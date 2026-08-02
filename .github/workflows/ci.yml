@@ -97,15 +97,13 @@ jobs:
           alembic downgrade base
           alembic upgrade head
       - name: Migration drift check (models vs. migrations)
-        # Non-blocking: the hand-written 0001 migration has known
-        # pre-existing drift from the models (nullable/server_default
-        # representation and unique-constraint-vs-unique-index differences)
-        # that predates this check and needs its own dedicated migration to
-        # reconcile -- not something to silently rewrite as a side effect of
-        # adding CI visibility. This step's job is to make sure drift never
-        # goes unnoticed again going forward.
+        # Blocking. 0023_reconcile_migration_drift resolved the
+        # pre-existing drift between 0001's hand-written DDL and the
+        # models (nullable/server_default representation and
+        # unique-constraint-vs-unique-index differences) -- this now
+        # means something and fails the build if a later migration ever
+        # forgets to match its model change.
         run: alembic check
-        continue-on-error: true
       - name: Seed dev data (tests log in as these accounts)
         run: python -m app.seed
       - name: Run tests
