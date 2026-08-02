@@ -9,3 +9,8 @@ class MonthlyAmountOut(CamelModel):
 class MonthlyCountOut(CamelModel):
     month: str
     count: int
+
+
+class MonthlyHoursOut(CamelModel):
+    month: str
+    hours: float

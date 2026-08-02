@@ -7,14 +7,10 @@ from app.core.limiter import limiter
 from app.deps import DbSession, require_roles
 from app.models.donation import Donation
 from app.models.enquiry import PatientEnquiry
-from app.schemas.analytics import MonthlyAmountOut, MonthlyCountOut
+from app.models.volunteer_hours_log import VolunteerHoursLog
+from app.schemas.analytics import MonthlyAmountOut, MonthlyCountOut, MonthlyHoursOut
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
-
-# Volunteer hours has no real data source (hoursLogged is a hardcoded 0 on
-# every volunteer -- see Phase C) -- deliberately not exposed here rather
-# than fabricating a chart for it. Only donations and patient intake have
-# real, aggregable columns to chart.
 
 
 @router.get("/donations-monthly", response_model=list[MonthlyAmountOut])
@@ -49,3 +45,20 @@ def patient_intake_monthly(
         .all()
     )
     return [MonthlyCountOut(month=r.month, count=r.count) for r in rows]
+
+
+@router.get("/volunteer-hours-monthly", response_model=list[MonthlyHoursOut])
+@limiter.limit("60/minute")
+def volunteer_hours_monthly(
+    request: Request,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_roles("superadmin"))],
+):
+    month = func.to_char(VolunteerHoursLog.log_date, "YYYY-MM").label("month")
+    rows = (
+        db.query(month, func.sum(VolunteerHoursLog.hours).label("hours"))
+        .group_by(month)
+        .order_by(month)
+        .all()
+    )
+    return [MonthlyHoursOut(month=r.month, hours=float(r.hours)) for r in rows]

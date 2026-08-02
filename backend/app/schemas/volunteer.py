@@ -27,6 +27,7 @@ class VolunteerOut(CamelModel):
     available_days: list[str] = []
     motivation: str | None = None
     status: str
+    total_hours: float = 0
     created_at: datetime
 
 

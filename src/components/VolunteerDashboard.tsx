@@ -2,11 +2,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Calendar, Bell, LogOut, CheckCircle2, Terminal, UserCheck, Menu,
-  BarChart3, Timer, GraduationCap, MessageSquare, IdCard, Globe,
+  BarChart3, Timer, GraduationCap, MessageSquare, IdCard, Globe, Clock3,
 } from 'lucide-react';
 import { useToast } from './common/Toast';
-import { ApiError, ApiVolunteer, getMyVolunteerProfile } from '../api/client';
-import { useApiNotifications } from '../api/hooks';
+import { ApiError, ApiVolunteer, getMyVolunteerProfile, logMyVolunteerHours, submitMyVolunteerFeedback } from '../api/client';
+import { useApiNotifications, useMyVolunteerFeedback, useMyVolunteerHours } from '../api/hooks';
 import DashboardSidebar, { SidebarFooterButton } from './common/DashboardSidebar';
 import { useSidebarState } from '../hooks/useSidebarState';
 import { useEscapeKey } from '../hooks/useEscapeKey';
@@ -25,6 +25,7 @@ import ScheduleTab from './volunteer-dashboard/ScheduleTab';
 import NotificationsPanel from './volunteer-dashboard/NotificationsPanel';
 import TrainingTab from './volunteer-dashboard/TrainingTab';
 import FeedbackTab from './volunteer-dashboard/FeedbackTab';
+import HoursTab from './volunteer-dashboard/HoursTab';
 import ProfileTab from './volunteer-dashboard/ProfileTab';
 import {
   EventPassModal, ProtocolModal, LeadContactModal, TrainingModuleModal, ReportIssueModal,
@@ -122,9 +123,21 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
   const [issueDescription, setIssueDescription] = useState('');
 
   // Feedback State
+  const { feedback: myFeedback, loading: myFeedbackLoading, refetch: refetchMyFeedback } = useMyVolunteerFeedback(volunteer?.accessToken || null);
+  const [feedbackCampaignName, setFeedbackCampaignName] = useState('');
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [feedbackSubmitError, setFeedbackSubmitError] = useState('');
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  // Hours Tracking State
+  const { hoursLogs: myHoursLogs, loading: myHoursLoading, refetch: refetchMyHours } = useMyVolunteerHours(volunteer?.accessToken || null);
+  const [hoursActivity, setHoursActivity] = useState('');
+  const [hoursValue, setHoursValue] = useState('');
+  const [hoursLogDate, setHoursLogDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [hoursSubmitting, setHoursSubmitting] = useState(false);
+  const [hoursSubmitError, setHoursSubmitError] = useState('');
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -206,10 +219,45 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
     showToast('Issue report dispatched to Regional Lead & Helpdesk.');
   };
 
-  const handleFeedbackSubmit = () => {
-    if (feedbackRating > 0 && feedbackText.trim()) {
+  const handleFeedbackSubmit = async () => {
+    if (!(feedbackRating > 0 && feedbackCampaignName.trim() && feedbackText.trim() && volunteer?.accessToken)) return;
+    setFeedbackSubmitting(true);
+    setFeedbackSubmitError('');
+    try {
+      await submitMyVolunteerFeedback(
+        { campaignName: feedbackCampaignName.trim(), rating: feedbackRating, comment: feedbackText.trim() },
+        volunteer.accessToken,
+      );
       setFeedbackSubmitted(true);
+      refetchMyFeedback();
       showToast('Thank you! Your feedback has been submitted to the regional team.');
+    } catch (err) {
+      setFeedbackSubmitError(err instanceof ApiError ? err.message : 'Unable to reach the server. Please try again.');
+    } finally {
+      setFeedbackSubmitting(false);
+    }
+  };
+
+  const handleLogHours = async () => {
+    const hoursNum = Number(hoursValue);
+    if (!(hoursActivity.trim() && hoursLogDate && hoursNum > 0 && volunteer?.accessToken)) return;
+    setHoursSubmitting(true);
+    setHoursSubmitError('');
+    try {
+      await logMyVolunteerHours(
+        { activity: hoursActivity.trim(), hours: hoursNum, logDate: hoursLogDate },
+        volunteer.accessToken,
+      );
+      setHoursActivity('');
+      setHoursValue('');
+      setHoursLogDate(new Date().toISOString().slice(0, 10));
+      refetchMyHours();
+      getMyVolunteerProfile(volunteer.accessToken).then(setProfile).catch(() => {});
+      showToast('Hours logged successfully.');
+    } catch (err) {
+      setHoursSubmitError(err instanceof ApiError ? err.message : 'Unable to reach the server. Please try again.');
+    } finally {
+      setHoursSubmitting(false);
     }
   };
 
@@ -229,6 +277,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
     { id: 'campaigns', label: 'Approved Campaigns', icon: Calendar, badge: myCampaigns.length },
     { id: 'schedule', label: 'Today\'s Agenda', icon: Timer },
     { id: 'training', label: 'Training Modules', icon: GraduationCap },
+    { id: 'hours', label: 'My Hours', icon: Clock3 },
     { id: 'feedback', label: 'Volunteer Feedback', icon: MessageSquare },
     { id: 'profile', label: 'My Profile', icon: IdCard },
   ];
@@ -386,15 +435,44 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
             />
           )}
 
+          {activeTab === 'hours' && (
+            <HoursTab
+              totalHours={profile?.totalHours ?? 0}
+              hoursLogs={myHoursLogs}
+              hoursLoading={myHoursLoading}
+              activity={hoursActivity}
+              setActivity={setHoursActivity}
+              hoursValue={hoursValue}
+              setHoursValue={setHoursValue}
+              logDate={hoursLogDate}
+              setLogDate={setHoursLogDate}
+              submitting={hoursSubmitting}
+              submitError={hoursSubmitError}
+              handleLogHours={handleLogHours}
+            />
+          )}
+
           {activeTab === 'feedback' && (
             <FeedbackTab
-              feedbackSubmitted={feedbackSubmitted}
+              campaignName={feedbackCampaignName}
+              setCampaignName={setFeedbackCampaignName}
               feedbackRating={feedbackRating}
               setFeedbackRating={setFeedbackRating}
               feedbackText={feedbackText}
               setFeedbackText={setFeedbackText}
+              submitting={feedbackSubmitting}
+              submitError={feedbackSubmitError}
               handleFeedbackSubmit={handleFeedbackSubmit}
-              resetFeedback={() => { setFeedbackSubmitted(false); setFeedbackRating(0); setFeedbackText(''); }}
+              justSubmitted={feedbackSubmitted}
+              resetFeedback={() => {
+                setFeedbackSubmitted(false);
+                setFeedbackRating(0);
+                setFeedbackText('');
+                setFeedbackCampaignName('');
+                setFeedbackSubmitError('');
+              }}
+              myFeedback={myFeedback}
+              myFeedbackLoading={myFeedbackLoading}
             />
           )}
 

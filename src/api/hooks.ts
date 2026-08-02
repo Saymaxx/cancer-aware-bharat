@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteers } from './client';
+import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listMyVolunteerFeedback, listMyVolunteerHours, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteerHoursMonthly, listVolunteers } from './client';
 import { mapApiAdmin, mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiCustomRole, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -155,6 +155,40 @@ export function useVolunteerFeedback(token: string | null) {
   };
 }
 
+/** A logged-in volunteer's own submitted feedback + any admin responses. */
+export function useMyVolunteerFeedback(token: string | null) {
+  const query = useQuery({
+    queryKey: ['my-volunteer-feedback', token],
+    queryFn: () => listMyVolunteerFeedback(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    feedback: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load your feedback' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** A logged-in volunteer's own logged hours. */
+export function useMyVolunteerHours(token: string | null) {
+  const query = useQuery({
+    queryKey: ['my-volunteer-hours', token],
+    queryFn: () => listMyVolunteerHours(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    hoursLogs: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load your hours' : null,
+    refetch: query.refetch,
+  };
+}
+
 /** Organization requests to host a campaign (Campaign Requests inbox). No
  * public submission form exists yet -- admin review side only. */
 export function useCampaignRequests(token: string | null) {
@@ -256,8 +290,7 @@ export function useRoles(token: string | null) {
 }
 
 /** Real monthly aggregates for the SuperAdmin Analytics tab. Superadmin-
- * only endpoints -- see backend/app/routers/analytics.py for why volunteer
- * hours has no equivalent (no real hours-tracking data exists yet). */
+ * only endpoints. */
 export function useDonationsMonthly(token: string | null) {
   const query = useQuery({
     queryKey: ['analytics-donations-monthly', token],
@@ -283,6 +316,20 @@ export function usePatientIntakeMonthly(token: string | null) {
     data: query.data ?? [],
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load patient intake analytics' : null,
+  };
+}
+
+export function useVolunteerHoursMonthly(token: string | null) {
+  const query = useQuery({
+    queryKey: ['analytics-volunteer-hours-monthly', token],
+    queryFn: () => listVolunteerHoursMonthly(token as string),
+    enabled: !!token,
+  });
+
+  return {
+    data: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load volunteer hours analytics' : null,
   };
 }
 

@@ -4,11 +4,56 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from app.core.limiter import limiter
-from app.deps import DbSession, require_admin_or_superadmin
+from app.deps import DbSession, require_admin_or_superadmin, require_volunteer
+from app.models.volunteer import Volunteer
 from app.models.volunteer_feedback import VolunteerFeedback
-from app.schemas.volunteer_feedback import VolunteerFeedbackIn, VolunteerFeedbackOut, VolunteerFeedbackRespondIn
+from app.schemas.volunteer_feedback import (
+    VolunteerFeedbackIn,
+    VolunteerFeedbackOut,
+    VolunteerFeedbackRespondIn,
+    VolunteerFeedbackSubmitIn,
+)
 
 router = APIRouter(prefix="/volunteer-feedback", tags=["volunteer-feedback"])
+
+
+@router.get("/mine", response_model=list[VolunteerFeedbackOut])
+@limiter.limit("60/minute")
+def list_my_feedback(
+    request: Request,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_volunteer)],
+):
+    return (
+        db.query(VolunteerFeedback)
+        .filter(VolunteerFeedback.volunteer_id == UUID(claims["sub"]))
+        .order_by(VolunteerFeedback.created_at.desc())
+        .all()
+    )
+
+
+@router.post("/mine", response_model=VolunteerFeedbackOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit("30/minute")
+def submit_my_feedback(
+    request: Request,
+    payload: VolunteerFeedbackSubmitIn,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_volunteer)],
+):
+    volunteer = db.query(Volunteer).filter(Volunteer.id == UUID(claims["sub"])).first()
+    if volunteer is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Volunteer not found")
+    feedback = VolunteerFeedback(
+        volunteer_id=volunteer.id,
+        volunteer_name=volunteer.name,
+        campaign_name=payload.campaign_name,
+        rating=payload.rating,
+        comment=payload.comment,
+    )
+    db.add(feedback)
+    db.commit()
+    db.refresh(feedback)
+    return feedback
 
 
 @router.get("", response_model=list[VolunteerFeedbackOut])
@@ -37,8 +82,8 @@ def create_volunteer_feedback(
     db: DbSession,
     claims: Annotated[dict, Depends(require_admin_or_superadmin)],
 ):
-    # Admin/superadmin-only for now -- no volunteer-facing submission UI
-    # exists yet (see VolunteerFeedback model docstring).
+    # Lets staff log feedback on a volunteer's behalf (e.g. from a phone
+    # call); volunteers submitting their own use POST /volunteer-feedback/mine.
     feedback = VolunteerFeedback(**payload.model_dump())
     db.add(feedback)
     db.commit()

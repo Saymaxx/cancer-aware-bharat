@@ -267,6 +267,7 @@ export interface ApiVolunteer {
   availableDays: string[];
   motivation: string | null;
   status: 'Pending Approval' | 'Approved' | 'Rejected';
+  totalHours: number;
   createdAt: string;
 }
 
@@ -276,6 +277,34 @@ export function registerVolunteer(payload: RegisterVolunteerPayload): Promise<Ap
 
 export function getMyVolunteerProfile(token: string): Promise<ApiVolunteer> {
   return request<ApiVolunteer>('/volunteers/me', {}, token);
+}
+
+// ---------------- Volunteer Hours ----------------
+
+export interface ApiVolunteerHoursLog {
+  id: string;
+  volunteerId: string;
+  activity: string;
+  hours: number;
+  logDate: string;
+  createdAt: string;
+}
+
+export function listMyVolunteerHours(token: string): Promise<ApiVolunteerHoursLog[]> {
+  return request<ApiVolunteerHoursLog[]>('/volunteers/me/hours', {}, token);
+}
+
+export interface LogVolunteerHoursPayload {
+  activity: string;
+  hours: number;
+  logDate: string;
+}
+
+export function logMyVolunteerHours(payload: LogVolunteerHoursPayload, token: string): Promise<ApiVolunteerHoursLog> {
+  return request<ApiVolunteerHoursLog>('/volunteers/me/hours', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }, token);
 }
 
 export function listVolunteers(token: string): Promise<ApiVolunteer[]> {
@@ -766,6 +795,24 @@ export function respondToVolunteerFeedback(id: string, token: string, response: 
   }, token);
 }
 
+// Volunteer self-service: their own submitted feedback + history of admin responses.
+export function listMyVolunteerFeedback(token: string): Promise<ApiVolunteerFeedback[]> {
+  return request<ApiVolunteerFeedback[]>('/volunteer-feedback/mine', {}, token);
+}
+
+export interface SubmitVolunteerFeedbackPayload {
+  campaignName: string;
+  rating: number;
+  comment: string;
+}
+
+export function submitMyVolunteerFeedback(payload: SubmitVolunteerFeedbackPayload, token: string): Promise<ApiVolunteerFeedback> {
+  return request<ApiVolunteerFeedback>('/volunteer-feedback/mine', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }, token);
+}
+
 // ---------------- Blog Articles ----------------
 
 export interface ApiBlogArticle {
@@ -922,8 +969,6 @@ export function deleteRole(id: string, token: string): Promise<void> {
 }
 
 // ---------------- Analytics ----------------
-// Volunteer hours has no real data source (see backend/app/routers/
-// analytics.py) -- only donations and patient intake are exposed.
 
 export interface ApiMonthlyAmount {
   month: string;
@@ -935,12 +980,21 @@ export interface ApiMonthlyCount {
   count: number;
 }
 
+export interface ApiMonthlyHours {
+  month: string;
+  hours: number;
+}
+
 export function listDonationsMonthly(token: string): Promise<ApiMonthlyAmount[]> {
   return request<ApiMonthlyAmount[]>('/analytics/donations-monthly', {}, token);
 }
 
 export function listPatientIntakeMonthly(token: string): Promise<ApiMonthlyCount[]> {
   return request<ApiMonthlyCount[]>('/analytics/patient-intake-monthly', {}, token);
+}
+
+export function listVolunteerHoursMonthly(token: string): Promise<ApiMonthlyHours[]> {
+  return request<ApiMonthlyHours[]>('/analytics/volunteer-hours-monthly', {}, token);
 }
 
 // ---------------- Admin Management (regional Admin accounts, not Super Admins) ----------------

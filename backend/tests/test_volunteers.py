@@ -194,3 +194,82 @@ class TestRejectVolunteer:
             headers=auth_header(admin_token),
         )
         assert resp.status_code == 409
+
+
+def login_as_volunteer(client, volunteer: dict) -> str:
+    resp = client.post("/auth/volunteer/login", json={"email": volunteer["email"], "password": volunteer["password"]})
+    assert resp.status_code == 200, resp.text
+    return resp.json()["accessToken"]
+
+
+class TestVolunteerHours:
+    def test_new_volunteer_has_zero_total_hours(self, client, admin_token):
+        volunteer = register_and_approve_volunteer(client, admin_token, email="hours.zero@example.com")
+        token = login_as_volunteer(client, volunteer)
+        resp = client.get("/volunteers/me", headers=auth_header(token))
+        assert resp.json()["totalHours"] == 0
+
+    def test_log_hours_requires_volunteer_auth(self, client):
+        resp = client.post("/volunteers/me/hours", json={"activity": "X", "hours": 2, "logDate": "2026-08-01"})
+        assert resp.status_code == 401
+
+    def test_staff_cannot_log_hours_as_volunteer(self, client, admin_token):
+        resp = client.post(
+            "/volunteers/me/hours",
+            json={"activity": "X", "hours": 2, "logDate": "2026-08-01"},
+            headers=auth_header(admin_token),
+        )
+        assert resp.status_code == 403
+
+    def test_volunteer_can_log_and_list_own_hours(self, client, admin_token):
+        volunteer = register_and_approve_volunteer(client, admin_token, email="hours.log@example.com")
+        token = login_as_volunteer(client, volunteer)
+
+        resp = client.post(
+            "/volunteers/me/hours",
+            json={"activity": "Free Early Detection Camp", "hours": 4.5, "logDate": "2026-08-01"},
+            headers=auth_header(token),
+        )
+        assert resp.status_code == 201, resp.text
+        assert resp.json()["activity"] == "Free Early Detection Camp"
+
+        list_resp = client.get("/volunteers/me/hours", headers=auth_header(token))
+        assert list_resp.status_code == 200
+        assert len(list_resp.json()) == 1
+
+    def test_logged_hours_sum_into_total_hours(self, client, admin_token):
+        volunteer = register_and_approve_volunteer(client, admin_token, email="hours.total@example.com")
+        token = login_as_volunteer(client, volunteer)
+
+        client.post("/volunteers/me/hours", json={"activity": "A", "hours": 3, "logDate": "2026-08-01"}, headers=auth_header(token))
+        client.post("/volunteers/me/hours", json={"activity": "B", "hours": 2.5, "logDate": "2026-08-02"}, headers=auth_header(token))
+
+        resp = client.get("/volunteers/me", headers=auth_header(token))
+        assert resp.json()["totalHours"] == 5.5
+
+        # Visible to admin/superadmin's volunteer list too, not just self-service.
+        admin_view = client.get("/volunteers", headers=auth_header(admin_token))
+        listed = next(v for v in admin_view.json() if v["id"] == volunteer["id"])
+        assert listed["totalHours"] == 5.5
+
+    def test_rejects_hours_out_of_range(self, client, admin_token):
+        volunteer = register_and_approve_volunteer(client, admin_token, email="hours.badrange@example.com")
+        token = login_as_volunteer(client, volunteer)
+
+        resp = client.post(
+            "/volunteers/me/hours",
+            json={"activity": "X", "hours": 25, "logDate": "2026-08-01"},
+            headers=auth_header(token),
+        )
+        assert resp.status_code == 422
+
+    def test_one_volunteers_hours_not_visible_to_another(self, client, admin_token):
+        volunteer_a = register_and_approve_volunteer(client, admin_token, email="hours.a@example.com")
+        volunteer_b = register_and_approve_volunteer(client, admin_token, email="hours.b@example.com")
+        token_a = login_as_volunteer(client, volunteer_a)
+        token_b = login_as_volunteer(client, volunteer_b)
+
+        client.post("/volunteers/me/hours", json={"activity": "A only", "hours": 1, "logDate": "2026-08-01"}, headers=auth_header(token_a))
+
+        resp = client.get("/volunteers/me/hours", headers=auth_header(token_b))
+        assert resp.json() == []

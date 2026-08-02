@@ -7,7 +7,9 @@ from sqlalchemy.orm import Session
 from app.core.limiter import limiter
 from app.deps import DbSession, require_admin_or_superadmin, require_volunteer
 from app.models.volunteer import Volunteer
+from app.models.volunteer_hours_log import VolunteerHoursLog
 from app.schemas.volunteer import VolunteerOut, VolunteerRejectIn
+from app.schemas.volunteer_hours import VolunteerHoursLogIn, VolunteerHoursLogOut
 from app.services.audit import record_event
 
 router = APIRouter(prefix="/volunteers", tags=["volunteers"])
@@ -41,6 +43,32 @@ def list_volunteers(
         .limit(limit)
         .all()
     )
+
+
+@router.get("/me/hours", response_model=list[VolunteerHoursLogOut])
+@limiter.limit("60/minute")
+def list_my_hours(request: Request, db: DbSession, claims: Annotated[dict, Depends(require_volunteer)]):
+    return (
+        db.query(VolunteerHoursLog)
+        .filter(VolunteerHoursLog.volunteer_id == UUID(claims["sub"]))
+        .order_by(VolunteerHoursLog.log_date.desc())
+        .all()
+    )
+
+
+@router.post("/me/hours", response_model=VolunteerHoursLogOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit("30/minute")
+def log_my_hours(
+    request: Request,
+    payload: VolunteerHoursLogIn,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_volunteer)],
+):
+    log = VolunteerHoursLog(volunteer_id=UUID(claims["sub"]), **payload.model_dump())
+    db.add(log)
+    db.commit()
+    db.refresh(log)
+    return log
 
 
 def _get_volunteer_or_404(db: Session, volunteer_id: UUID) -> Volunteer:

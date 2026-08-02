@@ -14,6 +14,15 @@ class VolunteerFeedbackIn(CamelModel):
     comment: str = Field(min_length=1, max_length=2000)
 
 
+# volunteer_id/volunteer_name are omitted here and derived server-side from
+# the authenticated volunteer -- unlike VolunteerFeedbackIn, which is the
+# admin-entry form where those fields describe someone else.
+class VolunteerFeedbackSubmitIn(CamelModel):
+    campaign_name: str = Field(min_length=1, max_length=255)
+    rating: int = Field(ge=1, le=5)
+    comment: str = Field(min_length=1, max_length=2000)
+
+
 class VolunteerFeedbackRespondIn(CamelModel):
     response: str = Field(min_length=1, max_length=2000)
 

@@ -228,8 +228,9 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   })), [apiPatientRecords]);
 
   const { volunteers: apiVolunteers } = useVolunteers(apiToken);
-  // domain/city/assignedCampaignsCount/hoursLogged/attendanceRate have no
-  // backend equivalent, same honest-default rationale as AdminDashboard.tsx.
+  // domain/city/assignedCampaignsCount/attendanceRate have no backend
+  // equivalent, same honest-default rationale as AdminDashboard.tsx.
+  // hoursLogged is real (self-reported hours log).
   const volunteers: AdminVolunteer[] = useMemo(() => apiVolunteers.map(v => ({
     id: v.id,
     name: v.name,
@@ -239,7 +240,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     city: '',
     status: v.status,
     assignedCampaignsCount: 0,
-    hoursLogged: 0,
+    hoursLogged: v.totalHours,
     attendanceRate: 0,
     registeredDate: new Date(v.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
   })), [apiVolunteers]);

@@ -3,6 +3,7 @@ from app.models.hospital import Hospital, HospitalPartnerRequest
 from app.models.event import Event
 from app.models.blog import BlogArticle
 from app.models.volunteer import Volunteer
+from app.models.volunteer_hours_log import VolunteerHoursLog
 from app.models.patient import OtpCode, Patient
 from app.models.patient_record import PatientRecord
 from app.models.donation import Donation
@@ -23,6 +24,7 @@ __all__ = [
     "Event",
     "BlogArticle",
     "Volunteer",
+    "VolunteerHoursLog",
     "Patient",
     "OtpCode",
     "PatientRecord",

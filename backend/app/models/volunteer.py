@@ -1,11 +1,15 @@
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import String, Text, DateTime, func
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.volunteer_hours_log import VolunteerHoursLog
 
 
 class Volunteer(Base):
@@ -30,3 +34,11 @@ class Volunteer(Base):
     # access wasn't retroactively revoked by introducing this gate.
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="Pending Approval")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    # selectin, not joined -- this is a one-to-many collection, so joined
+    # would risk row duplication; selectin avoids that and still sidesteps N+1.
+    hours_logs: Mapped[list["VolunteerHoursLog"]] = relationship(lazy="selectin")
+
+    @property
+    def total_hours(self) -> float:
+        return sum(float(log.hours) for log in self.hours_logs)

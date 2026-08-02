@@ -102,10 +102,10 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     reportUrl: r.reportUrl || undefined,
     status: r.caseStatus,
   })), [apiPatientRecords]);
-  // domain/city/assignedCampaignsCount/hoursLogged/attendanceRate have no
-  // backend equivalent (no campaign-assignment or hours-tracking feature
-  // exists for volunteers yet) -- left at their honest default rather than
-  // faked, same principle as documentVerified below.
+  // domain/city/assignedCampaignsCount/attendanceRate have no backend
+  // equivalent (no campaign-assignment feature exists for volunteers yet)
+  // -- left at their honest default rather than faked, same principle as
+  // documentVerified below. hoursLogged is real (self-reported hours log).
   const volunteers: AdminVolunteer[] = useMemo(() => apiVolunteers.map(v => ({
     id: v.id,
     name: v.name,
@@ -115,7 +115,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     city: '',
     status: v.status,
     assignedCampaignsCount: 0,
-    hoursLogged: 0,
+    hoursLogged: v.totalHours,
     attendanceRate: 0,
     registeredDate: new Date(v.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
   })), [apiVolunteers]);

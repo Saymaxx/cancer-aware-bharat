@@ -11,9 +11,10 @@ FEEDBACK_STATUSES = ("New", "Reviewed", "Responded")
 
 
 class VolunteerFeedback(Base):
-    """Feedback a volunteer left about a campaign. No submission UI exists
-    yet for volunteers to leave this themselves -- this is the admin review
-    side only (list + respond), same scope decision as PatientRecord."""
+    """Feedback a volunteer left about a campaign. Volunteers submit their own
+    via POST /volunteer-feedback/mine (self-service, volunteer_id/volunteer_name
+    derived from the token); admins can also log feedback on a volunteer's
+    behalf via POST /volunteer-feedback."""
 
     __tablename__ = "volunteer_feedback"
 
