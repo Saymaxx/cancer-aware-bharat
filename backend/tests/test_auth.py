@@ -1,4 +1,4 @@
-from tests.conftest import ADMIN_CREDENTIALS, auth_header
+from tests.conftest import ADMIN_CREDENTIALS, SUPERADMIN_CREDENTIALS, auth_header
 
 
 class TestAuditLog:
@@ -52,3 +52,63 @@ class TestLogout:
         # insert into the unique jti column.
         second = client.post("/auth/logout", headers=auth_header(admin_token))
         assert second.status_code == 401
+
+
+class TestStaffMe:
+    def test_requires_auth(self, client):
+        resp = client.get("/auth/staff/me")
+        assert resp.status_code == 401
+
+    def test_admin_can_read_own_profile(self, client, admin_token):
+        resp = client.get("/auth/staff/me", headers=auth_header(admin_token))
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["email"] == ADMIN_CREDENTIALS[0]
+        assert resp.json()["role"] == "admin"
+
+    def test_superadmin_can_read_own_profile(self, client, superadmin_token):
+        # Confirms self-service works for superadmin too, unlike /admins
+        # which never lists Super Admin accounts at all.
+        resp = client.get("/auth/staff/me", headers=auth_header(superadmin_token))
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["email"] == SUPERADMIN_CREDENTIALS[0]
+        assert resp.json()["role"] == "superadmin"
+
+    def test_can_update_own_display_name(self, client, admin_token):
+        resp = client.patch("/auth/staff/me", json={"name": "Updated Display Name"}, headers=auth_header(admin_token))
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["name"] == "Updated Display Name"
+
+        get_resp = client.get("/auth/staff/me", headers=auth_header(admin_token))
+        assert get_resp.json()["name"] == "Updated Display Name"
+
+
+class TestChangePassword:
+    def test_requires_auth(self, client):
+        resp = client.post("/auth/staff/change-password", json={"currentPassword": "x", "newPassword": "newpassword123"})
+        assert resp.status_code == 401
+
+    def test_wrong_current_password_rejected(self, client, admin_token):
+        # 400, not 401 -- the Bearer token itself is valid here; 401 would
+        # trigger the frontend's global "session expired" force-logout,
+        # which must not happen just because the current-password field
+        # was wrong.
+        resp = client.post(
+            "/auth/staff/change-password",
+            json={"currentPassword": "definitely-wrong", "newPassword": "newpassword123"},
+            headers=auth_header(admin_token),
+        )
+        assert resp.status_code == 400
+
+    def test_correct_current_password_updates_and_new_password_logs_in(self, client, admin_token):
+        resp = client.post(
+            "/auth/staff/change-password",
+            json={"currentPassword": ADMIN_CREDENTIALS[1], "newPassword": "brandNewPassword456"},
+            headers=auth_header(admin_token),
+        )
+        assert resp.status_code == 204, resp.text
+
+        old_login = client.post("/auth/staff/login", json={"email": ADMIN_CREDENTIALS[0], "password": ADMIN_CREDENTIALS[1]})
+        assert old_login.status_code == 401
+
+        new_login = client.post("/auth/staff/login", json={"email": ADMIN_CREDENTIALS[0], "password": "brandNewPassword456"})
+        assert new_login.status_code == 200

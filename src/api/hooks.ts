@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteers } from './client';
+import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteers } from './client';
 import { mapApiAdmin, mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiCustomRole, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -368,5 +368,22 @@ export function useIntegrationStatus(token: string | null) {
   return {
     status: query.data ?? null,
     loading: query.isLoading,
+  };
+}
+
+/** The logged-in staff member's own profile (SuperAdmin/Admin Profile tab).
+ * Works for both admin and superadmin -- unlike /admins, which never lists
+ * Super Admin accounts. */
+export function useStaffMe(token: string | null) {
+  const query = useQuery({
+    queryKey: ['staff-me', token],
+    queryFn: () => getStaffMe(token as string),
+    enabled: !!token,
+  });
+
+  return {
+    me: query.data ?? null,
+    loading: query.isLoading,
+    refetch: query.refetch,
   };
 }

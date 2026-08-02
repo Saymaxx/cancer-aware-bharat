@@ -117,6 +117,28 @@ export function setStaffSession(session: StaffSession) {
   localStorage.setItem(STAFF_SESSION_KEY, JSON.stringify(session));
 }
 
+export interface ApiStaffMe {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'superadmin';
+}
+
+export function getStaffMe(token: string): Promise<ApiStaffMe> {
+  return request<ApiStaffMe>('/auth/staff/me', {}, token);
+}
+
+export function updateStaffMe(token: string, name: string): Promise<ApiStaffMe> {
+  return request<ApiStaffMe>('/auth/staff/me', { method: 'PATCH', body: JSON.stringify({ name }) }, token);
+}
+
+export function changeStaffPassword(token: string, currentPassword: string, newPassword: string): Promise<void> {
+  return request<void>('/auth/staff/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  }, token);
+}
+
 // ---------------- Hospital session ----------------
 
 export interface HospitalSession {

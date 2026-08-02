@@ -6,13 +6,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.core.limiter import get_client_ip, limiter
 from app.core.security import create_access_token, generate_numeric_id, hash_password, verify_password
-from app.deps import DbSession, get_current_claims
+from app.deps import DbSession, get_current_claims, require_admin_or_superadmin
 from app.models.hospital import Hospital
 from app.models.patient import Patient
 from app.models.revoked_token import RevokedToken
 from app.models.user import User
 from app.models.volunteer import Volunteer
-from app.schemas.auth import LoginIn, TokenOut
+from app.schemas.auth import LoginIn, StaffChangePasswordIn, StaffMeOut, StaffMeUpdateIn, TokenOut
 from app.schemas.volunteer import VolunteerOut, VolunteerRegisterIn
 from app.services.audit import record_event
 from app.services.notifications import notify
@@ -36,6 +36,63 @@ def staff_login(request: Request, payload: LoginIn, db: DbSession):
     record_event(db, "login_success", role=user.role, actor_id=user.id, ip_address=get_client_ip(request))
     db.commit()
     return TokenOut(access_token=token, role=user.role, name=user.name)
+
+
+@router.get("/staff/me", response_model=StaffMeOut)
+@limiter.limit("60/minute")
+def get_staff_me(
+    request: Request,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_admin_or_superadmin)],
+):
+    """Self-service profile -- works for both admin and superadmin, unlike
+    /admins which deliberately never lists or manages Super Admin accounts.
+    A staff member reading/editing their own record isn't that scenario."""
+    user = db.query(User).filter(User.id == UUID(claims["sub"])).first()
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Account not found")
+    return user
+
+
+@router.patch("/staff/me", response_model=StaffMeOut)
+@limiter.limit("15/minute")
+def update_staff_me(
+    request: Request,
+    payload: StaffMeUpdateIn,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_admin_or_superadmin)],
+):
+    user = db.query(User).filter(User.id == UUID(claims["sub"])).first()
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Account not found")
+    user.name = payload.name
+    record_event(db, "staff_profile_updated", role=claims["role"], actor_id=user.id)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.post("/staff/change-password", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("10/minute")
+def change_staff_password(
+    request: Request,
+    payload: StaffChangePasswordIn,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_admin_or_superadmin)],
+):
+    user = db.query(User).filter(User.id == UUID(claims["sub"])).first()
+    if user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Account not found")
+    if not verify_password(payload.current_password, user.hashed_password):
+        # 400, not 401 -- the request's own Bearer token is perfectly valid
+        # here (require_admin_or_superadmin already passed); 401 is reserved
+        # for the token itself being invalid/expired, which the frontend's
+        # global fetch wrapper treats as "session expired" and force-logs
+        # out on. A wrong *current password* field must not trigger that.
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Current password is incorrect")
+    user.hashed_password = hash_password(payload.new_password)
+    record_event(db, "staff_password_updated", role=claims["role"], actor_id=user.id, ip_address=get_client_ip(request))
+    db.commit()
 
 
 @router.post("/hospital/login", response_model=TokenOut)

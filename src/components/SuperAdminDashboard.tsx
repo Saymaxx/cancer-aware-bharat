@@ -5,8 +5,8 @@ import {
   Stethoscope, Crown, UserCog, Layers, PieChart, LayoutDashboard, Megaphone,
   Database, ShieldCheck, FileText,
 } from 'lucide-react';
-import { useAdmins, useApiEnquiries, useApiNotifications, useApiHospitals, useAuditLogs, useBackups, useBlogs, useDatabaseHealth, useDonations, useEvents, useIntegrationStatus, useOrgSettings, usePartnerRequests, usePatientRecords, useRoles, useVolunteers } from '../api/hooks';
-import { activateAdmin, assignAdminRole, assignHospital, ApiError, approvePartnerRequest, broadcastNotification, createAdmin, createBackup, createBlog, createRole, deleteAdmin as deleteAdminAccount, deleteBlog, getStaffSession, rejectPartnerRequest, suspendAdmin, updateAdmin, updateOrgSettings, type ApiOrgSettings, type NotificationAudience } from '../api/client';
+import { useAdmins, useApiEnquiries, useApiNotifications, useApiHospitals, useAuditLogs, useBackups, useBlogs, useDatabaseHealth, useDonations, useEvents, useIntegrationStatus, useOrgSettings, usePartnerRequests, usePatientRecords, useRoles, useStaffMe, useVolunteers } from '../api/hooks';
+import { activateAdmin, assignAdminRole, assignHospital, ApiError, approvePartnerRequest, broadcastNotification, changeStaffPassword, createAdmin, createBackup, createBlog, createRole, deleteAdmin as deleteAdminAccount, deleteBlog, getStaffSession, rejectPartnerRequest, suspendAdmin, updateAdmin, updateOrgSettings, updateStaffMe, type ApiOrgSettings, type NotificationAudience } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, Hospital } from '../types';
 import { useToast } from './common/Toast';
@@ -342,14 +342,38 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   const [notifAudience, setNotifAudience] = useState('All Users');
 
   // Profile state
-  const [profileName, setProfileName] = useState(() => {
-    const stored = localStorage.getItem('aware_bharat_superadmin_profile');
-    if (stored) {
-      try { return JSON.parse(stored).profileName; } catch (e) {}
+  const { me: staffMe, loading: staffMeLoading, refetch: refetchStaffMe } = useStaffMe(apiToken);
+  const [savingProfileName, setSavingProfileName] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const handleSaveProfileName = async (name: string) => {
+    if (!apiToken) return;
+    setSavingProfileName(true);
+    try {
+      await updateStaffMe(apiToken, name);
+      await refetchStaffMe();
+      toast.success('Profile Updated', 'Your display name was updated successfully.');
+    } catch (err) {
+      toast.error('Update Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    } finally {
+      setSavingProfileName(false);
     }
-    return 'Board Administrator';
-  });
-  const [profileEmail] = useState('board@awarebharat.org');
+  };
+
+  const handleChangePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
+    if (!apiToken) return false;
+    setChangingPassword(true);
+    try {
+      await changeStaffPassword(apiToken, currentPassword, newPassword);
+      toast.success('Password Updated', 'Your password was changed successfully.');
+      return true;
+    } catch (err) {
+      toast.error('Password Change Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+      return false;
+    } finally {
+      setChangingPassword(false);
+    }
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -1044,10 +1068,12 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
           {/* ===== TAB: PROFILE ===== */}
           {activeTab === 'profile' && (
             <ProfileTab
-              profileName={profileName}
-              setProfileName={setProfileName}
-              profileEmail={profileEmail}
-              showToast={showToast}
+              me={staffMe}
+              loading={staffMeLoading}
+              savingName={savingProfileName}
+              changingPassword={changingPassword}
+              onSaveName={handleSaveProfileName}
+              onChangePassword={handleChangePassword}
               onLogout={onLogout}
             />
           )}
