@@ -19,8 +19,10 @@ export default function VolunteersTab({
           { label: 'Total Volunteers', value: volunteers.length.toLocaleString(), color: 'text-slate-700 bg-slate-50 border-slate-200' },
           { label: 'Approved & Active', value: String(volunteers.filter(v => v.status === 'Approved').length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
           { label: 'Pending Verification', value: String(volunteers.filter(v => v.status === 'Pending Approval').length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
-          // Total Hours Logged dropped -- no real hours-tracking data exists
-          // yet (see AnalyticsTab's identical honest-empty-state decision).
+          // Real self-reported hours log now (see hoursLogged mapping in
+          // SuperAdminDashboard.tsx) -- was dropped when this tab was built
+          // because that data didn't exist yet.
+          { label: 'Total Hours Logged', value: volunteers.reduce((sum, v) => sum + v.hoursLogged, 0).toLocaleString(), color: 'text-purple-700 bg-purple-50 border-purple-200' },
         ].map((s, i) => (
           <div key={i} className={`${s.color} rounded-2xl border p-4 text-center`}>
             <p className="text-2xl font-black">{s.value}</p>
