@@ -9,7 +9,7 @@ export default defineConfig(() => {
     appType: 'spa' as const,
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(import.meta.dirname, '.'),
       },
     },
     server: {

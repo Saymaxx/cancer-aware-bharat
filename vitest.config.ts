@@ -13,7 +13,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, '.'),
+      '@': path.resolve(import.meta.dirname, '.'),
     },
   },
   test: {
@@ -21,5 +21,11 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     globals: true,
     css: false,
+    // Default excludes only cover node_modules/dist/etc, not nested project
+    // trees -- a background-agent worktree under .claude/worktrees has its
+    // own copies of every *.test.tsx file, which the default include glob
+    // picks up and runs alongside the real ones, corrupting results with
+    // duplicate/racing DOM state.
+    exclude: ['**/node_modules/**', '**/dist/**', '.claude/worktrees/**'],
   },
 });
