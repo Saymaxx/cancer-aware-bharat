@@ -129,3 +129,30 @@ class TestDeleteEvent:
         created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
         resp = client.delete(f"/events/{created['id']}", headers=auth_header(hospital1_token))
         assert resp.status_code == 403
+
+
+class TestListMyEvents:
+    def test_requires_hospital_auth(self, client):
+        resp = client.get("/events/mine")
+        assert resp.status_code == 401
+
+    def test_starts_empty(self, client, hospital1_token):
+        resp = client.get("/events/mine", headers=auth_header(hospital1_token))
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_only_shows_events_hosted_with_own_hospital(self, client, admin_token, hospital1_token, hospital2_token, hospitals):
+        client.post("/events", json=sample_event_payload(title="Public Camp, No Hospital"), headers=auth_header(admin_token))
+        client.post("/events", json=sample_event_payload(title="Hospital 1 Co-Hosted Camp", hospitalId=hospitals[0]["id"]), headers=auth_header(admin_token))
+        client.post("/events", json=sample_event_payload(title="Hospital 2 Co-Hosted Camp", hospitalId=hospitals[1]["id"]), headers=auth_header(admin_token))
+
+        resp1 = client.get("/events/mine", headers=auth_header(hospital1_token))
+        assert [e["title"] for e in resp1.json()] == ["Hospital 1 Co-Hosted Camp"]
+
+        resp2 = client.get("/events/mine", headers=auth_header(hospital2_token))
+        assert [e["title"] for e in resp2.json()] == ["Hospital 2 Co-Hosted Camp"]
+
+    def test_public_list_still_includes_hospital_hosted_events(self, client, admin_token, hospitals):
+        client.post("/events", json=sample_event_payload(title="Visible Everywhere Camp", hospitalId=hospitals[0]["id"]), headers=auth_header(admin_token))
+        resp = client.get("/events")
+        assert any(e["title"] == "Visible Everywhere Camp" for e in resp.json())

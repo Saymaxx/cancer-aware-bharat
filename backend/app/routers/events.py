@@ -5,12 +5,29 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response,
 from sqlalchemy.orm import Session
 
 from app.core.limiter import limiter
-from app.deps import DbSession, require_admin_or_superadmin
+from app.deps import DbSession, current_hospital_id, require_admin_or_superadmin
 from app.models.event import Event
 from app.schemas.event import EventIn, EventOut
 from app.services.audit import record_event
 
 router = APIRouter(prefix="/events", tags=["events"])
+
+
+@router.get("/mine", response_model=list[EventOut])
+@limiter.limit("60/minute")
+def list_my_events(
+    request: Request,
+    db: DbSession,
+    hospital_id: Annotated[UUID, Depends(current_hospital_id)],
+):
+    """Awareness drives/camps specifically co-hosted with this hospital --
+    a strict subset of the public GET /events list (see Event.hospital_id)."""
+    return (
+        db.query(Event)
+        .filter(Event.hospital_id == hospital_id)
+        .order_by(Event.created_at.desc())
+        .all()
+    )
 
 
 @router.get("", response_model=list[EventOut])

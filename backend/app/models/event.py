@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, Text, Integer, DateTime, func
+from sqlalchemy import String, Text, Integer, DateTime, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -25,4 +25,9 @@ class Event(Base):
     registered_count: Mapped[int] = mapped_column(Integer, default=0)
     capacity: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="Scheduled")
+    # Nullable: most events are general public CAB camps with no specific
+    # partner hospital. Set only when Admin/SuperAdmin schedules a drive
+    # co-hosted with one particular hospital (Phase N6) -- that hospital
+    # then sees it in its own Campaigns tab via GET /events/mine.
+    hospital_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("hospitals.id"), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

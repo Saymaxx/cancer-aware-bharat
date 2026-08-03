@@ -21,6 +21,7 @@ class EventOut(CamelModel):
     registered_count: int = 0
     capacity: int = 0
     status: str
+    hospital_id: UUID | None = None
 
 
 # type/category are plain strings, not a Literal -- see the same note on
@@ -39,3 +40,4 @@ class EventIn(CamelModel):
     registered_count: int = Field(default=0, ge=0)
     capacity: int = Field(default=0, ge=0)
     status: EventStatus = "Scheduled"
+    hospital_id: UUID | None = None
