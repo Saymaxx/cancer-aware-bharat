@@ -6,20 +6,42 @@ import confetti from 'canvas-confetti';
 import PrescriptionPreview from './PrescriptionPreview';
 import { ApiError, submitEnquiry } from '../api/client';
 
+export interface PatientEnquiryFormData {
+  fullName: string;
+  age: string;
+  gender: string;
+  address: string;
+  phone: string;
+  symptoms: string;
+}
+
 interface PatientEnquiryFormProps {
   isOpen: boolean;
   onClose: () => void;
+  initialData?: Partial<PatientEnquiryFormData>;
 }
 
-export default function PatientEnquiryForm({ isOpen, onClose }: PatientEnquiryFormProps) {
-  const [formData, setFormData] = useState({
-    fullName: '',
-    age: '',
-    gender: '',
-    address: '',
-    phone: '',
-    symptoms: ''
-  });
+const EMPTY_FORM_DATA: PatientEnquiryFormData = {
+  fullName: '',
+  age: '',
+  gender: '',
+  address: '',
+  phone: '',
+  symptoms: ''
+};
+
+export default function PatientEnquiryForm({ isOpen, onClose, initialData }: PatientEnquiryFormProps) {
+  const [formData, setFormData] = useState<PatientEnquiryFormData>(EMPTY_FORM_DATA);
+
+  // Seeds from a caller (e.g. ChatAssistant carrying over what it already
+  // collected) only on the closed->open transition, so typing in the form
+  // itself doesn't get clobbered by a stale initialData on every render.
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({ ...EMPTY_FORM_DATA, ...initialData });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -152,7 +174,7 @@ export default function PatientEnquiryForm({ isOpen, onClose }: PatientEnquiryFo
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <>
+        <React.Fragment key="enquiry-modal">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -242,14 +264,7 @@ export default function PatientEnquiryForm({ isOpen, onClose }: PatientEnquiryFo
                           setIsSuccess(false);
                           setPatientId(null);
                           setReferenceNumber(null);
-                          setFormData({
-                            fullName: '',
-                            age: '',
-                            gender: '',
-                            address: '',
-                            phone: '',
-                            symptoms: ''
-                          });
+                          setFormData(EMPTY_FORM_DATA);
                         }}
                         className="px-6 py-3 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-900 transition-colors shadow-md hover:shadow-lg"
                       >
@@ -387,11 +402,14 @@ export default function PatientEnquiryForm({ isOpen, onClose }: PatientEnquiryFo
               )}
             </motion.div>
           </div>
-        </>
+        </React.Fragment>
       )}
 
-      {/* Render the Prescription Preview outside or on top if needed */}
-      <PrescriptionPreview 
+      {/* AnimatePresence requires a unique key on every direct child it
+          tracks -- this and the fragment above were both un-keyed, which is
+          what caused the "duplicate key ``" warning on every open/close. */}
+      <PrescriptionPreview
+        key="prescription-preview"
         isOpen={showPrescription}
         onClose={() => setShowPrescription(false)}
         patientData={formData}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Minus, Send, Bot, Paperclip, UploadCloud, CheckCircle2, ChevronDown, ArrowUpRight } from 'lucide-react';
-import PatientEnquiryForm from './PatientEnquiryForm';
+import { X, Minus, Send, Bot, ChevronDown, ArrowUpRight } from 'lucide-react';
+import PatientEnquiryForm, { type PatientEnquiryFormData } from './PatientEnquiryForm';
 
 interface ChatAssistantProps {
   isOpen: boolean;
@@ -38,6 +38,22 @@ const STEPS: Step[] = [
   { id: '11', question: 'Please briefly describe your symptoms or concern.', type: 'textarea', key: 'symptoms' },
   { id: '12', question: 'Upload Medical Reports (Optional)', type: 'file', key: 'reports' }
 ];
+
+// PatientEnquiryForm only accepts fullName/age/gender/address/phone/symptoms
+// -- the chat asks several extra questions (email, cancer type, help type,
+// preferred hospital/date) that the quick form has no field for, so those
+// are intentionally dropped here rather than silently discarding the six
+// fields the form *does* have, which is what used to happen.
+function mapChatDataToEnquiry(data: Record<string, string>): Partial<PatientEnquiryFormData> {
+  return {
+    fullName: data.fullName ?? '',
+    age: data.age ?? '',
+    gender: data.gender === 'Other' ? 'Others' : (data.gender ?? ''),
+    phone: data.mobile ?? '',
+    address: data.location ?? '',
+    symptoms: data.symptoms ?? '',
+  };
+}
 
 export default function ChatAssistant({ isOpen, onClose }: ChatAssistantProps) {
   const [isMinimized, setIsMinimized] = useState(false);
@@ -369,49 +385,32 @@ export default function ChatAssistant({ isOpen, onClose }: ChatAssistantProps) {
             </div>
           )}
 
-          {/* File Upload Mock */}
+          {/* File upload isn't wired to anything real yet -- this used to fake
+              an attachment by setting a hardcoded filename with no actual file
+              behind it. Disclosing that honestly instead of pretending. */}
           {currentStep.type === 'file' && (
             <div className="space-y-3">
-              <div 
-                className="border-2 border-dashed border-primary/30 bg-primary/5 rounded-2xl p-6 text-center hover:bg-primary/10 transition-colors cursor-pointer group"
-                onClick={() => setInputValue('Report_Document.pdf')}
+              <div className="border border-dashed border-slate-300 bg-slate-50 rounded-2xl p-5 text-center">
+                <p className="text-sm text-slate-600">
+                  Report uploads aren't available through this chat yet. Bring your reports to your appointment, or share them with our team after we contact you.
+                </p>
+              </div>
+              <button
+                onClick={() => handleUserInput('')}
+                className="w-full py-3 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary-container transition-colors shadow-md cursor-pointer"
               >
-                <UploadCloud className="w-8 h-8 text-primary mx-auto mb-2 group-hover:scale-110 transition-transform" />
-                <p className="text-sm font-semibold text-primary">Click to browse files</p>
-                <p className="text-[11px] text-slate-500 mt-1">PDF, JPG, PNG up to 10MB</p>
-                {inputValue && (
-                  <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-slate-200 shadow-sm">
-                    <Paperclip className="w-4 h-4 text-secondary" />
-                    <span className="text-xs font-medium text-slate-700 truncate max-w-[150px]">{inputValue}</span>
-                    <CheckCircle2 className="w-4 h-4 text-primary" />
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleUserInput('')}
-                  className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-600 text-sm font-bold hover:bg-slate-200 transition-colors cursor-pointer"
-                >
-                  Skip
-                </button>
-                <button
-                  onClick={() => handleUserInput(inputValue || 'Uploaded Files')}
-                  disabled={!inputValue}
-                  className="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-bold disabled:opacity-50 hover:bg-primary-container transition-colors shadow-md cursor-pointer"
-                >
-                  Upload & Finish
-                </button>
-              </div>
+                Continue
+              </button>
             </div>
           )}
         </div>
       )}
 
       {/* Finished State */}
-      {!isMinimized && !isTyping && isFinished && (
+      {!isMinimized && !isTyping && isFinished && !isFormOpen && (
         <div className="shrink-0 p-4 bg-white border-t border-outline-variant/20 shadow-[0_-4px_16px_rgba(0,0,0,0.02)] animate-slide-up">
           <button
-            onClick={handleFullClose}
+            onClick={() => setIsFormOpen(true)}
             className="w-full py-4 rounded-xl bg-secondary text-slate-900 text-[15px] font-extrabold hover:bg-[#FDB64D] transition-colors shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
           >
             Submit Enquiry
@@ -436,14 +435,12 @@ export default function ChatAssistant({ isOpen, onClose }: ChatAssistantProps) {
         }
       `}</style>
 
-      {/* Integrated Smart Form */}
-      <PatientEnquiryForm 
-        isOpen={isFormOpen} 
-        onClose={() => {
-          setIsFormOpen(false);
-          // Auto-close chat or complete it if they submitted the form
-          // For now just close the modal
-        }} 
+      {/* Integrated Smart Form -- prefilled with whatever the chat has
+          collected so far, so the user never has to retype it. */}
+      <PatientEnquiryForm
+        isOpen={isFormOpen}
+        initialData={mapChatDataToEnquiry(formData)}
+        onClose={() => setIsFormOpen(false)}
       />
     </div>
   );
