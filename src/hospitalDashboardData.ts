@@ -103,18 +103,6 @@ export interface HospitalActivityLog {
   module: string;
 }
 
-// ---- Initial Mock KPI Metrics ----
-export const INITIAL_HOSPITAL_KPI: HospitalKpiMetrics = {
-  totalReferredPatients: 142,
-  patientsUnderTreatment: 38,
-  completedTreatments: 94,
-  upcomingAwarenessCamps: 3,
-  assignedDoctorsCount: 8,
-  pendingMedicalReports: 5,
-  financialAidRequestsCount: 4,
-  partnershipStatus: 'Active Partner',
-};
-
 // ---- Medical Reports ----
 // ---- Financial Aid Verifications ----
 // ---- Hospital Profile Metadata ----
@@ -146,31 +134,3 @@ export const INITIAL_HOSPITAL_PROFILE = {
   ]
 };
 
-// ---- Analytics Chart Datasets ----
-export const MONTHLY_PATIENTS_TREATED = [
-  { month: 'Jan', count: 14 },
-  { month: 'Feb', count: 18 },
-  { month: 'Mar', count: 22 },
-  { month: 'Apr', count: 19 },
-  { month: 'May', count: 26 },
-  { month: 'Jun', count: 32 },
-  { month: 'Jul', count: 28 },
-];
-
-export const MONTHLY_REFERRAL_TREND = [
-  { month: 'Jan', referrals: 10, accepted: 9 },
-  { month: 'Feb', referrals: 15, accepted: 14 },
-  { month: 'Mar', referrals: 20, accepted: 18 },
-  { month: 'Apr', referrals: 18, accepted: 16 },
-  { month: 'May', referrals: 24, accepted: 22 },
-  { month: 'Jun', referrals: 30, accepted: 28 },
-  { month: 'Jul', referrals: 25, accepted: 24 },
-];
-
-export const DEPARTMENT_DISTRIBUTION = [
-  { department: 'Surgical Oncology', count: 42, percentage: 35 },
-  { department: 'Radiation Oncology', count: 36, percentage: 30 },
-  { department: 'Medical Oncology', count: 24, percentage: 20 },
-  { department: 'Gynec Oncology', count: 12, percentage: 10 },
-  { department: 'Others', count: 6, percentage: 5 },
-];

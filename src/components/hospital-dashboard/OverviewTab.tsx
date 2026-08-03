@@ -2,7 +2,6 @@ import {
   Users, Stethoscope, CheckCircle2, Calendar, UserCheck, FileText,
   DollarSign, ShieldCheck, TrendingUp, Activity,
 } from 'lucide-react';
-import { MONTHLY_PATIENTS_TREATED } from '../../hospitalDashboardData';
 import type { AssignedPatient, NgoReferral, HospitalActivityLog } from '../../hospitalDashboardData';
 import type { HospitalProfile } from './shared';
 
@@ -23,6 +22,7 @@ export default function OverviewTab({
   patients,
   referrals,
   activityLogs,
+  monthlyTreatedPatients,
   setActiveTab,
   setSelectedReferralModal,
 }: {
@@ -31,6 +31,7 @@ export default function OverviewTab({
   patients: AssignedPatient[];
   referrals: NgoReferral[];
   activityLogs: HospitalActivityLog[];
+  monthlyTreatedPatients: { month: string; count: number }[];
   setActiveTab: (tab: string) => void;
   setSelectedReferralModal: (ref: NgoReferral) => void;
 }) {
@@ -91,9 +92,8 @@ export default function OverviewTab({
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-primary-container" /> Monthly Treated Patients Trend
             </h3>
-            <span className="text-[10px] font-bold text-slate-700 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">+18% Growth</span>
           </div>
-          {patients.length === 0 ? (
+          {monthlyTreatedPatients.length === 0 ? (
             <div className="h-44 flex flex-col items-center justify-center text-center space-y-1.5 text-slate-400">
               <Activity className="w-8 h-8 text-primary-container/40" />
               <p className="text-xs font-bold text-slate-700">No Patient Treatment History</p>
@@ -101,9 +101,11 @@ export default function OverviewTab({
             </div>
           ) : (
             <div className="flex items-end justify-between gap-3 h-44 pt-4">
-              {MONTHLY_PATIENTS_TREATED.map((m, idx) => {
-                const heightPct = (m.count / 35) * 100;
-                return (
+              {(() => {
+                const maxCount = Math.max(...monthlyTreatedPatients.map(m => m.count));
+                return monthlyTreatedPatients.map((m, idx) => {
+                  const heightPct = (m.count / maxCount) * 100;
+                  return (
                   <div key={idx} className="flex-1 flex flex-col items-center gap-1 group">
                     <span className="text-[10px] font-bold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
                       {m.count}
@@ -114,8 +116,9 @@ export default function OverviewTab({
                     />
                     <span className="text-[10px] font-semibold text-slate-500">{m.month}</span>
                   </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           )}
         </div>

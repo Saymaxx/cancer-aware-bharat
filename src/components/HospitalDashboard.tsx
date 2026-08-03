@@ -15,7 +15,6 @@ import DashboardSidebar, { SidebarFooterButton } from './common/DashboardSidebar
 import { useSidebarState } from '../hooks/useSidebarState';
 
 import {
-  INITIAL_HOSPITAL_KPI,
   INITIAL_HOSPITAL_PROFILE,
   type AssignedPatient, type NgoReferral, type HospitalCampaign,
   type HospitalReport, type HospitalDoctor, type FinancialAidVerification,
@@ -360,6 +359,36 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
     category: e.category,
   })), [apiEvents]);
 
+  // Real monthly admission trend, derived from patients' own admissionDate
+  // -- only patients with one set (see the profile modal) contribute.
+  const monthlyTreatedPatients = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const p of patients) {
+      if (!p.admissionDate) continue;
+      const d = new Date(p.admissionDate);
+      if (isNaN(d.getTime())) continue;
+      const key = d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
+      .map(([month, count]) => ({ month, count }));
+  }, [patients]);
+
+  // Real department distribution, derived from each patient's assigned
+  // doctor's specialty (same lookup used for financialVerifications above).
+  const departmentDistribution = useMemo(() => {
+    if (patients.length === 0) return [];
+    const counts = new Map<string, number>();
+    for (const p of patients) {
+      const dept = doctors.find(d => d.name === p.assignedDoctor)?.specialty || 'Unassigned';
+      counts.set(dept, (counts.get(dept) || 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([department, count]) => ({ department, count, percentage: Math.round((count / patients.length) * 100) }))
+      .sort((a, b) => b.count - a.count);
+  }, [patients, doctors]);
+
   // Compute dynamic KPI metrics
   const kpiMetrics = useMemo(() => {
     return {
@@ -682,6 +711,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               patients={patients}
               referrals={referrals}
               activityLogs={activityLogs}
+              monthlyTreatedPatients={monthlyTreatedPatients}
               setActiveTab={setActiveTab}
               setSelectedReferralModal={setSelectedReferralModal}
             />
@@ -792,7 +822,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               TAB 9: REPORTS & ANALYTICS
           ===================================================== */}
           {activeTab === 'analytics' && (
-            <AnalyticsTab showToast={showToast} />
+            <AnalyticsTab departmentDistribution={departmentDistribution} />
           )}
 
           {/* =====================================================
