@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.core.limiter import limiter
 from app.core.logging_config import configure_logging
 from app.deps import DbSession
-from app.routers import admins, analytics, audit, auth, blogs, campaign_requests, database, donations, enquiries, events, feedback, hospitals, notifications, org_settings, patient_records, patients, roles, volunteers
+from app.routers import admins, analytics, audit, auth, blogs, campaign_requests, database, donations, enquiries, events, feedback, hospital_doctors, hospitals, notifications, org_settings, patient_records, patients, roles, volunteers
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -95,7 +95,7 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers.setdefault("Cache-Control", "no-store")
     return response
 
-_ROUTERS = (auth.router, enquiries.router, hospitals.router, notifications.router, volunteers.router, patients.router, events.router, blogs.router, patient_records.router, donations.router, feedback.router, campaign_requests.router, audit.router, roles.router, analytics.router, admins.router, database.router, org_settings.router)
+_ROUTERS = (auth.router, enquiries.router, hospitals.router, notifications.router, volunteers.router, patients.router, events.router, blogs.router, patient_records.router, donations.router, feedback.router, campaign_requests.router, audit.router, roles.router, analytics.router, admins.router, database.router, org_settings.router, hospital_doctors.router)
 
 for _router in _ROUTERS:
     app.include_router(_router)

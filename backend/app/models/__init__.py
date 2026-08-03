@@ -16,6 +16,7 @@ from app.models.revoked_token import RevokedToken
 from app.models.audit_log import AuditLog
 from app.models.backup_record import BackupRecord
 from app.models.org_settings import OrgSettings
+from app.models.hospital_doctor import HospitalDoctor
 
 __all__ = [
     "User",
@@ -41,4 +42,5 @@ __all__ = [
     "AuditLog",
     "BackupRecord",
     "OrgSettings",
+    "HospitalDoctor",
 ]
