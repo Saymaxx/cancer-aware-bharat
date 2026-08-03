@@ -27,5 +27,15 @@ export default defineConfig({
     // picks up and runs alongside the real ones, corrupting results with
     // duplicate/racing DOM state.
     exclude: ['**/node_modules/**', '**/dist/**', '.claude/worktrees/**'],
+    // Several auth-page tests wait on real component timers (200ms tab
+    // animations, 800ms typed-response delays, up to 2500ms login
+    // redirects) rather than fake ones. Vitest's 5s default is fine when
+    // one or two files run, but as the suite has grown, the thread pool
+    // running every file's jsdom+React environment concurrently starves
+    // individual tests of CPU under load, inflating those real delays past
+    // the default and causing spurious timeouts -- not flakiness in the
+    // tests themselves (each passes reliably in isolation). Raising the
+    // global default here instead of scattering more per-test overrides.
+    testTimeout: 15000,
   },
 });
