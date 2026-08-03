@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   Target, ShieldAlert, HeartPulse, GraduationCap, GitFork, Tent,
   Clock, Eye, Sparkles, CheckCircle2, ArrowRight, HeartHandshake,

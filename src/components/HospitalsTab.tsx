@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Search, MapPin, Phone, Mail, Globe, ShieldCheck, Heart, Info, ArrowUpRight, CheckCircle, Map, Building2 } from 'lucide-react';
 import { INITIAL_HOSPITALS } from '../data';
 import { Hospital, HospitalPartnerRequest } from '../types';

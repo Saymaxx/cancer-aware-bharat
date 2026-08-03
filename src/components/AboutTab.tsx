@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Target, Eye, Users, ShieldCheck, Heart, Award, Milestone, Calendar, ArrowRight, Quote } from 'lucide-react';
 import PremiumSection from './common/PremiumSection';
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { X, Home, Info, Book, Heart, Network, Building2, Calendar, Image } from 'lucide-react';
 
 interface SitemapModalProps {

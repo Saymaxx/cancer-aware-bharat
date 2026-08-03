@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   Award, ShieldCheck, MapPin, Calendar, Sparkles, Star, Phone,
   PlayCircle, Stethoscope, Info, CheckCircle2, ChevronRight, HeartPulse, Building2

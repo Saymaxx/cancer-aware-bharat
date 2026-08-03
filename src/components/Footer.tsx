@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   Heart, Mail, Phone, MapPin, ArrowRight, ExternalLink, ChevronRight,
   Facebook, Twitter, Instagram, Linkedin, Youtube, CheckCircle2

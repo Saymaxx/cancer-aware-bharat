@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { LogOut, Menu, Terminal, HeartPulse, Globe, LayoutDashboard, FileText, IdCard } from 'lucide-react';
 import { useToast } from './common/Toast';
 import { ApiError, ApiPatient, getMyPatientProfile, getPatientSession, updateMyPatientProfile } from '../api/client';

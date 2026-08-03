@@ -22,36 +22,7 @@ jobs:
       - name: Build
         run: npm run build
       - name: Dependency vulnerability audit
-        # Blocking: fails on any high/critical finding except the one
-        # explicit exception below. GHSA-qwww-vcr4-c8h2 (react-router,
-        # "RSC Mode CSRF Bypass") has no fix in the 7.x line -- the only
-        # clean version requires migrating off the react-router-dom
-        # package onto react-router directly (v8 merged the two), a real
-        # routing-layer change touching every page in the app, tracked
-        # separately rather than done silently in a CI-hardening pass.
-        # The vulnerable code path (RSC server actions) isn't reachable
-        # here anyway -- this is a pure client-side SPA using plain
-        # BrowserRouter/Routes/Route, no data routers, loaders, or
-        # actions. Any *other* high/critical finding still fails the build.
-        run: |
-          ALLOWLIST="GHSA-qwww-vcr4-c8h2"
-          npm audit --json > audit.json || true
-          UNALLOWED=$(jq --arg allow "$ALLOWLIST" '
-            [.vulnerabilities[]
-              | select(.severity == "high" or .severity == "critical")
-              | .via[] | select(type == "object")
-              | .url | ltrimstr("https://github.com/advisories/")]
-            | unique
-            | map(select(. as $id | ($allow | split(",") | index($id)) | not))
-          ' audit.json)
-          COUNT=$(echo "$UNALLOWED" | jq 'length')
-          if [ "$COUNT" -gt 0 ]; then
-            echo "Unallowlisted high/critical vulnerabilities found:"
-            echo "$UNALLOWED"
-            jq '.vulnerabilities' audit.json
-            exit 1
-          fi
-          echo "OK -- no unallowlisted high/critical vulnerabilities."
+        run: npm audit --audit-level=high
 
   backend:
     name: Backend (pytest)

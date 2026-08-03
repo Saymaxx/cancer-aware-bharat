@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Newspaper, ChevronRight, Search, Calendar, MapPin, ArrowRight, ChevronLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import RevealSection from './common/RevealSection';
 import PremiumSection from './common/PremiumSection';
 

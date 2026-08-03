@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { ShieldAlert, Eye, EyeOff, CheckCircle, Shield, Building, Lock, Mail, Key, UserCheck, ArrowRight, Activity, Terminal, Database, Server, RefreshCw } from 'lucide-react';
 import { ApiError, loginStaff, setStaffSession } from '../api/client';
 import PremiumSection from './common/PremiumSection';

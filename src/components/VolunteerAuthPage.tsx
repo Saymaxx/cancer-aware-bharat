@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Heart, Eye, EyeOff, CheckCircle, Shield, Users, Calendar, ArrowRight, User, Mail, Phone, Lock, MapPin, Briefcase, Sparkles } from 'lucide-react';
 import { ApiError, getMyVolunteerProfile, loginVolunteer, registerVolunteer, setVolunteerSession } from '../api/client';
 import PremiumSection from './common/PremiumSection';

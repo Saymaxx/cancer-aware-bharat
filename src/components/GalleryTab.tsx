@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   Image, Search, Calendar, MapPin, ChevronRight, ChevronLeft,
   Eye, X, Maximize2, Sparkles, Filter, Shield, Building2, Users, Globe

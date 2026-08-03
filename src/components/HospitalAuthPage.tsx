@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   Building2, Eye, EyeOff, CheckCircle2, Shield, FileCheck, ArrowRight, ArrowLeft,
   Mail, Phone, Lock, MapPin, Award, Check, Clock, Upload, Stethoscope,

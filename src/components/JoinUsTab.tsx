@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   UserPlus, ShieldAlert, CheckCircle2, Heart, Users, MapPin,
   Calendar, Building2, Sparkles, AlertTriangle, Send, FileText,

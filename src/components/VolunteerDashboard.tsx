@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   Calendar, Bell, LogOut, CheckCircle2, Terminal, UserCheck, Menu,
   BarChart3, Timer, GraduationCap, MessageSquare, IdCard, Globe, Clock3,
