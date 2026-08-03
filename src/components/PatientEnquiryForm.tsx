@@ -95,7 +95,7 @@ export default function PatientEnquiryForm({ isOpen, onClose, initialData }: Pat
     isAddressValid &&
     isSymptomsValid;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isValid) {
       setSubmitError('Please fill in all required fields correctly before submitting.');
@@ -217,9 +217,9 @@ export default function PatientEnquiryForm({ isOpen, onClose, initialData }: Pat
                 </button>
               </div>
 
-              {/* Body */}
-              <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
-                {isSuccess ? (
+              {/* Body -- success state only; form state is handled below */}
+              {isSuccess && (
+                <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -272,8 +272,17 @@ export default function PatientEnquiryForm({ isOpen, onClose, initialData }: Pat
                       </button>
                     </div>
                   </motion.div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-5">
+                </div>
+              )}
+
+              {/* Form with footer button INSIDE the form so type="submit" works
+                  and tests / Enter-key submission work correctly. The form is
+                  rendered outside the scrollable body div but inside the same
+                  flex-col motion.div so nothing visual changes. */}
+              {!isSuccess && (
+                <form onSubmit={handleSubmit} noValidate className="contents">
+                  {/* Scrollable fields area */}
+                  <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 space-y-5">
                     {/* Grid Layout for Desktop */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       {/* Full Name */}
@@ -340,7 +349,7 @@ export default function PatientEnquiryForm({ isOpen, onClose, initialData }: Pat
 
                       {/* Address */}
                       <div className="space-y-1.5 md:col-span-2">
-                        <label className="text-sm font-semibold text-slate-700 block">Address</label>
+                        <label className="text-sm font-semibold text-slate-700 block">Address *</label>
                         <textarea
                           name="address"
                           value={formData.address}
@@ -363,42 +372,39 @@ export default function PatientEnquiryForm({ isOpen, onClose, initialData }: Pat
                         />
                       </div>
                     </div>
-                  </form>
-                )}
-              </div>
-
-              {/* Footer Buttons */}
-              {!isSuccess && (
-                <div className="shrink-0 p-6 bg-white border-t border-slate-100 flex flex-col items-center gap-4 z-10">
-                  {submitError && (
-                    <div className="w-full bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm font-medium border border-red-100 text-center mb-2">
-                      {submitError}
-                    </div>
-                  )}
-                  <div className="w-full flex flex-col sm:flex-row items-center gap-4 sm:justify-end">
-
-                    <button
-                      onClick={handleSubmit}
-                      disabled={isSubmitting}
-                      className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-primary text-white font-bold text-[15px] flex items-center justify-center gap-2 hover:bg-primary-container hover:shadow-[0_4px_20px_rgba(22,58,95,0.4)] transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
-                    >
-                      {isSubmitting ? (
-                        <div className="flex items-center gap-2 relative z-10">
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Submitting...
-                        </div>
-                      ) : (
-                        <>
-                          <span className="relative z-10">Submit Inquiry</span>
-                          <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
-                        </>
-                      )}
-                    </button>
                   </div>
-                </div>
+
+                  {/* Footer Buttons (inside the form so type="submit" works) */}
+                  <div className="shrink-0 p-6 bg-white border-t border-slate-100 flex flex-col items-center gap-4 z-10">
+                    {submitError && (
+                      <div className="w-full bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm font-medium border border-red-100 text-center">
+                        {submitError}
+                      </div>
+                    )}
+                    <div className="w-full flex flex-col sm:flex-row items-center gap-4 sm:justify-end">
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-primary text-white font-bold text-[15px] flex items-center justify-center gap-2 hover:bg-primary-container hover:shadow-[0_4px_20px_rgba(22,58,95,0.4)] transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
+                      >
+                        {isSubmitting ? (
+                          <div className="flex items-center gap-2 relative z-10">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Submitting...
+                          </div>
+                        ) : (
+                          <>
+                            <span className="relative z-10">Submit Inquiry</span>
+                            <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </form>
               )}
             </motion.div>
           </div>
