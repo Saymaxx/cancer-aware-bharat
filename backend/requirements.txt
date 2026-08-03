@@ -21,6 +21,11 @@ bcrypt==4.0.1
 # current clean release.
 python-multipart==0.0.32
 slowapi==0.1.9
+# Only actually connects when RATE_LIMIT_STORAGE_URI is set to a redis://
+# URL (see app/core/config.py) -- the limits package that slowapi sits on
+# top of lazy-imports this, but it still needs to be installed for that
+# import to succeed once someone does set it.
+redis==8.1.0
 boto3==1.35.90
 razorpay==1.4.2
 # razorpay's SDK still imports the deprecated pkg_resources, which recent

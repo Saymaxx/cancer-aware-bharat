@@ -16,6 +16,21 @@ from app.routers import admins, analytics, audit, auth, blogs, campaign_requests
 configure_logging()
 logger = logging.getLogger(__name__)
 
+if settings.is_production and settings.rate_limit_storage_uri == "memory://":
+    # Not a hard failure -- a single-instance production deployment is a
+    # legitimate choice this app can't detect from Settings alone. But
+    # the in-memory default silently stops giving real protection the
+    # moment there's more than one backend process (each gets its own
+    # independent counter, multiplying every configured limit), so this
+    # needs to be a loud, visible warning rather than something only
+    # discovered while investigating a brute-force incident later.
+    logger.warning(
+        "RATE_LIMIT_STORAGE_URI is still the in-memory default in production. "
+        "Rate limits are per-process and reset on every restart/deploy -- fine "
+        "for a single instance, but silently weaker the moment you run more "
+        "than one. Set it to a real Redis URL before scaling past one process."
+    )
+
 # /docs, /redoc, and the raw /openapi.json schema are unauthenticated by
 # FastAPI's default -- fine for development, but in production they hand an
 # unauthenticated visitor a complete map of every route, request/response

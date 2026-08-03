@@ -57,6 +57,17 @@ class Settings(BaseSettings):
     # client spoof the header to dodge rate limiting entirely.
     trust_proxy_headers: bool = False
 
+    # slowapi/limits storage backend for rate-limit counters. "memory://"
+    # (default) keeps counters in this process's own memory -- correct and
+    # sufficient for a single instance, but each process gets its own
+    # independent counter the moment you run more than one (multiple
+    # uvicorn workers, multiple container replicas), silently multiplying
+    # every configured limit, and every counter resets on restart/deploy.
+    # Set to a real Redis URL (e.g. "redis://localhost:6379") before
+    # running more than one backend process -- see main.py's startup
+    # warning if this is still the default under ENVIRONMENT=production.
+    rate_limit_storage_uri: str = "memory://"
+
     # "console" (default -- logs the email instead of sending it, same safe
     # no-external-account pattern as storage_backend="local") or "smtp" (a
     # real mailbox or transactional-email service's SMTP endpoint). Used for

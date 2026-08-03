@@ -17,6 +17,11 @@ Three independently-hosted pieces, each on the platform best suited for it:
 Self-hosting all three on one VPS with `docker compose` is also viable if
 you'd rather manage it yourself, but isn't what's set up here.
 
+Not needed for a first launch, but once you run more than one backend
+instance you'll also want a small managed Redis (Railway, Render, and
+Upstash all offer one) for rate-limit storage -- see `RATE_LIMIT_STORAGE_URI`
+below.
+
 ## 1. Provision Postgres
 
 Create the database on whichever provider you pick and note the connection
@@ -45,6 +50,7 @@ variables on the host:
 | `UPLOAD_DIR` | `./uploads` -- only used when `STORAGE_BACKEND=local` (the default); see the note on file storage below |
 | `STORAGE_BACKEND` | `local` to start, `s3` before real patient volume -- see below |
 | `LOG_LEVEL` | `INFO` is fine to start. All requests and unhandled errors are logged; see `backend/app/core/logging_config.py` |
+| `RATE_LIMIT_STORAGE_URI` | `memory://` (default) is fine for exactly one backend instance. The moment you run more than one -- multiple uvicorn workers, multiple container replicas, which most platforms default to -- each process gets its own independent rate-limit counter, silently multiplying every configured limit. Set to a real Redis URL (`redis://host:6379`) before scaling past one process; the app logs a warning at startup if it's still `memory://` under `ENVIRONMENT=production` |
 
 **Run once after the first deploy** (as a one-off command / release step,
 however your platform does that):

@@ -28,4 +28,9 @@ limiter = Limiter(
     # on the view function's own identity instead, so both mounts of the
     # same function share one bucket regardless of which path was hit.
     key_style="endpoint",
+    # "memory://" by default (single-process counters); set
+    # RATE_LIMIT_STORAGE_URI to a real Redis URL so limits are shared
+    # across every backend process/instance instead of each one
+    # independently allowing its own quota. See Settings.rate_limit_storage_uri.
+    storage_uri=settings.rate_limit_storage_uri,
 )

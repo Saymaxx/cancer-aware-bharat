@@ -37,3 +37,13 @@ class TestStorageBackendGuard:
     def test_local_backend_is_the_default(self):
         settings = Settings()
         assert settings.storage_backend == "local"
+
+
+class TestRateLimitStorage:
+    def test_memory_is_the_default(self):
+        settings = Settings()
+        assert settings.rate_limit_storage_uri == "memory://"
+
+    def test_accepts_a_redis_uri(self):
+        settings = Settings(rate_limit_storage_uri="redis://localhost:6379")
+        assert settings.rate_limit_storage_uri == "redis://localhost:6379"
