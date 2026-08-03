@@ -37,7 +37,11 @@ describe('DonateModal checkout flow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     lastRazorpayOptions = null;
-    window.Razorpay = vi.fn().mockImplementation((options: Record<string, unknown>) => {
+    // Must be a real `function`, not an arrow function -- DonateModal calls
+    // this with `new`, and vitest 4's mock internals actually invoke the
+    // implementation as a constructor now (vitest 3 silently tolerated an
+    // arrow function here; arrow functions aren't constructible in real JS).
+    window.Razorpay = vi.fn().mockImplementation(function (options: Record<string, unknown>) {
       lastRazorpayOptions = options;
       return { open: vi.fn() };
     }) as unknown as typeof window.Razorpay;
