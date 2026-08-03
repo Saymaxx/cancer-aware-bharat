@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Facebook, Twitter, Instagram, Linkedin, Plus, ArrowRight } from 'lucide-react';
+import { Plus, ArrowRight } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin } from './icons/SocialIcons';
 import PremiumSection from './common/PremiumSection';
 
 /* ─────────── Section Reveal on Scroll ─────────── */

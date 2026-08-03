@@ -6,7 +6,7 @@ import {
   Phone, Stethoscope, Star, Quote, ChevronDown, Mail,
   Sun, Apple, Cigarette, Dumbbell, Syringe, Search as SearchIcon, Target,
   ClipboardCheck, UserCheck, Compass, HeartPulse, Droplet, Play,
-  Facebook, Instagram, Linkedin, Twitter, Plus, Building, Clock
+  Plus, Building, Clock
 } from 'lucide-react';
 import { useEvents } from '../api/hooks';
 import TeamShowcase from './TeamShowcase';

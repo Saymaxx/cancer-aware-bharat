@@ -3,9 +3,9 @@ import { useNavigate, useLocation } from 'react-router';
 import {
   Menu, X, Heart, LogIn, LayoutDashboard, LogOut, Building2,
   ChevronDown, Home, Target, Stethoscope, BookOpen, Calendar, UserPlus, PhoneCall,
-  Images, Users, ArrowRight, User, Shield, Gift,
-  Facebook, Instagram, Linkedin, Youtube
+  Images, Users, ArrowRight, User, Shield, Gift
 } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, Youtube } from './icons/SocialIcons';
 
 interface NavbarProps {
   onOpenVolunteer: () => void;

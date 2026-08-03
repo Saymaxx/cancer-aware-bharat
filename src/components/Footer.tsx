@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Heart, Mail, Phone, MapPin, ArrowRight, ExternalLink, ChevronRight,
-  Facebook, Twitter, Instagram, Linkedin, Youtube, CheckCircle2
+  CheckCircle2
 } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube } from './icons/SocialIcons';
 
 interface FooterProps {
   onOpenVolunteer: () => void;
