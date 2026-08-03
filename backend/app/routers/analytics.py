@@ -35,7 +35,11 @@ def donations_monthly(
 def patient_intake_monthly(
     request: Request,
     db: DbSession,
-    claims: Annotated[dict, Depends(require_roles("superadmin"))],
+    # Also used by Admin's own dashboard overview (unlike the other two
+    # endpoints here, which stay superadmin-only) -- this is an org-wide
+    # aggregate count with no PII, not a privacy concern the way the raw
+    # donation ledger or audit log would be.
+    claims: Annotated[dict, Depends(require_roles("admin", "superadmin"))],
 ):
     month = func.to_char(PatientEnquiry.created_at, "YYYY-MM").label("month")
     rows = (

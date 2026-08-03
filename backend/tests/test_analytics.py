@@ -36,9 +36,29 @@ class TestPatientIntakeMonthly:
         resp = client.get("/analytics/patient-intake-monthly")
         assert resp.status_code == 401
 
-    def test_admin_role_cannot_view(self, client, admin_token):
-        resp = client.get("/analytics/patient-intake-monthly", headers=auth_header(admin_token))
+    def test_hospital_role_cannot_view(self, client, hospital1_token):
+        resp = client.get("/analytics/patient-intake-monthly", headers=auth_header(hospital1_token))
         assert resp.status_code == 403
+
+    def test_admin_sees_real_aggregate(self, client, admin_token, db_session):
+        # Unlike donations-monthly and volunteer-hours-monthly, admin is
+        # allowed here -- it's an org-wide aggregate count with no PII,
+        # backing Admin's own dashboard overview chart.
+        from app.models.enquiry import PatientEnquiry
+
+        db_session.add(PatientEnquiry(
+            enquiry_id="ENQ-ANALYTICS-ADMIN-1", reference_number="REF-ANALYTICS-ADMIN-1",
+            patient_name="Analytics Admin Test Patient", age=40, gender="Female", phone="+919876500001",
+            city="Delhi", reason="Screening", status="Pending Admin Review", priority="Normal",
+            date="2026-08-01",
+        ))
+        db_session.flush()
+
+        resp = client.get("/analytics/patient-intake-monthly", headers=auth_header(admin_token))
+        assert resp.status_code == 200
+        body = resp.json()
+        assert len(body) >= 1
+        assert sum(m["count"] for m in body) >= 1
 
     def test_superadmin_sees_real_aggregate(self, client, superadmin_token, db_session):
         from app.models.enquiry import PatientEnquiry
