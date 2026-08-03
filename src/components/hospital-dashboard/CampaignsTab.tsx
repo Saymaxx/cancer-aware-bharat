@@ -3,10 +3,8 @@ import type { HospitalCampaign } from '../../hospitalDashboardData';
 
 export default function CampaignsTab({
   campaigns,
-  showToast,
 }: {
   campaigns: HospitalCampaign[];
-  showToast: (msg: string) => void;
 }) {
   return (
     <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
@@ -38,17 +36,19 @@ export default function CampaignsTab({
                 <p className="text-xs text-slate-500 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-primary-container" /> {camp.venue}</p>
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs space-y-1">
                   <p className="text-[10px] font-bold text-slate-500 uppercase">Assigned Hospital Oncologists</p>
-                  {camp.assignedDoctors.map((doc, idx) => (
-                    <p key={idx} className="font-semibold text-slate-700 text-[11px]">• {doc}</p>
-                  ))}
+                  {camp.assignedDoctors.length === 0 ? (
+                    <p className="text-slate-400 text-[11px]">No doctors assigned yet</p>
+                  ) : (
+                    camp.assignedDoctors.map((doc, idx) => (
+                      <p key={idx} className="font-semibold text-slate-700 text-[11px]">• {doc}</p>
+                    ))
+                  )}
                 </div>
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span className="text-slate-500 text-[11px]">Capacity: <strong>{camp.expectedScreenings}</strong></span>
                 <span className="text-slate-500 text-[11px]">Volunteers: <strong>{camp.volunteerCount}</strong></span>
-                <button onClick={() => showToast(`Registered hospital doctors for ${camp.title}`)} className="px-3 py-1.5 bg-[#063b42] text-white rounded-lg text-[10px] font-bold hover:opacity-90 cursor-pointer">
-                  Register Doctors
-                </button>
               </div>
             </div>
           ))}

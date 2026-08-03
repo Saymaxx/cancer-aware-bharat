@@ -5,7 +5,7 @@ import {
   DollarSign, Bell, TrendingUp, Terminal, CheckCircle2,
   HelpCircle, Settings, LogOut, Activity, Globe, Menu
 } from 'lucide-react';
-import { useApiEnquiries, useApiNotifications, useHospitalDoctors, useNgoReferrals, useMyPatientRecords, useMyHospitalReports } from '../api/hooks';
+import { useApiEnquiries, useApiNotifications, useHospitalDoctors, useNgoReferrals, useMyPatientRecords, useMyHospitalReports, useMyEvents } from '../api/hooks';
 import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, addMyHospitalDoctor, updateMyHospitalDoctorAvailability, acceptMyNgoReferral, declineMyNgoReferral, updateMyPatientRecord, verifyMyPatientCost, uploadMyHospitalReport, downloadMyHospitalReport, ApiError, getHospitalSession } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
@@ -16,7 +16,6 @@ import { useSidebarState } from '../hooks/useSidebarState';
 
 import {
   INITIAL_HOSPITAL_KPI,
-  INITIAL_HOSPITAL_CAMPAIGNS,
   INITIAL_HOSPITAL_NOTIFICATIONS,
   INITIAL_HOSPITAL_PROFILE, INITIAL_HOSPITAL_ACTIVITY_LOG,
   type AssignedPatient, type NgoReferral, type HospitalCampaign,
@@ -135,7 +134,7 @@ const isPreApprovedDemoAccount = (email: string) => {
 const getInitialHospitalData = (profileEmail: string) => {
   if (!profileEmail) {
     return {
-      campaigns: [], notifications: [], activityLogs: []
+      notifications: [], activityLogs: []
     };
   }
 
@@ -150,7 +149,6 @@ const getInitialHospitalData = (profileEmail: string) => {
   // Pre-approved accounts keep initial demo data
   if (isPreApprovedDemoAccount(profileEmail)) {
     return {
-      campaigns: INITIAL_HOSPITAL_CAMPAIGNS,
       notifications: INITIAL_HOSPITAL_NOTIFICATIONS,
       activityLogs: INITIAL_HOSPITAL_ACTIVITY_LOG,
     };
@@ -158,7 +156,6 @@ const getInitialHospitalData = (profileEmail: string) => {
 
   // Newly registered hospital starts completely EMPTY — only registration details
   return {
-    campaigns: [],
     notifications: [
       {
         id: 'NOTIF-INIT-1',
@@ -190,7 +187,6 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   const [profile, setProfile] = useState(() => getInitialHospitalProfile());
 
   // React State for tables - initialized from hospital-specific data store
-  const [campaigns, setCampaigns] = useState<HospitalCampaign[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).campaigns);
   const [notifications, setNotifications] = useState<HospitalNotification[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).notifications);
   const [activityLogs, setActivityLogs] = useState<HospitalActivityLog[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).activityLogs);
 
@@ -204,7 +200,6 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
     setEditProfileWebsite(fresh.website);
 
     const data = getInitialHospitalData(fresh.email);
-    setCampaigns(data.campaigns || []);
     setNotifications(data.notifications || []);
     setActivityLogs(data.activityLogs || []);
   }, []);
@@ -379,6 +374,23 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
       department: doctors.find(d => d.id === r.assignedDoctorId)?.specialty || 'Not Assigned',
       notes: r.remarks,
     })), [apiPatientRecords, doctors]);
+
+  const { events: apiEvents } = useMyEvents(apiToken);
+  const campaigns: HospitalCampaign[] = useMemo(() => apiEvents.map(e => ({
+    id: e.id,
+    title: e.title,
+    date: e.date,
+    time: e.time,
+    venue: e.location,
+    city: '',
+    expectedScreenings: e.capacity,
+    // No real doctor-to-campaign or volunteer-to-campaign assignment
+    // mechanism exists yet -- left honestly empty/zero rather than faked.
+    assignedDoctors: [],
+    volunteerCount: 0,
+    status: e.status === 'Scheduled' ? 'Upcoming' : e.status,
+    category: e.category,
+  })), [apiEvents]);
 
   // Compute dynamic KPI metrics
   const kpiMetrics = useMemo(() => {
@@ -762,7 +774,6 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
           {activeTab === 'campaigns' && (
             <CampaignsTab
               campaigns={campaigns}
-              showToast={showToast}
             />
           )}
 

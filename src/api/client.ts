@@ -1039,6 +1039,7 @@ export interface ApiEvent {
   registeredCount: number;
   capacity: number;
   status: 'Scheduled' | 'Completed' | 'Cancelled';
+  hospitalId: string | null;
 }
 
 export interface EventPayload {
@@ -1057,6 +1058,10 @@ export interface EventPayload {
 
 export function listEvents(): Promise<ApiEvent[]> {
   return request<ApiEvent[]>('/events');
+}
+
+export function listMyEvents(token: string): Promise<ApiEvent[]> {
+  return request<ApiEvent[]>('/events/mine', {}, token);
 }
 
 export function createEvent(token: string, payload: EventPayload): Promise<ApiEvent> {

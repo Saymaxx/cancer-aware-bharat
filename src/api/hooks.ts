@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyHospitalDoctors, listMyHospitalReports, listMyNgoReferrals, listMyPatientEnquiries, listMyPatientRecords, listMyVolunteerFeedback, listMyVolunteerHours, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteerHoursMonthly, listVolunteers } from './client';
+import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyEvents, listMyHospitalDoctors, listMyHospitalReports, listMyNgoReferrals, listMyPatientEnquiries, listMyPatientRecords, listMyVolunteerFeedback, listMyVolunteerHours, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteerHoursMonthly, listVolunteers } from './client';
 import { mapApiAdmin, mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiCustomRole, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -334,6 +334,23 @@ export function useEvents() {
     events: (query.data ?? []).map(mapApiEvent),
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load events' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Awareness drives co-hosted with the logged-in hospital (Hospital
+ * Dashboard, self-service) -- a filtered subset of useEvents' public list. */
+export function useMyEvents(token: string | null) {
+  const query = useQuery({
+    queryKey: ['events-mine', token],
+    queryFn: () => listMyEvents(token as string),
+    enabled: !!token,
+  });
+
+  return {
+    events: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load campaigns' : null,
     refetch: query.refetch,
   };
 }

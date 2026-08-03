@@ -56,7 +56,7 @@ export interface HospitalCampaign {
   expectedScreenings: number;
   assignedDoctors: string[];
   volunteerCount: number;
-  status: 'Upcoming' | 'In Progress' | 'Completed';
+  status: 'Upcoming' | 'In Progress' | 'Completed' | 'Cancelled';
   category: string;
 }
 
@@ -123,31 +123,6 @@ export const INITIAL_HOSPITAL_KPI: HospitalKpiMetrics = {
   financialAidRequestsCount: 4,
   partnershipStatus: 'Active Partner',
 };
-
-// ---- Hospital Awareness Campaigns ----
-export const INITIAL_HOSPITAL_CAMPAIGNS: HospitalCampaign[] = [
-  {
-    id: 'CAMP-H01', title: 'Lions Club Mega Early Screening Camp', date: 'Sun, 26 Jul 2026',
-    time: '09:00 AM - 04:00 PM', venue: 'Lions Community Grounds, Sector 10, Dwarka',
-    city: 'New Delhi', expectedScreenings: 350,
-    assignedDoctors: ['Dr. Siddharth Roy', 'Dr. Sunita Agarwal'], volunteerCount: 15,
-    status: 'Upcoming', category: 'Screening Camp',
-  },
-  {
-    id: 'CAMP-H02', title: 'Mammography & Cervical Awareness Drive', date: 'Sat, 01 Aug 2026',
-    time: '10:00 AM - 03:00 PM', venue: 'Rotary Club Hall, Saket',
-    city: 'New Delhi', expectedScreenings: 200,
-    assignedDoctors: ['Dr. Sunita Agarwal'], volunteerCount: 10,
-    status: 'Upcoming', category: 'Mobile Mammography',
-  },
-  {
-    id: 'CAMP-H03', title: 'Oral Cancer Detection & Tobacco Workshop', date: 'Sun, 12 Jul 2026',
-    time: '09:00 AM - 02:00 PM', venue: 'Civil Lines Community Center',
-    city: 'Old Delhi', expectedScreenings: 280,
-    assignedDoctors: ['Dr. Meenakshi Sundaram'], volunteerCount: 12,
-    status: 'Completed', category: 'Oral Screening',
-  },
-];
 
 // ---- Medical Reports ----
 // ---- Financial Aid Verifications ----
