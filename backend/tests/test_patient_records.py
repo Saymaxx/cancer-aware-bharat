@@ -232,3 +232,84 @@ class TestUpdateMyPatientRecord:
             headers=auth_header(hospital1_token),
         )
         assert resp.status_code == 404
+
+    def test_sets_estimated_cost(self, client, admin_token, hospital1_token, hospitals):
+        record = create_sample_record(client, admin_token, name="Cost Estimate Patient", hospitalId=hospitals[0]["id"])
+        resp = client.patch(
+            f"/patient-records/mine/{record['id']}",
+            json={"estimatedCost": 180000},
+            headers=auth_header(hospital1_token),
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["estimatedCost"] == 180000
+        assert body["costVerificationStatus"] == "Pending Verification"
+
+
+class TestVerifyMyPatientCost:
+    def test_verifies_after_estimate_set(self, client, admin_token, hospital1_token, hospitals):
+        record = create_sample_record(client, admin_token, name="Verify Cost Patient", hospitalId=hospitals[0]["id"])
+        client.patch(
+            f"/patient-records/mine/{record['id']}",
+            json={"estimatedCost": 180000},
+            headers=auth_header(hospital1_token),
+        )
+        resp = client.post(
+            f"/patient-records/mine/{record['id']}/verify-cost",
+            json={"verifiedAmount": 150000},
+            headers=auth_header(hospital1_token),
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["verifiedCost"] == 150000
+        assert body["costVerificationStatus"] == "Cost Verified"
+
+    def test_rejects_verification_without_estimate(self, client, admin_token, hospital1_token, hospitals):
+        record = create_sample_record(client, admin_token, name="No Estimate Patient", hospitalId=hospitals[0]["id"])
+        resp = client.post(
+            f"/patient-records/mine/{record['id']}/verify-cost",
+            json={"verifiedAmount": 150000},
+            headers=auth_header(hospital1_token),
+        )
+        assert resp.status_code == 400
+
+    def test_rejects_double_verification(self, client, admin_token, hospital1_token, hospitals):
+        record = create_sample_record(client, admin_token, name="Double Verify Patient", hospitalId=hospitals[0]["id"])
+        client.patch(
+            f"/patient-records/mine/{record['id']}",
+            json={"estimatedCost": 100000},
+            headers=auth_header(hospital1_token),
+        )
+        client.post(
+            f"/patient-records/mine/{record['id']}/verify-cost",
+            json={"verifiedAmount": 90000},
+            headers=auth_header(hospital1_token),
+        )
+        resp = client.post(
+            f"/patient-records/mine/{record['id']}/verify-cost",
+            json={"verifiedAmount": 95000},
+            headers=auth_header(hospital1_token),
+        )
+        assert resp.status_code == 409
+
+    def test_cannot_verify_another_hospitals_patient(self, client, admin_token, hospital1_token, hospital2_token, hospitals):
+        record = create_sample_record(client, admin_token, name="Cross Hospital Cost Patient", hospitalId=hospitals[0]["id"])
+        client.patch(
+            f"/patient-records/mine/{record['id']}",
+            json={"estimatedCost": 100000},
+            headers=auth_header(hospital1_token),
+        )
+        resp = client.post(
+            f"/patient-records/mine/{record['id']}/verify-cost",
+            json={"verifiedAmount": 90000},
+            headers=auth_header(hospital2_token),
+        )
+        assert resp.status_code == 404
+
+    def test_new_record_has_no_cost_verification_status(self, client, admin_token, hospital1_token, hospitals):
+        create_sample_record(client, admin_token, name="Fresh No Cost Patient", hospitalId=hospitals[0]["id"])
+        listing = client.get("/patient-records/mine", headers=auth_header(hospital1_token)).json()
+        record = next(r for r in listing if r["name"] == "Fresh No Cost Patient")
+        assert record["costVerificationStatus"] is None
+        assert record["estimatedCost"] is None
+        assert record["verifiedCost"] is None

@@ -9,6 +9,7 @@ from app.schemas.base import CamelModel
 FinancialAidStatus = Literal["Not Requested", "Pending Review", "Approved", "Disbursed", "Rejected"]
 CaseStatus = Literal["Under Treatment", "Recovered", "Screened - Healthy", "Follow-up"]
 TreatmentStatus = Literal["Under Review", "Under Treatment", "Completed", "Referred", "Emergency"]
+CostVerificationStatus = Literal["Pending Verification", "Cost Verified"]
 
 
 class PatientRecordIn(CamelModel):
@@ -46,10 +47,14 @@ class PatientRecordOut(CamelModel):
     admission_date: date | None = None
     remarks: str
     prescription_uploaded: bool
-    # Placeholder until Phase N4 (Medical Reports) adds a HospitalReport
-    # table to count -- matches HospitalDoctorOut.assigned_patients_count's
-    # precedent in Phase N1.
+    # Computed at read time from real HospitalReport rows (Phase N4) -- see
+    # patient_records.py's _out()/_out_many().
     reports_count: int = 0
+    estimated_cost: float | None = None
+    verified_cost: float | None = None
+    # Derived, not stored -- None until estimated_cost is set, then
+    # "Pending Verification" until verified_cost is also set.
+    cost_verification_status: CostVerificationStatus | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -64,3 +69,8 @@ class PatientRecordHospitalPatch(CamelModel):
     assigned_doctor_id: UUID | None = None
     admission_date: date | None = None
     remarks: str | None = Field(default=None, max_length=2000)
+    estimated_cost: float | None = Field(default=None, ge=0)
+
+
+class VerifyCostIn(CamelModel):
+    verified_amount: float = Field(ge=0)

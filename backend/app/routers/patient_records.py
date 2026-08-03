@@ -12,15 +12,24 @@ from app.deps import DbSession, current_hospital_id, require_admin_or_superadmin
 from app.models.hospital_doctor import HospitalDoctor
 from app.models.hospital_report import HospitalReport
 from app.models.patient_record import PatientRecord
-from app.schemas.patient_record import PatientRecordHospitalPatch, PatientRecordIn, PatientRecordOut
+from app.schemas.patient_record import PatientRecordHospitalPatch, PatientRecordIn, PatientRecordOut, VerifyCostIn
 from app.services.audit import record_event
 
 router = APIRouter(prefix="/patient-records", tags=["patient-records"])
 
 
+def _cost_verification_status(record: PatientRecord) -> str | None:
+    if record.estimated_cost is None:
+        return None
+    return "Cost Verified" if record.verified_cost is not None else "Pending Verification"
+
+
 def _out(db: Session, record: PatientRecord) -> PatientRecordOut:
     count = db.query(HospitalReport).filter(HospitalReport.patient_record_id == record.id).count()
-    return PatientRecordOut.model_validate(record).model_copy(update={"reports_count": count})
+    return PatientRecordOut.model_validate(record).model_copy(update={
+        "reports_count": count,
+        "cost_verification_status": _cost_verification_status(record),
+    })
 
 
 def _out_many(db: Session, records: list[PatientRecord]) -> list[PatientRecordOut]:
@@ -34,7 +43,10 @@ def _out_many(db: Session, records: list[PatientRecord]) -> list[PatientRecordOu
         .all()
     )
     return [
-        PatientRecordOut.model_validate(r).model_copy(update={"reports_count": counts.get(r.id, 0)})
+        PatientRecordOut.model_validate(r).model_copy(update={
+            "reports_count": counts.get(r.id, 0),
+            "cost_verification_status": _cost_verification_status(r),
+        })
         for r in records
     ]
 
@@ -147,6 +159,26 @@ def update_my_patient_record(
     for field, value in updates.items():
         setattr(record, field, value)
 
+    db.commit()
+    db.refresh(record)
+    return _out(db, record)
+
+
+@router.post("/mine/{record_id}/verify-cost", response_model=PatientRecordOut)
+@limiter.limit("30/minute")
+def verify_my_patient_cost(
+    request: Request,
+    record_id: UUID,
+    payload: VerifyCostIn,
+    db: DbSession,
+    hospital_id: Annotated[UUID, Depends(current_hospital_id)],
+):
+    record = _get_own_patient_record_or_404(db, hospital_id, record_id)
+    if record.estimated_cost is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Set an estimated cost before verifying it")
+    if record.verified_cost is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "This cost has already been verified")
+    record.verified_cost = payload.verified_amount
     db.commit()
     db.refresh(record)
     return _out(db, record)

@@ -59,5 +59,15 @@ class PatientRecord(Base):
     remarks: Mapped[str] = mapped_column(String(2000), nullable=False, default="")
     prescription_uploaded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
+    # Hospital-side financial aid verification (Phase N5) -- distinct from
+    # financial_aid_status/financial_aid_amount above, which is CAB/admin's
+    # own aid-disbursement decision. estimated_cost is the hospital's own
+    # treatment cost estimate; verified_cost is set once the hospital
+    # confirms it (see POST /patient-records/mine/{id}/verify-cost).
+    # cost_verification_status isn't stored -- it's derived from these two
+    # at read time (see patient_records.py's _out()), same as reports_count.
+    estimated_cost: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    verified_cost: Mapped[float | None] = mapped_column(Numeric(12, 2))
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
