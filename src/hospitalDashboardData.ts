@@ -217,15 +217,6 @@ export const INITIAL_MEDICAL_REPORTS: HospitalReport[] = [
   { id: 'RPT-H04', patientId: 'HOSP-PAT-003', patientName: 'Ananya Mehta', reportType: 'Discharge Summary', uploadDate: 'Jun 22, 2026', uploadedByDoctor: 'Dr. Sunita Agarwal', fileSize: '1.2 MB', fileName: 'Discharge_Summary_Ananya.pdf' },
 ];
 
-// ---- Hospital Doctor Directory ----
-export const INITIAL_HOSPITAL_DOCTORS: HospitalDoctor[] = [
-  { id: 'DOC-001', name: 'Dr. Siddharth Roy', specialty: 'Surgical Oncology', qualification: 'MS, MCh (Surgical Oncology) AIIMS', experienceYears: 18, phone: '+91 98111 22334', email: 'sroy@rgcirc.org', availability: 'Available', assignedPatientsCount: 12 },
-  { id: 'DOC-002', name: 'Dr. Sunita Agarwal', specialty: 'Gynecological Oncology', qualification: 'MD, DNB, Fellow GynecOncology', experienceYears: 14, phone: '+91 98222 33445', email: 'sagarwal@rgcirc.org', availability: 'Available', assignedPatientsCount: 9 },
-  { id: 'DOC-003', name: 'Dr. Vikram Malhotra', specialty: 'Radiation Oncology', qualification: 'MD (Radiation), DNB', experienceYears: 16, phone: '+91 98333 44556', email: 'vmalhotra@rgcirc.org', availability: 'In Surgery', assignedPatientsCount: 15 },
-  { id: 'DOC-004', name: 'Dr. Meenakshi Sundaram', specialty: 'Head & Neck Surgical Oncology', qualification: 'MS, MCh, FACS', experienceYears: 20, phone: '+91 98444 55667', email: 'msundaram@rgcirc.org', availability: 'Available', assignedPatientsCount: 11 },
-  { id: 'DOC-005', name: 'Dr. Aniruddh Gupta', specialty: 'Medical Oncology & Hematology', qualification: 'MD, DM (Medical Oncology)', experienceYears: 12, phone: '+91 98555 66778', email: 'agupta@rgcirc.org', availability: 'On Leave', assignedPatientsCount: 6 },
-];
-
 // ---- Financial Aid Verifications ----
 export const INITIAL_FINANCIAL_VERIFICATIONS: FinancialAidVerification[] = [
   { id: 'FA-VER-001', patientName: 'Sunita Devi', ngoCaseId: 'PAT-2026-8941', requestDate: 'Jul 13, 2026', estimatedCost: 180000, verifiedAmount: 150000, status: 'Cost Verified', department: 'Surgical Oncology', notes: '6 cycles Paclitaxel + Carboplatin. Cost estimation verified as per NGO subsidized rate card.' },

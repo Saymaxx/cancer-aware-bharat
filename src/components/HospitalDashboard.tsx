@@ -5,8 +5,8 @@ import {
   DollarSign, Bell, TrendingUp, Terminal, CheckCircle2,
   HelpCircle, Settings, LogOut, Activity, Globe, Menu
 } from 'lucide-react';
-import { useApiEnquiries, useApiNotifications } from '../api/hooks';
-import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, ApiError, getHospitalSession } from '../api/client';
+import { useApiEnquiries, useApiNotifications, useHospitalDoctors } from '../api/hooks';
+import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, addMyHospitalDoctor, updateMyHospitalDoctorAvailability, ApiError, getHospitalSession } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
@@ -16,7 +16,7 @@ import { useSidebarState } from '../hooks/useSidebarState';
 
 import {
   INITIAL_HOSPITAL_KPI, INITIAL_ASSIGNED_PATIENTS, INITIAL_NGO_REFERRALS,
-  INITIAL_HOSPITAL_CAMPAIGNS, INITIAL_MEDICAL_REPORTS, INITIAL_HOSPITAL_DOCTORS,
+  INITIAL_HOSPITAL_CAMPAIGNS, INITIAL_MEDICAL_REPORTS,
   INITIAL_FINANCIAL_VERIFICATIONS, INITIAL_HOSPITAL_NOTIFICATIONS,
   INITIAL_HOSPITAL_PROFILE, INITIAL_HOSPITAL_ACTIVITY_LOG,
   type AssignedPatient, type NgoReferral, type HospitalCampaign,
@@ -135,7 +135,7 @@ const isPreApprovedDemoAccount = (email: string) => {
 const getInitialHospitalData = (profileEmail: string) => {
   if (!profileEmail) {
     return {
-      patients: [], referrals: [], campaigns: [], reports: [], doctors: [], financialVerifications: [], notifications: [], activityLogs: []
+      patients: [], referrals: [], campaigns: [], reports: [], financialVerifications: [], notifications: [], activityLogs: []
     };
   }
 
@@ -154,7 +154,6 @@ const getInitialHospitalData = (profileEmail: string) => {
       referrals: INITIAL_NGO_REFERRALS,
       campaigns: INITIAL_HOSPITAL_CAMPAIGNS,
       reports: INITIAL_MEDICAL_REPORTS,
-      doctors: INITIAL_HOSPITAL_DOCTORS,
       financialVerifications: INITIAL_FINANCIAL_VERIFICATIONS,
       notifications: INITIAL_HOSPITAL_NOTIFICATIONS,
       activityLogs: INITIAL_HOSPITAL_ACTIVITY_LOG,
@@ -167,7 +166,6 @@ const getInitialHospitalData = (profileEmail: string) => {
     referrals: [],
     campaigns: [],
     reports: [],
-    doctors: [],
     financialVerifications: [],
     notifications: [
       {
@@ -204,7 +202,6 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   const [referrals, setReferrals] = useState<NgoReferral[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).referrals);
   const [campaigns, setCampaigns] = useState<HospitalCampaign[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).campaigns);
   const [reports, setReports] = useState<HospitalReport[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).reports);
-  const [doctors, setDoctors] = useState<HospitalDoctor[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).doctors);
   const [financialVerifications, setFinancialVerifications] = useState<FinancialAidVerification[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).financialVerifications);
   const [notifications, setNotifications] = useState<HospitalNotification[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).notifications);
   const [activityLogs, setActivityLogs] = useState<HospitalActivityLog[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).activityLogs);
@@ -223,25 +220,10 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
     setReferrals(data.referrals || []);
     setCampaigns(data.campaigns || []);
     setReports(data.reports || []);
-    setDoctors(data.doctors || []);
     setFinancialVerifications(data.financialVerifications || []);
     setNotifications(data.notifications || []);
     setActivityLogs(data.activityLogs || []);
   }, []);
-
-  // Compute dynamic KPI metrics
-  const kpiMetrics = useMemo(() => {
-    return {
-      totalReferredPatients: referrals.length + patients.length,
-      patientsUnderTreatment: patients.filter(p => p.treatmentStatus === 'Under Treatment').length,
-      completedTreatments: patients.filter(p => p.treatmentStatus === 'Completed').length,
-      upcomingAwarenessCamps: campaigns.filter(c => c.status === 'Upcoming').length,
-      assignedDoctorsCount: doctors.length,
-      pendingMedicalReports: reports.length,
-      financialAidRequestsCount: financialVerifications.filter(f => f.status === 'Pending Verification').length,
-      partnershipStatus: profile.accreditationStatus.includes('NABH') ? 'Active Partner' : 'Under Review',
-    };
-  }, [patients, referrals, campaigns, doctors, reports, financialVerifications, profile]);
 
   // Profile Edit State
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -327,6 +309,32 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   const apiToken = useMemo(() => getHospitalSession()?.accessToken || null, []);
   const { enquiries, refetch: refetchEnquiries } = useApiEnquiries(apiToken);
   const { notifications: hospitalNotifications } = useApiNotifications(apiToken);
+  const { doctors: apiDoctors, refetch: refetchDoctors } = useHospitalDoctors(apiToken);
+  const doctors: HospitalDoctor[] = useMemo(() => apiDoctors.map(d => ({
+    id: d.id,
+    name: d.name,
+    specialty: d.specialty,
+    qualification: d.qualification,
+    experienceYears: d.experienceYears,
+    phone: d.phone,
+    email: d.email,
+    availability: d.availability,
+    assignedPatientsCount: d.assignedPatientsCount,
+  })), [apiDoctors]);
+
+  // Compute dynamic KPI metrics
+  const kpiMetrics = useMemo(() => {
+    return {
+      totalReferredPatients: referrals.length + patients.length,
+      patientsUnderTreatment: patients.filter(p => p.treatmentStatus === 'Under Treatment').length,
+      completedTreatments: patients.filter(p => p.treatmentStatus === 'Completed').length,
+      upcomingAwarenessCamps: campaigns.filter(c => c.status === 'Upcoming').length,
+      assignedDoctorsCount: doctors.length,
+      pendingMedicalReports: reports.length,
+      financialAidRequestsCount: financialVerifications.filter(f => f.status === 'Pending Verification').length,
+      partnershipStatus: profile.accreditationStatus.includes('NABH') ? 'Active Partner' : 'Under Review',
+    };
+  }, [patients, referrals, campaigns, doctors, reports, financialVerifications, profile]);
 
   const assignedEnquiriesForThisHospital = useMemo(() => {
     return enquiries.filter(e =>
@@ -403,36 +411,41 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   };
 
   // ---- Doctor Management Handlers ----
-  const handleToggleDoctorAvailability = (docId: string) => {
-    setDoctors(prev => prev.map(d => {
-      if (d.id === docId) {
-        const nextState = d.availability === 'Available' ? 'In Surgery' : d.availability === 'In Surgery' ? 'On Leave' : 'Available';
-        showToast(`${d.name} availability set to ${nextState}`);
-        return { ...d, availability: nextState };
-      }
-      return d;
-    }));
+  const handleToggleDoctorAvailability = async (docId: string) => {
+    if (!apiToken) return;
+    const current = doctors.find(d => d.id === docId);
+    if (!current) return;
+    const nextState = current.availability === 'Available' ? 'In Surgery' : current.availability === 'In Surgery' ? 'On Leave' : 'Available';
+    try {
+      await updateMyHospitalDoctorAvailability(docId, nextState, apiToken);
+      showToast(`${current.name} availability set to ${nextState}`);
+      refetchDoctors();
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
-  const handleAddDoctorSubmit = (e: React.FormEvent) => {
+  const handleAddDoctorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!docName || !docQual) return;
-    const newDoc: HospitalDoctor = {
-      id: 'DOC-00' + (doctors.length + 1),
-      name: docName,
-      specialty: docSpecialty,
-      qualification: docQual,
-      experienceYears: parseInt(docExp) || 5,
-      phone: docPhone || '+91 98000 11122',
-      email: docEmail || 'doctor@rgcirc.org',
-      availability: 'Available',
-      assignedPatientsCount: 0
-    };
-    setDoctors(prev => [...prev, newDoc]);
-    setShowAddDoctorModal(false);
-    showToast(`Dr. ${docName} added to hospital directory.`);
-    addLog(`Added doctor ${docName}`, 'Doctor Management');
-    setDocName(''); setDocQual(''); setDocExp(''); setDocPhone(''); setDocEmail('');
+    if (!docName || !docQual || !docPhone || !docEmail || !apiToken) return;
+    try {
+      await addMyHospitalDoctor({
+        name: docName,
+        specialty: docSpecialty,
+        qualification: docQual,
+        experienceYears: parseInt(docExp) || 0,
+        phone: docPhone,
+        email: docEmail,
+        availability: 'Available',
+      }, apiToken);
+      setShowAddDoctorModal(false);
+      showToast(`Dr. ${docName} added to hospital directory.`);
+      addLog(`Added doctor ${docName}`, 'Doctor Management');
+      setDocName(''); setDocQual(''); setDocExp(''); setDocPhone(''); setDocEmail('');
+      refetchDoctors();
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   // ---- Report Handlers ----
@@ -785,6 +798,10 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
           setDocQual={setDocQual}
           docExp={docExp}
           setDocExp={setDocExp}
+          docPhone={docPhone}
+          setDocPhone={setDocPhone}
+          docEmail={docEmail}
+          setDocEmail={setDocEmail}
           onSubmit={handleAddDoctorSubmit}
         />
       )}

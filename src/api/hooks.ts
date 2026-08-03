@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyPatientEnquiries, listMyVolunteerFeedback, listMyVolunteerHours, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteerHoursMonthly, listVolunteers } from './client';
+import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyHospitalDoctors, listMyPatientEnquiries, listMyVolunteerFeedback, listMyVolunteerHours, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteerHoursMonthly, listVolunteers } from './client';
 import { mapApiAdmin, mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiCustomRole, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -116,6 +116,22 @@ export function usePatientRecords(token: string | null) {
     patientRecords: query.data ?? [],
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load patient records' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** A hospital's own doctor roster (Hospital Dashboard, self-service). */
+export function useHospitalDoctors(token: string | null) {
+  const query = useQuery({
+    queryKey: ['hospital-doctors-mine', token],
+    queryFn: () => listMyHospitalDoctors(token as string),
+    enabled: !!token,
+  });
+
+  return {
+    doctors: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load doctors' : null,
     refetch: query.refetch,
   };
 }

@@ -124,6 +124,10 @@ export function AddDoctorModal({
   setDocQual,
   docExp,
   setDocExp,
+  docPhone,
+  setDocPhone,
+  docEmail,
+  setDocEmail,
   onSubmit,
 }: {
   onClose: () => void;
@@ -135,6 +139,10 @@ export function AddDoctorModal({
   setDocQual: (val: string) => void;
   docExp: string;
   setDocExp: (val: string) => void;
+  docPhone: string;
+  setDocPhone: (val: string) => void;
+  docEmail: string;
+  setDocEmail: (val: string) => void;
   onSubmit: (e: React.FormEvent) => void;
 }) {
   return (
@@ -162,6 +170,14 @@ export function AddDoctorModal({
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Experience (Years)</label>
             <input type="number" value={docExp} onChange={e => setDocExp(e.target.value)} className="w-full p-2 rounded-xl border border-slate-200 bg-slate-50 text-xs" placeholder="15" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Phone *</label>
+            <input type="tel" required value={docPhone} onChange={e => setDocPhone(e.target.value)} className="w-full p-2 rounded-xl border border-slate-200 bg-slate-50 text-xs" placeholder="+91 98000 11122" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Email *</label>
+            <input type="email" required value={docEmail} onChange={e => setDocEmail(e.target.value)} className="w-full p-2 rounded-xl border border-slate-200 bg-slate-50 text-xs" placeholder="doctor@hospital.org" />
           </div>
           <div className="flex gap-2 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold">Cancel</button>

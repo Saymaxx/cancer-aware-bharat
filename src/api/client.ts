@@ -737,6 +737,49 @@ export function deletePatientRecord(id: string, token: string): Promise<void> {
   return request<void>(`/patient-records/${id}`, { method: 'DELETE' }, token);
 }
 
+// ---------------- Hospital Doctors (Hospital Dashboard, self-service) ----------------
+
+export interface ApiHospitalDoctor {
+  id: string;
+  hospitalId: string;
+  name: string;
+  specialty: string;
+  qualification: string;
+  experienceYears: number;
+  phone: string;
+  email: string;
+  availability: 'Available' | 'In Surgery' | 'On Leave';
+  assignedPatientsCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HospitalDoctorPayload {
+  name: string;
+  specialty: string;
+  qualification: string;
+  experienceYears: number;
+  phone: string;
+  email: string;
+  availability: 'Available' | 'In Surgery' | 'On Leave';
+}
+
+export function listMyHospitalDoctors(token: string): Promise<ApiHospitalDoctor[]> {
+  return request<ApiHospitalDoctor[]>('/hospital-doctors/mine', {}, token);
+}
+
+export function addMyHospitalDoctor(payload: HospitalDoctorPayload, token: string): Promise<ApiHospitalDoctor> {
+  return request<ApiHospitalDoctor>('/hospital-doctors/mine', { method: 'POST', body: JSON.stringify(payload) }, token);
+}
+
+export function updateMyHospitalDoctorAvailability(id: string, availability: string, token: string): Promise<ApiHospitalDoctor> {
+  return request<ApiHospitalDoctor>(`/hospital-doctors/mine/${id}`, { method: 'PATCH', body: JSON.stringify({ availability }) }, token);
+}
+
+export function removeMyHospitalDoctor(id: string, token: string): Promise<void> {
+  return request<void>(`/hospital-doctors/mine/${id}`, { method: 'DELETE' }, token);
+}
+
 // ---------------- Donations (Donations Audit) ----------------
 
 export interface ApiDonation {
