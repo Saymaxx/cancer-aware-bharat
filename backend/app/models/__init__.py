@@ -17,6 +17,7 @@ from app.models.audit_log import AuditLog
 from app.models.backup_record import BackupRecord
 from app.models.org_settings import OrgSettings
 from app.models.hospital_doctor import HospitalDoctor
+from app.models.ngo_referral import NgoReferral
 
 __all__ = [
     "User",
@@ -43,4 +44,5 @@ __all__ = [
     "BackupRecord",
     "OrgSettings",
     "HospitalDoctor",
+    "NgoReferral",
 ]
