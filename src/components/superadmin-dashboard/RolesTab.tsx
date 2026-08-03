@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react';
+import { Plus, AlertTriangle } from 'lucide-react';
 import type { CustomRole } from '../../superAdminDashboardData';
 
 export default function RolesTab({
@@ -18,6 +18,17 @@ export default function RolesTab({
         >
           <Plus className="w-4 h-4" /> Create Custom Role
         </button>
+      </div>
+
+      {/* Not a UI polish note -- this is load-bearing. Nothing anywhere
+          checks a role's permissions array; access control is still just
+          the raw admin/superadmin flag on the JWT. Without this, someone
+          creating a role here would reasonably assume it restricts access. */}
+      <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-amber-800">
+        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+        <p className="text-xs leading-relaxed">
+          <span className="font-bold">Permissions shown below are not yet enforced.</span> Roles and their permission lists are saved for record-keeping, but no endpoint currently checks them — every admin's actual access is still governed only by their Admin / Super Admin flag. Treat this as a directory, not an access control mechanism, until enforcement is built.
+        </p>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200/60 overflow-hidden shadow-xs">
