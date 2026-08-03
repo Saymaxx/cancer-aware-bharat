@@ -95,15 +95,6 @@ export interface FinancialAidVerification {
   notes: string;
 }
 
-export interface HospitalNotification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'patient' | 'campaign' | 'announcement' | 'financial' | 'reminder';
-  timestamp: string;
-  read: boolean;
-}
-
 export interface HospitalActivityLog {
   id: string;
   timestamp: string;
@@ -126,14 +117,6 @@ export const INITIAL_HOSPITAL_KPI: HospitalKpiMetrics = {
 
 // ---- Medical Reports ----
 // ---- Financial Aid Verifications ----
-// ---- Notifications ----
-export const INITIAL_HOSPITAL_NOTIFICATIONS: HospitalNotification[] = [
-  { id: 'NOTIF-H1', title: 'New NGO Patient Assigned', message: 'Patient Amitabh Sen (Esophageal Adenocarcinoma) referred by CAB Delhi node for urgent oncology review.', type: 'patient', timestamp: '10 mins ago', read: false },
-  { id: 'NOTIF-H2', title: 'Campaign Staffing Invitation', message: 'Lions Club Screening Camp scheduled for Jul 26 requires 2 senior oncologists on site.', type: 'campaign', timestamp: '1 hour ago', read: false },
-  { id: 'NOTIF-H3', title: 'Financial Aid Verification Approved', message: 'CAB Trust approved ₹1,50,000 subsidy for Sunita Devi (PAT-2026-8941).', type: 'financial', timestamp: '3 hours ago', read: true },
-  { id: 'NOTIF-H4', title: 'CAB Trust Admin Announcement', message: 'Q3 Partner Hospital Coordination Summit scheduled for Aug 10, 2026 via VC.', type: 'announcement', timestamp: 'Yesterday', read: true },
-];
-
 // ---- Hospital Profile Metadata ----
 export const INITIAL_HOSPITAL_PROFILE = {
   name: 'Rajiv Gandhi Cancer Institute & Research Centre',
@@ -162,15 +145,6 @@ export const INITIAL_HOSPITAL_PROFILE = {
     'Blood Bank & Component Separator', 'Bone Marrow Transplant Unit', 'Robotic Surgery Suite'
   ]
 };
-
-// ---- Activity Log ----
-export const INITIAL_HOSPITAL_ACTIVITY_LOG: HospitalActivityLog[] = [
-  { id: 'LOG-H01', timestamp: 'Jul 22, 2026 — 10:30 AM', action: 'Prescription Uploaded', user: 'Dr. Siddharth Roy', module: 'Patient Management' },
-  { id: 'LOG-H02', timestamp: 'Jul 22, 2026 — 09:15 AM', action: 'Hospital Partner Login Success', user: 'rgci@awarebharat.org', module: 'Authentication' },
-  { id: 'LOG-H03', timestamp: 'Jul 21, 2026 — 04:20 PM', action: 'Financial Aid Estimate Verified (₹1,50,000)', user: 'Hospital Admin', module: 'Financial Aid' },
-  { id: 'LOG-H04', timestamp: 'Jul 21, 2026 — 02:10 PM', action: 'Referral Accepted (Prakash Chandra)', user: 'Dr. Meenakshi Sundaram', module: 'Referrals' },
-  { id: 'LOG-H05', timestamp: 'Jul 20, 2026 — 11:45 AM', action: 'Doctor Assigned to Campaign (Lions Club Camp)', user: 'Dr. Sunita Agarwal', module: 'Campaigns' },
-];
 
 // ---- Analytics Chart Datasets ----
 export const MONTHLY_PATIENTS_TREATED = [

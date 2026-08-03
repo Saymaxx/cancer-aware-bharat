@@ -16,11 +16,10 @@ import { useSidebarState } from '../hooks/useSidebarState';
 
 import {
   INITIAL_HOSPITAL_KPI,
-  INITIAL_HOSPITAL_NOTIFICATIONS,
-  INITIAL_HOSPITAL_PROFILE, INITIAL_HOSPITAL_ACTIVITY_LOG,
+  INITIAL_HOSPITAL_PROFILE,
   type AssignedPatient, type NgoReferral, type HospitalCampaign,
   type HospitalReport, type HospitalDoctor, type FinancialAidVerification,
-  type HospitalNotification, type HospitalActivityLog
+  type HospitalActivityLog
 } from '../hospitalDashboardData';
 
 import OverviewTab from './hospital-dashboard/OverviewTab';
@@ -119,23 +118,13 @@ const getInitialHospitalProfile = () => {
   return INITIAL_HOSPITAL_PROFILE;
 };
 
-// Check if email belongs to static preapproved demo accounts
-const isPreApprovedDemoAccount = (email: string) => {
-  const demoEmails = [
-    'rgci@awarebharat.org',
-    'admin@maxhealthcare.com',
-    'info@fortishospitals.com',
-    'proton@apollohospitals.com'
-  ];
-  return demoEmails.includes((email || '').toLowerCase());
-};
-
-// Dynamic data loader: loads demo data ONLY for pre-approved accounts, and EMPTY [] data for newly registered hospitals
+// Dynamic data loader: activityLogs is client-derived (see addLog()) and
+// persisted per-hospital in localStorage; a fresh account just starts with
+// the one genuine "registered" entry, real or demo alike -- no fabricated
+// history is seeded for anyone.
 const getInitialHospitalData = (profileEmail: string) => {
   if (!profileEmail) {
-    return {
-      notifications: [], activityLogs: []
-    };
+    return { activityLogs: [] };
   }
 
   const storageKey = `aware_bharat_hospital_data_${profileEmail.toLowerCase()}`;
@@ -146,26 +135,7 @@ const getInitialHospitalData = (profileEmail: string) => {
     } catch (e) {}
   }
 
-  // Pre-approved accounts keep initial demo data
-  if (isPreApprovedDemoAccount(profileEmail)) {
-    return {
-      notifications: INITIAL_HOSPITAL_NOTIFICATIONS,
-      activityLogs: INITIAL_HOSPITAL_ACTIVITY_LOG,
-    };
-  }
-
-  // Newly registered hospital starts completely EMPTY — only registration details
   return {
-    notifications: [
-      {
-        id: 'NOTIF-INIT-1',
-        title: 'Partnership Registration Received',
-        message: 'Your application details have been loaded. Add your oncology doctors and medical staff to manage clinical intake.',
-        type: 'announcement',
-        timestamp: 'Just now',
-        read: false
-      }
-    ],
     activityLogs: [
       {
         id: 'LOG-INIT-1',
@@ -187,7 +157,6 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   const [profile, setProfile] = useState(() => getInitialHospitalProfile());
 
   // React State for tables - initialized from hospital-specific data store
-  const [notifications, setNotifications] = useState<HospitalNotification[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).notifications);
   const [activityLogs, setActivityLogs] = useState<HospitalActivityLog[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).activityLogs);
 
   // Sync profile & data on mount or session change
@@ -200,7 +169,6 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
     setEditProfileWebsite(fresh.website);
 
     const data = getInitialHospitalData(fresh.email);
-    setNotifications(data.notifications || []);
     setActivityLogs(data.activityLogs || []);
   }, []);
 
