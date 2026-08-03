@@ -236,22 +236,28 @@ export function AddDoctorModal({
 export function UploadReportModal({
   onClose,
   patients,
+  doctors,
   reportPatientId,
   setReportPatientId,
   reportType,
   setReportType,
-  reportFileName,
-  setReportFileName,
+  reportDoctorId,
+  setReportDoctorId,
+  reportFile,
+  setReportFile,
   onSubmit,
 }: {
   onClose: () => void;
   patients: AssignedPatient[];
+  doctors: HospitalDoctor[];
   reportPatientId: string;
   setReportPatientId: (val: string) => void;
   reportType: 'Prescription' | 'Lab Test' | 'Biopsy' | 'CT/MRI Scan' | 'Discharge Summary';
   setReportType: (val: 'Prescription' | 'Lab Test' | 'Biopsy' | 'CT/MRI Scan' | 'Discharge Summary') => void;
-  reportFileName: string;
-  setReportFileName: (val: string) => void;
+  reportDoctorId: string;
+  setReportDoctorId: (val: string) => void;
+  reportFile: File | null;
+  setReportFile: (val: File | null) => void;
   onSubmit: (e: React.FormEvent) => void;
 }) {
   return (
@@ -267,8 +273,9 @@ export function UploadReportModal({
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Select Patient</label>
             <select value={reportPatientId} onChange={e => setReportPatientId(e.target.value)} className="w-full p-2 rounded-xl border border-slate-200 bg-slate-50 text-xs">
+              <option value="">Select a patient...</option>
               {patients.map(p => (
-                <option key={p.id} value={p.id}>{p.name} ({p.ngoRefId})</option>
+                <option key={p.id} value={p.id}>{p.name} ({p.ngoRefId || p.id.slice(0, 8)})</option>
               ))}
             </select>
           </div>
@@ -283,8 +290,23 @@ export function UploadReportModal({
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Document File Name *</label>
-            <input type="text" required value={reportFileName} onChange={e => setReportFileName(e.target.value)} className="w-full p-2 rounded-xl border border-slate-200 bg-slate-50 text-xs" placeholder="e.g. Biopsy_Report_SunitaDevi.pdf" />
+            <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Uploaded By Doctor</label>
+            <select value={reportDoctorId} onChange={e => setReportDoctorId(e.target.value)} className="w-full p-2 rounded-xl border border-slate-200 bg-slate-50 text-xs">
+              <option value="">Unspecified</option>
+              {doctors.map(d => (
+                <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Document File (PDF, JPEG, or PNG) *</label>
+            <input
+              type="file"
+              required
+              accept="application/pdf,image/jpeg,image/png"
+              onChange={e => setReportFile(e.target.files?.[0] || null)}
+              className="w-full p-2 rounded-xl border border-slate-200 bg-slate-50 text-xs"
+            />
           </div>
           <div className="flex gap-2 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold">Cancel</button>

@@ -838,6 +838,67 @@ export function updateMyPatientRecord(id: string, token: string, payload: Patien
   return request<ApiPatientRecord>(`/patient-records/mine/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }, token);
 }
 
+// ---------------- Hospital Medical Reports (Hospital Dashboard, self-service) ----------------
+
+export interface ApiHospitalReport {
+  id: string;
+  patientRecordId: string;
+  patientName: string;
+  reportType: 'Prescription' | 'Lab Test' | 'Biopsy' | 'CT/MRI Scan' | 'Discharge Summary';
+  uploadedByDoctorId: string | null;
+  uploadedByDoctorName: string | null;
+  fileName: string;
+  fileSize: string;
+  fileType: string;
+  createdAt: string;
+}
+
+export function listMyHospitalReports(token: string, patientRecordId?: string): Promise<ApiHospitalReport[]> {
+  const query = patientRecordId ? `?patientRecordId=${patientRecordId}` : '';
+  return request<ApiHospitalReport[]>(`/hospital-reports/mine${query}`, {}, token);
+}
+
+export function uploadMyHospitalReport(
+  file: File,
+  patientRecordId: string,
+  reportType: ApiHospitalReport['reportType'],
+  uploadedByDoctorId: string | null,
+  token: string,
+): Promise<ApiHospitalReport> {
+  const form = new FormData();
+  form.append('file', file);
+  form.append('patientRecordId', patientRecordId);
+  form.append('reportType', reportType);
+  if (uploadedByDoctorId) form.append('uploadedByDoctorId', uploadedByDoctorId);
+  return request<ApiHospitalReport>('/hospital-reports/mine', { method: 'POST', body: form }, token);
+}
+
+// Same pattern as downloadEnquiryReport: the route requires a Bearer token,
+// so it's fetched as a blob and saved client-side rather than linked directly.
+export async function downloadMyHospitalReport(reportId: string, token: string, filename: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}${API_PREFIX}/hospital-reports/mine/${reportId}/download`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const body = await res.json();
+      detail = body.detail || detail;
+    } catch { /* non-JSON error body */ }
+    if (res.status === 401) handleUnauthorized();
+    throw new ApiError(res.status, detail);
+  }
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(objectUrl);
+}
+
 // ---------------- Donations (Donations Audit) ----------------
 
 export interface ApiDonation {

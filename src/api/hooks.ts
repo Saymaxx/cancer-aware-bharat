@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyHospitalDoctors, listMyNgoReferrals, listMyPatientEnquiries, listMyPatientRecords, listMyVolunteerFeedback, listMyVolunteerHours, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteerHoursMonthly, listVolunteers } from './client';
+import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyHospitalDoctors, listMyHospitalReports, listMyNgoReferrals, listMyPatientEnquiries, listMyPatientRecords, listMyVolunteerFeedback, listMyVolunteerHours, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteerHoursMonthly, listVolunteers } from './client';
 import { mapApiAdmin, mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiCustomRole, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -166,6 +166,23 @@ export function useMyPatientRecords(token: string | null) {
     patientRecords: query.data ?? [],
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load patient records' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Medical report documents uploaded for the logged-in hospital's own
+ * patients (Hospital Dashboard, self-service). */
+export function useMyHospitalReports(token: string | null) {
+  const query = useQuery({
+    queryKey: ['hospital-reports-mine', token],
+    queryFn: () => listMyHospitalReports(token as string),
+    enabled: !!token,
+  });
+
+  return {
+    reports: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load medical reports' : null,
     refetch: query.refetch,
   };
 }

@@ -5,8 +5,8 @@ import {
   DollarSign, Bell, TrendingUp, Terminal, CheckCircle2,
   HelpCircle, Settings, LogOut, Activity, Globe, Menu
 } from 'lucide-react';
-import { useApiEnquiries, useApiNotifications, useHospitalDoctors, useNgoReferrals, useMyPatientRecords } from '../api/hooks';
-import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, addMyHospitalDoctor, updateMyHospitalDoctorAvailability, acceptMyNgoReferral, declineMyNgoReferral, updateMyPatientRecord, ApiError, getHospitalSession } from '../api/client';
+import { useApiEnquiries, useApiNotifications, useHospitalDoctors, useNgoReferrals, useMyPatientRecords, useMyHospitalReports } from '../api/hooks';
+import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, addMyHospitalDoctor, updateMyHospitalDoctorAvailability, acceptMyNgoReferral, declineMyNgoReferral, updateMyPatientRecord, uploadMyHospitalReport, downloadMyHospitalReport, ApiError, getHospitalSession } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
@@ -16,7 +16,7 @@ import { useSidebarState } from '../hooks/useSidebarState';
 
 import {
   INITIAL_HOSPITAL_KPI,
-  INITIAL_HOSPITAL_CAMPAIGNS, INITIAL_MEDICAL_REPORTS,
+  INITIAL_HOSPITAL_CAMPAIGNS,
   INITIAL_FINANCIAL_VERIFICATIONS, INITIAL_HOSPITAL_NOTIFICATIONS,
   INITIAL_HOSPITAL_PROFILE, INITIAL_HOSPITAL_ACTIVITY_LOG,
   type AssignedPatient, type NgoReferral, type HospitalCampaign,
@@ -135,7 +135,7 @@ const isPreApprovedDemoAccount = (email: string) => {
 const getInitialHospitalData = (profileEmail: string) => {
   if (!profileEmail) {
     return {
-      campaigns: [], reports: [], financialVerifications: [], notifications: [], activityLogs: []
+      campaigns: [], financialVerifications: [], notifications: [], activityLogs: []
     };
   }
 
@@ -151,7 +151,6 @@ const getInitialHospitalData = (profileEmail: string) => {
   if (isPreApprovedDemoAccount(profileEmail)) {
     return {
       campaigns: INITIAL_HOSPITAL_CAMPAIGNS,
-      reports: INITIAL_MEDICAL_REPORTS,
       financialVerifications: INITIAL_FINANCIAL_VERIFICATIONS,
       notifications: INITIAL_HOSPITAL_NOTIFICATIONS,
       activityLogs: INITIAL_HOSPITAL_ACTIVITY_LOG,
@@ -161,7 +160,6 @@ const getInitialHospitalData = (profileEmail: string) => {
   // Newly registered hospital starts completely EMPTY — only registration details
   return {
     campaigns: [],
-    reports: [],
     financialVerifications: [],
     notifications: [
       {
@@ -195,7 +193,6 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
   // React State for tables - initialized from hospital-specific data store
   const [campaigns, setCampaigns] = useState<HospitalCampaign[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).campaigns);
-  const [reports, setReports] = useState<HospitalReport[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).reports);
   const [financialVerifications, setFinancialVerifications] = useState<FinancialAidVerification[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).financialVerifications);
   const [notifications, setNotifications] = useState<HospitalNotification[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).notifications);
   const [activityLogs, setActivityLogs] = useState<HospitalActivityLog[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).activityLogs);
@@ -211,7 +208,6 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
     const data = getInitialHospitalData(fresh.email);
     setCampaigns(data.campaigns || []);
-    setReports(data.reports || []);
     setFinancialVerifications(data.financialVerifications || []);
     setNotifications(data.notifications || []);
     setActivityLogs(data.activityLogs || []);
@@ -286,8 +282,8 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   // Form states (Upload Report)
   const [reportPatientId, setReportPatientId] = useState('');
   const [reportType, setReportType] = useState<'Prescription' | 'Lab Test' | 'Biopsy' | 'CT/MRI Scan' | 'Discharge Summary'>('Prescription');
-  const [reportDocName, setReportDocName] = useState('Dr. Siddharth Roy');
-  const [reportFileName, setReportFileName] = useState('');
+  const [reportDoctorId, setReportDoctorId] = useState('');
+  const [reportFile, setReportFile] = useState<File | null>(null);
 
   // Form states (Support Ticket)
   const [ticketSubject, setTicketSubject] = useState('');
@@ -352,6 +348,18 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
     prescriptionUploaded: r.prescriptionUploaded,
     remarks: r.remarks,
   })), [apiPatientRecords]);
+
+  const { reports: apiReports, refetch: refetchReports } = useMyHospitalReports(apiToken);
+  const reports: HospitalReport[] = useMemo(() => apiReports.map(r => ({
+    id: r.id,
+    patientId: r.patientRecordId,
+    patientName: r.patientName,
+    reportType: r.reportType,
+    uploadDate: new Date(r.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
+    uploadedByDoctor: r.uploadedByDoctorName || 'Unspecified',
+    fileSize: r.fileSize,
+    fileName: r.fileName,
+  })), [apiReports]);
 
   // Compute dynamic KPI metrics
   const kpiMetrics = useMemo(() => {
@@ -509,27 +517,30 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   };
 
   // ---- Report Handlers ----
-  const handleUploadReportSubmit = (e: React.FormEvent) => {
+  const handleUploadReportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reportFileName) return;
+    if (!reportFile || !reportPatientId || !apiToken) return;
     const targetPatient = patients.find(p => p.id === reportPatientId);
-    const newReport: HospitalReport = {
-      id: 'RPT-H0' + (reports.length + 1),
-      patientId: reportPatientId,
-      patientName: targetPatient?.name || 'Patient',
-      reportType,
-      uploadDate: new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
-      uploadedByDoctor: reportDocName,
-      fileSize: '1.5 MB',
-      fileName: reportFileName
-    };
-    setReports(prev => [newReport, ...prev]);
-    // reportsCount/prescriptionUploaded on the patient record itself will be
-    // wired for real in Phase N4, once Medical Reports has a real backend.
-    setShowUploadReportModal(false);
-    showToast(`Medical report "${reportFileName}" uploaded successfully.`);
-    addLog(`Uploaded ${reportType} for ${targetPatient?.name}`, 'Medical Reports');
-    setReportFileName('');
+    try {
+      await uploadMyHospitalReport(reportFile, reportPatientId, reportType, reportDoctorId || null, apiToken);
+      setShowUploadReportModal(false);
+      showToast(`Medical report "${reportFile.name}" uploaded successfully.`);
+      addLog(`Uploaded ${reportType} for ${targetPatient?.name}`, 'Medical Reports');
+      setReportFile(null);
+      refetchReports();
+      refetchPatientRecords();
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
+  };
+
+  const handleDownloadReport = async (reportId: string, fileName: string) => {
+    if (!apiToken) return;
+    try {
+      await downloadMyHospitalReport(reportId, apiToken, fileName);
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   // ---- Financial Verification Handler ----
@@ -736,7 +747,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
             <ReportsTab
               reports={reports}
               setShowUploadReportModal={setShowUploadReportModal}
-              showToast={showToast}
+              onDownload={handleDownloadReport}
             />
           )}
 
@@ -881,12 +892,15 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
         <UploadReportModal
           onClose={() => setShowUploadReportModal(false)}
           patients={patients}
+          doctors={doctors}
           reportPatientId={reportPatientId}
           setReportPatientId={setReportPatientId}
           reportType={reportType}
           setReportType={setReportType}
-          reportFileName={reportFileName}
-          setReportFileName={setReportFileName}
+          reportDoctorId={reportDoctorId}
+          setReportDoctorId={setReportDoctorId}
+          reportFile={reportFile}
+          setReportFile={setReportFile}
           onSubmit={handleUploadReportSubmit}
         />
       )}

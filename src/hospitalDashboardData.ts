@@ -149,13 +149,6 @@ export const INITIAL_HOSPITAL_CAMPAIGNS: HospitalCampaign[] = [
 ];
 
 // ---- Medical Reports ----
-export const INITIAL_MEDICAL_REPORTS: HospitalReport[] = [
-  { id: 'RPT-H01', patientId: 'HOSP-PAT-001', patientName: 'Sunita Devi', reportType: 'Biopsy', uploadDate: 'Jul 14, 2026', uploadedByDoctor: 'Dr. Siddharth Roy', fileSize: '2.4 MB', fileName: 'Biopsy_Histopathology_SunitaDevi.pdf' },
-  { id: 'RPT-H02', patientId: 'HOSP-PAT-001', patientName: 'Sunita Devi', reportType: 'CT/MRI Scan', uploadDate: 'Jul 16, 2026', uploadedByDoctor: 'Dr. Vikram Malhotra', fileSize: '14.8 MB', fileName: 'Contrast_CT_Chest_Sunita.pdf' },
-  { id: 'RPT-H03', patientId: 'HOSP-PAT-002', patientName: 'Rajesh Kumar', reportType: 'Lab Test', uploadDate: 'Jul 17, 2026', uploadedByDoctor: 'Dr. Meenakshi Sundaram', fileSize: '850 KB', fileName: 'CBC_LFT_KFT_Rajesh.pdf' },
-  { id: 'RPT-H04', patientId: 'HOSP-PAT-003', patientName: 'Ananya Mehta', reportType: 'Discharge Summary', uploadDate: 'Jun 22, 2026', uploadedByDoctor: 'Dr. Sunita Agarwal', fileSize: '1.2 MB', fileName: 'Discharge_Summary_Ananya.pdf' },
-];
-
 // ---- Financial Aid Verifications ----
 export const INITIAL_FINANCIAL_VERIFICATIONS: FinancialAidVerification[] = [
   { id: 'FA-VER-001', patientName: 'Sunita Devi', ngoCaseId: 'PAT-2026-8941', requestDate: 'Jul 13, 2026', estimatedCost: 180000, verifiedAmount: 150000, status: 'Cost Verified', department: 'Surgical Oncology', notes: '6 cycles Paclitaxel + Carboplatin. Cost estimation verified as per NGO subsidized rate card.' },

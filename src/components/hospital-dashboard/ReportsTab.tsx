@@ -4,11 +4,11 @@ import type { HospitalReport } from '../../hospitalDashboardData';
 export default function ReportsTab({
   reports,
   setShowUploadReportModal,
-  showToast,
+  onDownload,
 }: {
   reports: HospitalReport[];
   setShowUploadReportModal: (val: boolean) => void;
-  showToast: (msg: string) => void;
+  onDownload: (reportId: string, fileName: string) => void;
 }) {
   return (
     <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
@@ -57,7 +57,7 @@ export default function ReportsTab({
                     <td className="p-4 text-slate-500">{rpt.uploadDate}</td>
                     <td className="p-4 font-medium text-slate-700">{rpt.uploadedByDoctor}</td>
                     <td className="p-4 text-right">
-                      <button onClick={() => showToast(`Downloaded ${rpt.fileName}`)} className="px-3 py-1 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 text-[10px] cursor-pointer inline-flex items-center gap-1">
+                      <button onClick={() => onDownload(rpt.id, rpt.fileName)} className="px-3 py-1 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 text-[10px] cursor-pointer inline-flex items-center gap-1">
                         <Download className="w-3.5 h-3.5" /> Download
                       </button>
                     </td>
