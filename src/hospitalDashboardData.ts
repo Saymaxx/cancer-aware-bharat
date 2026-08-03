@@ -29,6 +29,7 @@ export interface AssignedPatient {
   reportsCount: number;
   prescriptionUploaded: boolean;
   remarks: string;
+  estimatedCost: number | null;
 }
 
 export interface NgoReferral {
@@ -150,12 +151,6 @@ export const INITIAL_HOSPITAL_CAMPAIGNS: HospitalCampaign[] = [
 
 // ---- Medical Reports ----
 // ---- Financial Aid Verifications ----
-export const INITIAL_FINANCIAL_VERIFICATIONS: FinancialAidVerification[] = [
-  { id: 'FA-VER-001', patientName: 'Sunita Devi', ngoCaseId: 'PAT-2026-8941', requestDate: 'Jul 13, 2026', estimatedCost: 180000, verifiedAmount: 150000, status: 'Cost Verified', department: 'Surgical Oncology', notes: '6 cycles Paclitaxel + Carboplatin. Cost estimation verified as per NGO subsidized rate card.' },
-  { id: 'FA-VER-002', patientName: 'Kamla Bai', ngoCaseId: 'PAT-2026-9551', requestDate: 'Jul 21, 2026', estimatedCost: 220000, verifiedAmount: 0, status: 'Pending Verification', department: 'ICU & Emergency', notes: 'Emergency ICU stabilization and palliative paracentesis cost estimate awaiting clinical audit approval.' },
-  { id: 'FA-VER-003', patientName: 'Rajesh Kumar', ngoCaseId: 'PAT-2026-9120', requestDate: 'Jul 16, 2026', estimatedCost: 140000, verifiedAmount: 140000, status: 'Aid Disbursed', department: 'Radiation Oncology', notes: 'IMRT Radiation therapy 30 fractions. Full aid approved and credited by CAB Trust.' },
-];
-
 // ---- Notifications ----
 export const INITIAL_HOSPITAL_NOTIFICATIONS: HospitalNotification[] = [
   { id: 'NOTIF-H1', title: 'New NGO Patient Assigned', message: 'Patient Amitabh Sen (Esophageal Adenocarcinoma) referred by CAB Delhi node for urgent oncology review.', type: 'patient', timestamp: '10 mins ago', read: false },

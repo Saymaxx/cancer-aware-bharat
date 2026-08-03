@@ -714,6 +714,9 @@ export interface ApiPatientRecord {
   remarks: string;
   prescriptionUploaded: boolean;
   reportsCount: number;
+  estimatedCost: number | null;
+  verifiedCost: number | null;
+  costVerificationStatus: 'Pending Verification' | 'Cost Verified' | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -828,6 +831,7 @@ export interface PatientRecordHospitalPatchPayload {
   assignedDoctorId?: string | null;
   admissionDate?: string | null;
   remarks?: string;
+  estimatedCost?: number | null;
 }
 
 export function listMyPatientRecords(token: string): Promise<ApiPatientRecord[]> {
@@ -836,6 +840,10 @@ export function listMyPatientRecords(token: string): Promise<ApiPatientRecord[]>
 
 export function updateMyPatientRecord(id: string, token: string, payload: PatientRecordHospitalPatchPayload): Promise<ApiPatientRecord> {
   return request<ApiPatientRecord>(`/patient-records/mine/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }, token);
+}
+
+export function verifyMyPatientCost(id: string, verifiedAmount: number, token: string): Promise<ApiPatientRecord> {
+  return request<ApiPatientRecord>(`/patient-records/mine/${id}/verify-cost`, { method: 'POST', body: JSON.stringify({ verifiedAmount }) }, token);
 }
 
 // ---------------- Hospital Medical Reports (Hospital Dashboard, self-service) ----------------

@@ -6,7 +6,7 @@ import {
   HelpCircle, Settings, LogOut, Activity, Globe, Menu
 } from 'lucide-react';
 import { useApiEnquiries, useApiNotifications, useHospitalDoctors, useNgoReferrals, useMyPatientRecords, useMyHospitalReports } from '../api/hooks';
-import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, addMyHospitalDoctor, updateMyHospitalDoctorAvailability, acceptMyNgoReferral, declineMyNgoReferral, updateMyPatientRecord, uploadMyHospitalReport, downloadMyHospitalReport, ApiError, getHospitalSession } from '../api/client';
+import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, addMyHospitalDoctor, updateMyHospitalDoctorAvailability, acceptMyNgoReferral, declineMyNgoReferral, updateMyPatientRecord, verifyMyPatientCost, uploadMyHospitalReport, downloadMyHospitalReport, ApiError, getHospitalSession } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
@@ -17,7 +17,7 @@ import { useSidebarState } from '../hooks/useSidebarState';
 import {
   INITIAL_HOSPITAL_KPI,
   INITIAL_HOSPITAL_CAMPAIGNS,
-  INITIAL_FINANCIAL_VERIFICATIONS, INITIAL_HOSPITAL_NOTIFICATIONS,
+  INITIAL_HOSPITAL_NOTIFICATIONS,
   INITIAL_HOSPITAL_PROFILE, INITIAL_HOSPITAL_ACTIVITY_LOG,
   type AssignedPatient, type NgoReferral, type HospitalCampaign,
   type HospitalReport, type HospitalDoctor, type FinancialAidVerification,
@@ -135,7 +135,7 @@ const isPreApprovedDemoAccount = (email: string) => {
 const getInitialHospitalData = (profileEmail: string) => {
   if (!profileEmail) {
     return {
-      campaigns: [], financialVerifications: [], notifications: [], activityLogs: []
+      campaigns: [], notifications: [], activityLogs: []
     };
   }
 
@@ -151,7 +151,6 @@ const getInitialHospitalData = (profileEmail: string) => {
   if (isPreApprovedDemoAccount(profileEmail)) {
     return {
       campaigns: INITIAL_HOSPITAL_CAMPAIGNS,
-      financialVerifications: INITIAL_FINANCIAL_VERIFICATIONS,
       notifications: INITIAL_HOSPITAL_NOTIFICATIONS,
       activityLogs: INITIAL_HOSPITAL_ACTIVITY_LOG,
     };
@@ -160,7 +159,6 @@ const getInitialHospitalData = (profileEmail: string) => {
   // Newly registered hospital starts completely EMPTY — only registration details
   return {
     campaigns: [],
-    financialVerifications: [],
     notifications: [
       {
         id: 'NOTIF-INIT-1',
@@ -193,7 +191,6 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
   // React State for tables - initialized from hospital-specific data store
   const [campaigns, setCampaigns] = useState<HospitalCampaign[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).campaigns);
-  const [financialVerifications, setFinancialVerifications] = useState<FinancialAidVerification[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).financialVerifications);
   const [notifications, setNotifications] = useState<HospitalNotification[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).notifications);
   const [activityLogs, setActivityLogs] = useState<HospitalActivityLog[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).activityLogs);
 
@@ -208,7 +205,6 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
     const data = getInitialHospitalData(fresh.email);
     setCampaigns(data.campaigns || []);
-    setFinancialVerifications(data.financialVerifications || []);
     setNotifications(data.notifications || []);
     setActivityLogs(data.activityLogs || []);
   }, []);
@@ -263,6 +259,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   const [editPatientDoctorId, setEditPatientDoctorId] = useState('');
   const [editPatientAdmissionDate, setEditPatientAdmissionDate] = useState('');
   const [editPatientRemarks, setEditPatientRemarks] = useState('');
+  const [editPatientEstimatedCost, setEditPatientEstimatedCost] = useState('');
   const [selectedReferralModal, setSelectedReferralModal] = useState<NgoReferral | null>(null);
   const [declineReasonText, setDeclineReasonText] = useState('');
   const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
@@ -347,6 +344,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
     reportsCount: r.reportsCount,
     prescriptionUploaded: r.prescriptionUploaded,
     remarks: r.remarks,
+    estimatedCost: r.estimatedCost,
   })), [apiPatientRecords]);
 
   const { reports: apiReports, refetch: refetchReports } = useMyHospitalReports(apiToken);
@@ -360,6 +358,27 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
     fileSize: r.fileSize,
     fileName: r.fileName,
   })), [apiReports]);
+
+  // A patient only shows up here once the hospital has set an estimated
+  // cost (via the profile modal); admin's separate financial_aid_status
+  // (Disbursed/Rejected) overlays the hospital's own verification once
+  // Admin has acted on it, closing the loop between the two workflows.
+  const financialVerifications: FinancialAidVerification[] = useMemo(() => apiPatientRecords
+    .filter(r => r.estimatedCost != null)
+    .map(r => ({
+      id: r.id,
+      patientName: r.name,
+      ngoCaseId: r.recordId,
+      requestDate: new Date(r.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
+      estimatedCost: r.estimatedCost as number,
+      verifiedAmount: r.financialAidStatus === 'Disbursed' ? (r.financialAidAmount ?? r.verifiedCost ?? 0) : (r.verifiedCost ?? 0),
+      status: r.financialAidStatus === 'Disbursed' ? 'Aid Disbursed'
+        : r.financialAidStatus === 'Rejected' ? 'Rejected'
+        : r.costVerificationStatus === 'Cost Verified' ? 'Cost Verified'
+        : 'Pending Verification',
+      department: doctors.find(d => d.id === r.assignedDoctorId)?.specialty || 'Not Assigned',
+      notes: r.remarks,
+    })), [apiPatientRecords, doctors]);
 
   // Compute dynamic KPI metrics
   const kpiMetrics = useMemo(() => {
@@ -427,6 +446,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
     setEditPatientDoctorId(doctors.find(d => d.name === patient.assignedDoctor)?.id || '');
     setEditPatientAdmissionDate(patient.admissionDate);
     setEditPatientRemarks(patient.remarks);
+    setEditPatientEstimatedCost(patient.estimatedCost != null ? String(patient.estimatedCost) : '');
   };
 
   const handleSavePatientProfile = async (e: React.FormEvent) => {
@@ -439,6 +459,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
         assignedDoctorId: editPatientDoctorId || null,
         admissionDate: editPatientAdmissionDate || null,
         remarks: editPatientRemarks,
+        estimatedCost: editPatientEstimatedCost ? parseFloat(editPatientEstimatedCost) : null,
       });
       showToast('Patient clinical profile updated.');
       addLog(`Updated clinical profile for ${selectedPatientModal.name}`, 'Patient Management');
@@ -544,15 +565,20 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   };
 
   // ---- Financial Verification Handler ----
-  const handleVerifyCostSubmit = (e: React.FormEvent) => {
+  const handleVerifyCostSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!showVerifyCostModal || !verifiedCostInput) return;
+    if (!showVerifyCostModal || !verifiedCostInput || !apiToken) return;
     const amt = parseInt(verifiedCostInput);
-    setFinancialVerifications(prev => prev.map(f => f.id === showVerifyCostModal.id ? { ...f, verifiedAmount: amt, status: 'Cost Verified' } : f));
-    setShowVerifyCostModal(null);
-    showToast(`Treatment cost of ₹${amt.toLocaleString()} verified and sent to NGO.`);
-    addLog(`Verified cost for ${showVerifyCostModal.patientName}`, 'Financial Aid');
-    setVerifiedCostInput('');
+    try {
+      await verifyMyPatientCost(showVerifyCostModal.id, amt, apiToken);
+      setShowVerifyCostModal(null);
+      showToast(`Treatment cost of ₹${amt.toLocaleString()} verified and sent to NGO.`);
+      addLog(`Verified cost for ${showVerifyCostModal.patientName}`, 'Financial Aid');
+      setVerifiedCostInput('');
+      refetchPatientRecords();
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   // ---- Sidebar Item Taxonomy ----
@@ -851,6 +877,8 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
           setEditAdmissionDate={setEditPatientAdmissionDate}
           editRemarks={editPatientRemarks}
           setEditRemarks={setEditPatientRemarks}
+          editEstimatedCost={editPatientEstimatedCost}
+          setEditEstimatedCost={setEditPatientEstimatedCost}
           onSubmit={handleSavePatientProfile}
         />
       )}

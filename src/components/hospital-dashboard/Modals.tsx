@@ -19,6 +19,8 @@ export function PatientProfileModal({
   setEditAdmissionDate,
   editRemarks,
   setEditRemarks,
+  editEstimatedCost,
+  setEditEstimatedCost,
   onSubmit,
 }: {
   patient: AssignedPatient;
@@ -34,6 +36,8 @@ export function PatientProfileModal({
   setEditAdmissionDate: (val: string) => void;
   editRemarks: string;
   setEditRemarks: (val: string) => void;
+  editEstimatedCost: string;
+  setEditEstimatedCost: (val: string) => void;
   onSubmit: (e: React.FormEvent) => void;
 }) {
   return (
@@ -78,6 +82,11 @@ export function PatientProfileModal({
                 <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Estimated Treatment Cost (INR)</label>
+            <input type="number" min="0" value={editEstimatedCost} onChange={e => setEditEstimatedCost(e.target.value)} placeholder="e.g. 180000" className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-xs" />
           </div>
 
           <div>
