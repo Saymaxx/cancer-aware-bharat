@@ -5,8 +5,8 @@ import {
   DollarSign, Bell, TrendingUp, Terminal, CheckCircle2,
   HelpCircle, Settings, LogOut, Activity, Globe, Menu
 } from 'lucide-react';
-import { useApiEnquiries, useApiNotifications, useHospitalDoctors } from '../api/hooks';
-import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, addMyHospitalDoctor, updateMyHospitalDoctorAvailability, ApiError, getHospitalSession } from '../api/client';
+import { useApiEnquiries, useApiNotifications, useHospitalDoctors, useNgoReferrals } from '../api/hooks';
+import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, addMyHospitalDoctor, updateMyHospitalDoctorAvailability, acceptMyNgoReferral, declineMyNgoReferral, ApiError, getHospitalSession } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
@@ -15,7 +15,7 @@ import DashboardSidebar, { SidebarFooterButton } from './common/DashboardSidebar
 import { useSidebarState } from '../hooks/useSidebarState';
 
 import {
-  INITIAL_HOSPITAL_KPI, INITIAL_ASSIGNED_PATIENTS, INITIAL_NGO_REFERRALS,
+  INITIAL_HOSPITAL_KPI, INITIAL_ASSIGNED_PATIENTS,
   INITIAL_HOSPITAL_CAMPAIGNS, INITIAL_MEDICAL_REPORTS,
   INITIAL_FINANCIAL_VERIFICATIONS, INITIAL_HOSPITAL_NOTIFICATIONS,
   INITIAL_HOSPITAL_PROFILE, INITIAL_HOSPITAL_ACTIVITY_LOG,
@@ -135,7 +135,7 @@ const isPreApprovedDemoAccount = (email: string) => {
 const getInitialHospitalData = (profileEmail: string) => {
   if (!profileEmail) {
     return {
-      patients: [], referrals: [], campaigns: [], reports: [], financialVerifications: [], notifications: [], activityLogs: []
+      patients: [], campaigns: [], reports: [], financialVerifications: [], notifications: [], activityLogs: []
     };
   }
 
@@ -151,7 +151,6 @@ const getInitialHospitalData = (profileEmail: string) => {
   if (isPreApprovedDemoAccount(profileEmail)) {
     return {
       patients: INITIAL_ASSIGNED_PATIENTS,
-      referrals: INITIAL_NGO_REFERRALS,
       campaigns: INITIAL_HOSPITAL_CAMPAIGNS,
       reports: INITIAL_MEDICAL_REPORTS,
       financialVerifications: INITIAL_FINANCIAL_VERIFICATIONS,
@@ -163,7 +162,6 @@ const getInitialHospitalData = (profileEmail: string) => {
   // Newly registered hospital starts completely EMPTY — only registration details
   return {
     patients: [],
-    referrals: [],
     campaigns: [],
     reports: [],
     financialVerifications: [],
@@ -199,7 +197,6 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
   // React State for tables - initialized from hospital-specific data store
   const [patients, setPatients] = useState<AssignedPatient[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).patients);
-  const [referrals, setReferrals] = useState<NgoReferral[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).referrals);
   const [campaigns, setCampaigns] = useState<HospitalCampaign[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).campaigns);
   const [reports, setReports] = useState<HospitalReport[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).reports);
   const [financialVerifications, setFinancialVerifications] = useState<FinancialAidVerification[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).financialVerifications);
@@ -217,7 +214,6 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
     const data = getInitialHospitalData(fresh.email);
     setPatients(data.patients || []);
-    setReferrals(data.referrals || []);
     setCampaigns(data.campaigns || []);
     setReports(data.reports || []);
     setFinancialVerifications(data.financialVerifications || []);
@@ -322,6 +318,21 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
     assignedPatientsCount: d.assignedPatientsCount,
   })), [apiDoctors]);
 
+  const { referrals: apiReferrals, refetch: refetchReferrals } = useNgoReferrals(apiToken);
+  const referrals: NgoReferral[] = useMemo(() => apiReferrals.map(r => ({
+    id: r.id,
+    patientName: r.patientName,
+    age: r.age,
+    gender: r.gender as NgoReferral['gender'],
+    referralDate: r.referralDate,
+    priority: r.priority,
+    cancerType: r.cancerType,
+    recommendedDepartment: r.recommendedDepartment,
+    referredByNgoAgent: r.referredByNgoAgent,
+    status: r.status,
+    declineReason: r.declineReason || undefined,
+  })), [apiReferrals]);
+
   // Compute dynamic KPI metrics
   const kpiMetrics = useMemo(() => {
     return {
@@ -394,20 +405,31 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   };
 
   // ---- Referral Handlers ----
-  const handleAcceptReferral = (refId: string) => {
-    setReferrals(prev => prev.map(r => r.id === refId ? { ...r, status: 'Accepted' } : r));
-    showToast('NGO referral accepted. Assigned to clinical intake.');
-    addLog(`Accepted referral ${refId}`, 'Referrals');
-    setSelectedReferralModal(null);
+  const handleAcceptReferral = async (refId: string) => {
+    if (!apiToken) return;
+    try {
+      await acceptMyNgoReferral(refId, apiToken);
+      showToast('NGO referral accepted. Assigned to clinical intake.');
+      addLog(`Accepted referral ${refId}`, 'Referrals');
+      setSelectedReferralModal(null);
+      refetchReferrals();
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
-  const handleDeclineReferral = (refId: string) => {
-    if (!declineReasonText.trim()) return;
-    setReferrals(prev => prev.map(r => r.id === refId ? { ...r, status: 'Declined', declineReason: declineReasonText } : r));
-    showToast('Referral declined with feedback to NGO admin.');
-    addLog(`Declined referral ${refId}`, 'Referrals');
-    setSelectedReferralModal(null);
-    setDeclineReasonText('');
+  const handleDeclineReferral = async (refId: string) => {
+    if (!declineReasonText.trim() || !apiToken) return;
+    try {
+      await declineMyNgoReferral(refId, declineReasonText, apiToken);
+      showToast('Referral declined with feedback to NGO admin.');
+      addLog(`Declined referral ${refId}`, 'Referrals');
+      setSelectedReferralModal(null);
+      setDeclineReasonText('');
+      refetchReferrals();
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   // ---- Doctor Management Handlers ----

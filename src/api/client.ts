@@ -780,6 +780,37 @@ export function removeMyHospitalDoctor(id: string, token: string): Promise<void>
   return request<void>(`/hospital-doctors/mine/${id}`, { method: 'DELETE' }, token);
 }
 
+// ---------------- NGO Referrals (Hospital Dashboard, self-service) ----------------
+
+export interface ApiNgoReferral {
+  id: string;
+  hospitalId: string;
+  patientName: string;
+  age: number;
+  gender: string;
+  referralDate: string;
+  priority: 'Normal' | 'Urgent' | 'Critical';
+  cancerType: string;
+  recommendedDepartment: string;
+  referredByNgoAgent: string;
+  status: 'Pending Action' | 'Accepted' | 'Declined';
+  declineReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function listMyNgoReferrals(token: string): Promise<ApiNgoReferral[]> {
+  return request<ApiNgoReferral[]>('/ngo-referrals/mine', {}, token);
+}
+
+export function acceptMyNgoReferral(id: string, token: string): Promise<ApiNgoReferral> {
+  return request<ApiNgoReferral>(`/ngo-referrals/mine/${id}/accept`, { method: 'POST' }, token);
+}
+
+export function declineMyNgoReferral(id: string, reason: string, token: string): Promise<ApiNgoReferral> {
+  return request<ApiNgoReferral>(`/ngo-referrals/mine/${id}/decline`, { method: 'POST', body: JSON.stringify({ reason }) }, token);
+}
+
 // ---------------- Donations (Donations Audit) ----------------
 
 export interface ApiDonation {

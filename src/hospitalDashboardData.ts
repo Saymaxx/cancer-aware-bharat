@@ -162,28 +162,6 @@ export const INITIAL_ASSIGNED_PATIENTS: AssignedPatient[] = [
   },
 ];
 
-// ---- NGO Patient Referrals ----
-export const INITIAL_NGO_REFERRALS: NgoReferral[] = [
-  {
-    id: 'REF-2026-081', patientName: 'Amitabh Sen', age: 58, gender: 'Male',
-    referralDate: 'Jul 21, 2026', priority: 'Critical', cancerType: 'Esophageal Adenocarcinoma',
-    recommendedDepartment: 'Gastrointestinal Oncology', referredByNgoAgent: 'Dr. Ramesh Sharma (Delhi Node)',
-    status: 'Pending Action',
-  },
-  {
-    id: 'REF-2026-082', patientName: 'Geeta Sharma', age: 42, gender: 'Female',
-    referralDate: 'Jul 20, 2026', priority: 'Urgent', cancerType: 'Invasive Lobular Carcinoma',
-    recommendedDepartment: 'Breast Services', referredByNgoAgent: 'Meera Iyer (Mumbai Node)',
-    status: 'Pending Action',
-  },
-  {
-    id: 'REF-2026-083', patientName: 'Prakash Chandra', age: 65, gender: 'Male',
-    referralDate: 'Jul 18, 2026', priority: 'Normal', cancerType: 'Prostate Adenocarcinoma',
-    recommendedDepartment: 'Uro Oncology', referredByNgoAgent: 'Dr. Ramesh Sharma (Delhi Node)',
-    status: 'Accepted',
-  },
-];
-
 // ---- Hospital Awareness Campaigns ----
 export const INITIAL_HOSPITAL_CAMPAIGNS: HospitalCampaign[] = [
   {
