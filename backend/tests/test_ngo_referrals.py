@@ -66,6 +66,21 @@ class TestAcceptReferral:
         assert resp.status_code == 200
         assert resp.json()["status"] == "Accepted"
 
+    def test_accepting_creates_assigned_patient_record(self, client, admin_token, hospital1_token, hospitals):
+        referral = _create_referral(client, admin_token, hospitals[0]["id"]).json()
+        client.post(f"/ngo-referrals/mine/{referral['id']}/accept", headers=auth_header(hospital1_token))
+
+        resp = client.get("/patient-records/mine", headers=auth_header(hospital1_token))
+        assert resp.status_code == 200
+        records = [r for r in resp.json() if r["ngoReferralId"] == referral["id"]]
+        assert len(records) == 1
+        record = records[0]
+        assert record["name"] == referral["patientName"]
+        assert record["age"] == referral["age"]
+        assert record["diagnosis"] == referral["cancerType"]
+        assert record["hospitalId"] == hospitals[0]["id"]
+        assert record["treatmentStatus"] == "Under Review"
+
     def test_cannot_accept_another_hospitals_referral(self, client, admin_token, hospital2_token, hospitals):
         referral = _create_referral(client, admin_token, hospitals[0]["id"]).json()
         resp = client.post(f"/ngo-referrals/mine/{referral['id']}/accept", headers=auth_header(hospital2_token))

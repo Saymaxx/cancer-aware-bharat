@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import String, Numeric, DateTime, ForeignKey, func
+from sqlalchemy import Boolean, Date, String, Numeric, DateTime, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -9,6 +9,7 @@ from app.core.database import Base
 
 FINANCIAL_AID_STATUSES = ("Not Requested", "Pending Review", "Approved", "Disbursed", "Rejected")
 CASE_STATUSES = ("Under Treatment", "Recovered", "Screened - Healthy", "Follow-up")
+TREATMENT_STATUSES = ("Under Review", "Under Treatment", "Completed", "Referred", "Emergency")
 
 
 class PatientRecord(Base):
@@ -42,6 +43,21 @@ class PatientRecord(Base):
     financial_aid_amount: Mapped[float | None] = mapped_column(Numeric(12, 2))
     report_url: Mapped[str | None] = mapped_column(String(1000))
     case_status: Mapped[str] = mapped_column(String(30), nullable=False, default="Under Treatment")
+
+    # Hospital-side clinical intake fields (Phase N3) -- distinct from
+    # case_status above, which is CAB/admin's own case-lifecycle tracking.
+    # A record only gets these once a hospital has actually taken the
+    # patient in; they're set either by accepting an NgoReferral (see
+    # ngo_referrals.py) or via the hospital's own PATCH /mine/{id}.
+    ngo_referral_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("ngo_referrals.id"), index=True)
+    treatment_status: Mapped[str] = mapped_column(String(30), nullable=False, default="Under Review")
+    cancer_stage: Mapped[str | None] = mapped_column(String(50))
+    assigned_doctor_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("hospital_doctors.id"))
+    # Denormalized snapshot, matching hospital_name's convention above.
+    assigned_doctor_name: Mapped[str | None] = mapped_column(String(200))
+    admission_date: Mapped[date | None] = mapped_column(Date)
+    remarks: Mapped[str] = mapped_column(String(2000), nullable=False, default="")
+    prescription_uploaded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

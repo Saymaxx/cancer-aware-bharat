@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Annotated
 from uuid import UUID
 
@@ -5,8 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.limiter import limiter
+from app.core.security import generate_numeric_id
 from app.deps import DbSession, current_hospital_id, require_admin_or_superadmin
+from app.models.hospital import Hospital
 from app.models.ngo_referral import NgoReferral
+from app.models.patient_record import PatientRecord
 from app.schemas.ngo_referral import NgoReferralDeclineIn, NgoReferralIn, NgoReferralOut
 from app.services.notifications import notify
 
@@ -71,6 +75,24 @@ def accept_my_referral(
     if referral.status != "Pending Action":
         raise HTTPException(status.HTTP_409_CONFLICT, f"Cannot accept a referral that is currently '{referral.status}'")
     referral.status = "Accepted"
+
+    # Accepting is what "assigns clinical intake" per the Referrals tab's
+    # own copy -- so it creates the hospital's assigned-patient record
+    # (Phase N3), not just a status flip.
+    hospital = db.query(Hospital).filter(Hospital.id == hospital_id).first()
+    year = datetime.now(timezone.utc).year
+    record = PatientRecord(
+        record_id=f"CASE-{year}-{generate_numeric_id()}",
+        name=referral.patient_name,
+        age=referral.age,
+        gender=referral.gender,
+        diagnosis=referral.cancer_type,
+        hospital_id=hospital_id,
+        hospital_name=hospital.name if hospital else None,
+        ngo_referral_id=referral.id,
+    )
+    db.add(record)
+
     db.commit()
     db.refresh(referral)
     return referral
