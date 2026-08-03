@@ -5,8 +5,8 @@ import {
   DollarSign, Bell, TrendingUp, Terminal, CheckCircle2,
   HelpCircle, Settings, LogOut, Activity, Globe, Menu
 } from 'lucide-react';
-import { useApiEnquiries, useApiNotifications, useHospitalDoctors, useNgoReferrals } from '../api/hooks';
-import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, addMyHospitalDoctor, updateMyHospitalDoctorAvailability, acceptMyNgoReferral, declineMyNgoReferral, ApiError, getHospitalSession } from '../api/client';
+import { useApiEnquiries, useApiNotifications, useHospitalDoctors, useNgoReferrals, useMyPatientRecords } from '../api/hooks';
+import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, addMyHospitalDoctor, updateMyHospitalDoctorAvailability, acceptMyNgoReferral, declineMyNgoReferral, updateMyPatientRecord, ApiError, getHospitalSession } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
@@ -15,7 +15,7 @@ import DashboardSidebar, { SidebarFooterButton } from './common/DashboardSidebar
 import { useSidebarState } from '../hooks/useSidebarState';
 
 import {
-  INITIAL_HOSPITAL_KPI, INITIAL_ASSIGNED_PATIENTS,
+  INITIAL_HOSPITAL_KPI,
   INITIAL_HOSPITAL_CAMPAIGNS, INITIAL_MEDICAL_REPORTS,
   INITIAL_FINANCIAL_VERIFICATIONS, INITIAL_HOSPITAL_NOTIFICATIONS,
   INITIAL_HOSPITAL_PROFILE, INITIAL_HOSPITAL_ACTIVITY_LOG,
@@ -135,7 +135,7 @@ const isPreApprovedDemoAccount = (email: string) => {
 const getInitialHospitalData = (profileEmail: string) => {
   if (!profileEmail) {
     return {
-      patients: [], campaigns: [], reports: [], financialVerifications: [], notifications: [], activityLogs: []
+      campaigns: [], reports: [], financialVerifications: [], notifications: [], activityLogs: []
     };
   }
 
@@ -150,7 +150,6 @@ const getInitialHospitalData = (profileEmail: string) => {
   // Pre-approved accounts keep initial demo data
   if (isPreApprovedDemoAccount(profileEmail)) {
     return {
-      patients: INITIAL_ASSIGNED_PATIENTS,
       campaigns: INITIAL_HOSPITAL_CAMPAIGNS,
       reports: INITIAL_MEDICAL_REPORTS,
       financialVerifications: INITIAL_FINANCIAL_VERIFICATIONS,
@@ -161,7 +160,6 @@ const getInitialHospitalData = (profileEmail: string) => {
 
   // Newly registered hospital starts completely EMPTY — only registration details
   return {
-    patients: [],
     campaigns: [],
     reports: [],
     financialVerifications: [],
@@ -196,7 +194,6 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   const [profile, setProfile] = useState(() => getInitialHospitalProfile());
 
   // React State for tables - initialized from hospital-specific data store
-  const [patients, setPatients] = useState<AssignedPatient[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).patients);
   const [campaigns, setCampaigns] = useState<HospitalCampaign[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).campaigns);
   const [reports, setReports] = useState<HospitalReport[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).reports);
   const [financialVerifications, setFinancialVerifications] = useState<FinancialAidVerification[]>(() => getInitialHospitalData(getInitialHospitalProfile().email).financialVerifications);
@@ -213,7 +210,6 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
     setEditProfileWebsite(fresh.website);
 
     const data = getInitialHospitalData(fresh.email);
-    setPatients(data.patients || []);
     setCampaigns(data.campaigns || []);
     setReports(data.reports || []);
     setFinancialVerifications(data.financialVerifications || []);
@@ -266,6 +262,11 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
 
   // Modals state
   const [selectedPatientModal, setSelectedPatientModal] = useState<AssignedPatient | null>(null);
+  const [editPatientStatus, setEditPatientStatus] = useState<AssignedPatient['treatmentStatus']>('Under Review');
+  const [editPatientCancerStage, setEditPatientCancerStage] = useState('');
+  const [editPatientDoctorId, setEditPatientDoctorId] = useState('');
+  const [editPatientAdmissionDate, setEditPatientAdmissionDate] = useState('');
+  const [editPatientRemarks, setEditPatientRemarks] = useState('');
   const [selectedReferralModal, setSelectedReferralModal] = useState<NgoReferral | null>(null);
   const [declineReasonText, setDeclineReasonText] = useState('');
   const [showAddDoctorModal, setShowAddDoctorModal] = useState(false);
@@ -283,7 +284,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   const [docEmail, setDocEmail] = useState('');
 
   // Form states (Upload Report)
-  const [reportPatientId, setReportPatientId] = useState(patients[0]?.id || '');
+  const [reportPatientId, setReportPatientId] = useState('');
   const [reportType, setReportType] = useState<'Prescription' | 'Lab Test' | 'Biopsy' | 'CT/MRI Scan' | 'Discharge Summary'>('Prescription');
   const [reportDocName, setReportDocName] = useState('Dr. Siddharth Roy');
   const [reportFileName, setReportFileName] = useState('');
@@ -332,6 +333,25 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
     status: r.status,
     declineReason: r.declineReason || undefined,
   })), [apiReferrals]);
+
+  const { patientRecords: apiPatientRecords, refetch: refetchPatientRecords } = useMyPatientRecords(apiToken);
+  const patients: AssignedPatient[] = useMemo(() => apiPatientRecords.map(r => ({
+    id: r.id,
+    ngoRefId: r.ngoReferralId || '',
+    name: r.name,
+    age: r.age,
+    gender: r.gender as AssignedPatient['gender'],
+    diagnosis: r.diagnosis,
+    cancerStage: r.cancerStage || '',
+    treatmentStatus: r.treatmentStatus,
+    assignedDoctor: r.assignedDoctorName || 'Unassigned',
+    admissionDate: r.admissionDate || '',
+    city: '',
+    phone: '',
+    reportsCount: r.reportsCount,
+    prescriptionUploaded: r.prescriptionUploaded,
+    remarks: r.remarks,
+  })), [apiPatientRecords]);
 
   // Compute dynamic KPI metrics
   const kpiMetrics = useMemo(() => {
@@ -392,16 +412,33 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   };
 
   // ---- Patient Management Handlers ----
-  const handleUpdatePatientStatus = (patientId: string, status: AssignedPatient['treatmentStatus']) => {
-    setPatients(prev => prev.map(p => p.id === patientId ? { ...p, treatmentStatus: status } : p));
-    showToast(`Patient status updated to "${status}"`);
-    addLog(`Patient ${patientId} status changed to ${status}`, 'Patient Management');
+  const handleOpenPatientModal = (patient: AssignedPatient) => {
+    setSelectedPatientModal(patient);
+    setEditPatientStatus(patient.treatmentStatus);
+    setEditPatientCancerStage(patient.cancerStage);
+    setEditPatientDoctorId(doctors.find(d => d.name === patient.assignedDoctor)?.id || '');
+    setEditPatientAdmissionDate(patient.admissionDate);
+    setEditPatientRemarks(patient.remarks);
   };
 
-  const handleAddPatientRemark = (patientId: string, remarks: string) => {
-    setPatients(prev => prev.map(p => p.id === patientId ? { ...p, remarks } : p));
-    showToast('Doctor remarks saved successfully');
-    addLog(`Updated remarks for patient ${patientId}`, 'Patient Management');
+  const handleSavePatientProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPatientModal || !apiToken) return;
+    try {
+      await updateMyPatientRecord(selectedPatientModal.id, apiToken, {
+        treatmentStatus: editPatientStatus,
+        cancerStage: editPatientCancerStage || null,
+        assignedDoctorId: editPatientDoctorId || null,
+        admissionDate: editPatientAdmissionDate || null,
+        remarks: editPatientRemarks,
+      });
+      showToast('Patient clinical profile updated.');
+      addLog(`Updated clinical profile for ${selectedPatientModal.name}`, 'Patient Management');
+      setSelectedPatientModal(null);
+      refetchPatientRecords();
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   // ---- Referral Handlers ----
@@ -413,6 +450,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
       addLog(`Accepted referral ${refId}`, 'Referrals');
       setSelectedReferralModal(null);
       refetchReferrals();
+      refetchPatientRecords();
     } catch (err) {
       showToast(err instanceof ApiError ? err.message : 'Unable to reach the server.');
     }
@@ -486,8 +524,8 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
       fileName: reportFileName
     };
     setReports(prev => [newReport, ...prev]);
-    // increment patient report count
-    setPatients(prev => prev.map(p => p.id === reportPatientId ? { ...p, reportsCount: p.reportsCount + 1, prescriptionUploaded: reportType === 'Prescription' ? true : p.prescriptionUploaded } : p));
+    // reportsCount/prescriptionUploaded on the patient record itself will be
+    // wired for real in Phase N4, once Medical Reports has a real backend.
     setShowUploadReportModal(false);
     showToast(`Medical report "${reportFileName}" uploaded successfully.`);
     addLog(`Uploaded ${reportType} for ${targetPatient?.name}`, 'Medical Reports');
@@ -667,7 +705,7 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               setPatientStatusFilter={setPatientStatusFilter}
               filteredPatients={filteredPatients}
               hospitalName={profile.name}
-              setSelectedPatientModal={setSelectedPatientModal}
+              setSelectedPatientModal={handleOpenPatientModal}
             />
           )}
 
@@ -790,9 +828,19 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
       {selectedPatientModal && (
         <PatientProfileModal
           patient={selectedPatientModal}
+          doctors={doctors}
           onClose={() => setSelectedPatientModal(null)}
-          onUpdateStatus={handleUpdatePatientStatus}
-          onUpdateRemarks={handleAddPatientRemark}
+          editStatus={editPatientStatus}
+          setEditStatus={setEditPatientStatus}
+          editCancerStage={editPatientCancerStage}
+          setEditCancerStage={setEditPatientCancerStage}
+          editDoctorId={editPatientDoctorId}
+          setEditDoctorId={setEditPatientDoctorId}
+          editAdmissionDate={editPatientAdmissionDate}
+          setEditAdmissionDate={setEditPatientAdmissionDate}
+          editRemarks={editPatientRemarks}
+          setEditRemarks={setEditPatientRemarks}
+          onSubmit={handleSavePatientProfile}
         />
       )}
 

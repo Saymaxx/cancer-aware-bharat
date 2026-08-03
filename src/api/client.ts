@@ -705,6 +705,15 @@ export interface ApiPatientRecord {
   financialAidAmount: number | null;
   reportUrl: string | null;
   caseStatus: 'Under Treatment' | 'Recovered' | 'Screened - Healthy' | 'Follow-up';
+  ngoReferralId: string | null;
+  treatmentStatus: 'Under Review' | 'Under Treatment' | 'Completed' | 'Referred' | 'Emergency';
+  cancerStage: string | null;
+  assignedDoctorId: string | null;
+  assignedDoctorName: string | null;
+  admissionDate: string | null;
+  remarks: string;
+  prescriptionUploaded: boolean;
+  reportsCount: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -809,6 +818,24 @@ export function acceptMyNgoReferral(id: string, token: string): Promise<ApiNgoRe
 
 export function declineMyNgoReferral(id: string, reason: string, token: string): Promise<ApiNgoReferral> {
   return request<ApiNgoReferral>(`/ngo-referrals/mine/${id}/decline`, { method: 'POST', body: JSON.stringify({ reason }) }, token);
+}
+
+// ---------------- Patient Records (Hospital Dashboard, self-service) ----------------
+
+export interface PatientRecordHospitalPatchPayload {
+  treatmentStatus?: ApiPatientRecord['treatmentStatus'];
+  cancerStage?: string | null;
+  assignedDoctorId?: string | null;
+  admissionDate?: string | null;
+  remarks?: string;
+}
+
+export function listMyPatientRecords(token: string): Promise<ApiPatientRecord[]> {
+  return request<ApiPatientRecord[]>('/patient-records/mine', {}, token);
+}
+
+export function updateMyPatientRecord(id: string, token: string, payload: PatientRecordHospitalPatchPayload): Promise<ApiPatientRecord> {
+  return request<ApiPatientRecord>(`/patient-records/mine/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }, token);
 }
 
 // ---------------- Donations (Donations Audit) ----------------

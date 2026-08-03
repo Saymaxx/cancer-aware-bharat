@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyHospitalDoctors, listMyNgoReferrals, listMyPatientEnquiries, listMyVolunteerFeedback, listMyVolunteerHours, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteerHoursMonthly, listVolunteers } from './client';
+import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyHospitalDoctors, listMyNgoReferrals, listMyPatientEnquiries, listMyPatientRecords, listMyVolunteerFeedback, listMyVolunteerHours, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteerHoursMonthly, listVolunteers } from './client';
 import { mapApiAdmin, mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiCustomRole, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -148,6 +148,24 @@ export function useNgoReferrals(token: string | null) {
     referrals: query.data ?? [],
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load referrals' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Patients assigned to the logged-in hospital (Hospital Dashboard,
+ * self-service) -- distinct from usePatientRecords, which is Admin's
+ * cross-hospital case-record manager. */
+export function useMyPatientRecords(token: string | null) {
+  const query = useQuery({
+    queryKey: ['patient-records-mine', token],
+    queryFn: () => listMyPatientRecords(token as string),
+    enabled: !!token,
+  });
+
+  return {
+    patientRecords: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load patient records' : null,
     refetch: query.refetch,
   };
 }

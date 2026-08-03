@@ -7,14 +7,34 @@ import type { PatientEnquiry } from '../../types';
 // 1. VIEW PATIENT PROFILE MODAL
 export function PatientProfileModal({
   patient,
+  doctors,
   onClose,
-  onUpdateStatus,
-  onUpdateRemarks,
+  editStatus,
+  setEditStatus,
+  editCancerStage,
+  setEditCancerStage,
+  editDoctorId,
+  setEditDoctorId,
+  editAdmissionDate,
+  setEditAdmissionDate,
+  editRemarks,
+  setEditRemarks,
+  onSubmit,
 }: {
   patient: AssignedPatient;
+  doctors: HospitalDoctor[];
   onClose: () => void;
-  onUpdateStatus: (patientId: string, status: AssignedPatient['treatmentStatus']) => void;
-  onUpdateRemarks: (patientId: string, remarks: string) => void;
+  editStatus: AssignedPatient['treatmentStatus'];
+  setEditStatus: (val: AssignedPatient['treatmentStatus']) => void;
+  editCancerStage: string;
+  setEditCancerStage: (val: string) => void;
+  editDoctorId: string;
+  setEditDoctorId: (val: string) => void;
+  editAdmissionDate: string;
+  setEditAdmissionDate: (val: string) => void;
+  editRemarks: string;
+  setEditRemarks: (val: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
 }) {
   return (
     <div
@@ -28,21 +48,43 @@ export function PatientProfileModal({
           <span id="patient-profile-modal-title" className="font-bold text-sm">Patient Clinical Profile — {patient.name}</span>
           <button onClick={onClose} aria-label="Close" className="text-white/70 hover:text-white">✕</button>
         </div>
-        <div className="p-6 overflow-y-auto space-y-4 text-xs">
+        <form onSubmit={onSubmit} className="p-6 overflow-y-auto space-y-4 text-xs">
           <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
-            <p><strong>NGO Ref:</strong> {patient.ngoRefId}</p>
+            <p><strong>NGO Ref:</strong> {patient.ngoRefId || '—'}</p>
             <p><strong>Age / Gender:</strong> {patient.age} / {patient.gender}</p>
-            <p><strong>Diagnosis:</strong> {patient.diagnosis}</p>
-            <p><strong>Cancer Stage:</strong> {patient.cancerStage}</p>
-            <p><strong>Assigned Doctor:</strong> {patient.assignedDoctor}</p>
-            <p><strong>Current Status:</strong> {patient.treatmentStatus}</p>
+            <p className="col-span-2"><strong>Diagnosis:</strong> {patient.diagnosis}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Cancer Stage</label>
+              <input type="text" value={editCancerStage} onChange={e => setEditCancerStage(e.target.value)} placeholder="e.g. Stage IIB" className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-xs" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Admission Date</label>
+              <input type="date" value={editAdmissionDate} onChange={e => setEditAdmissionDate(e.target.value)} className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-xs" />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Assigned Doctor</label>
+            <select
+              value={editDoctorId}
+              onChange={e => setEditDoctorId(e.target.value)}
+              className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-bold text-xs"
+            >
+              <option value="">Unassigned</option>
+              {doctors.map(d => (
+                <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
+              ))}
+            </select>
           </div>
 
           <div>
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Update Patient Treatment Status</label>
             <select
-              value={patient.treatmentStatus}
-              onChange={e => onUpdateStatus(patient.id, e.target.value as any)}
+              value={editStatus}
+              onChange={e => setEditStatus(e.target.value as AssignedPatient['treatmentStatus'])}
               className="w-full p-2.5 rounded-xl border border-slate-200 bg-white font-bold text-xs"
             >
               <option value="Under Review">Under Review</option>
@@ -57,16 +99,17 @@ export function PatientProfileModal({
             <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Doctor Clinical Remarks</label>
             <textarea
               rows={3}
-              value={patient.remarks}
-              onChange={e => onUpdateRemarks(patient.id, e.target.value)}
+              value={editRemarks}
+              onChange={e => setEditRemarks(e.target.value)}
               className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-xs"
             />
           </div>
 
-          <div className="flex justify-end pt-3 border-t">
-            <button onClick={onClose} className="px-5 py-2 bg-primary text-white font-bold text-xs rounded-xl hover:opacity-90">Close</button>
+          <div className="flex justify-end gap-2 pt-3 border-t">
+            <button type="button" onClick={onClose} className="px-5 py-2 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-200">Cancel</button>
+            <button type="submit" className="px-5 py-2 bg-primary text-white font-bold text-xs rounded-xl hover:opacity-90">Save Changes</button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

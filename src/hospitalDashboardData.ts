@@ -123,45 +123,6 @@ export const INITIAL_HOSPITAL_KPI: HospitalKpiMetrics = {
   partnershipStatus: 'Active Partner',
 };
 
-// ---- Assigned NGO Patients ----
-export const INITIAL_ASSIGNED_PATIENTS: AssignedPatient[] = [
-  {
-    id: 'HOSP-PAT-001', ngoRefId: 'PAT-2026-8941', name: 'Sunita Devi', age: 48, gender: 'Female',
-    diagnosis: 'Invasive Ductal Carcinoma (Breast Cancer)', cancerStage: 'Stage IIB',
-    treatmentStatus: 'Under Treatment', assignedDoctor: 'Dr. Siddharth Roy (Surgical Oncology)',
-    admissionDate: 'Jul 12, 2026', city: 'Rohini, New Delhi', phone: '+91 98112 34567',
-    reportsCount: 4, prescriptionUploaded: true, remarks: 'Cycle 3 chemotherapy scheduled for Jul 26. Tolerating well.',
-  },
-  {
-    id: 'HOSP-PAT-002', ngoRefId: 'PAT-2026-9120', name: 'Rajesh Kumar', age: 54, gender: 'Male',
-    diagnosis: 'Squamous Cell Carcinoma (Oral Cavity)', cancerStage: 'Stage III',
-    treatmentStatus: 'Under Treatment', assignedDoctor: 'Dr. Meenakshi Sundaram (Head & Neck)',
-    admissionDate: 'Jul 15, 2026', city: 'Dwarka, New Delhi', phone: '+91 99543 21098',
-    reportsCount: 3, prescriptionUploaded: true, remarks: 'Post-operative radiation planning in progress.',
-  },
-  {
-    id: 'HOSP-PAT-003', ngoRefId: 'PAT-2026-7782', name: 'Ananya Mehta', age: 36, gender: 'Female',
-    diagnosis: 'High-Grade Cervical Intraepithelial Neoplasia', cancerStage: 'Stage I',
-    treatmentStatus: 'Completed', assignedDoctor: 'Dr. Sunita Agarwal (GynecOncology)',
-    admissionDate: 'Jun 20, 2026', city: 'Saket, New Delhi', phone: '+91 98765 12345',
-    reportsCount: 5, prescriptionUploaded: true, remarks: 'Cryotherapy treatment successful. Biopsy clear on follow-up.',
-  },
-  {
-    id: 'HOSP-PAT-004', ngoRefId: 'PAT-2026-9430', name: 'Harpreet Singh', age: 62, gender: 'Male',
-    diagnosis: 'Non-Small Cell Lung Carcinoma', cancerStage: 'Stage IIIA',
-    treatmentStatus: 'Under Review', assignedDoctor: 'Dr. Vikram Malhotra (Radiation)',
-    admissionDate: 'Jul 20, 2026', city: 'Gurugram, Haryana', phone: '+91 97188 54321',
-    reportsCount: 2, prescriptionUploaded: false, remarks: 'PET-CT scan evaluation scheduled for Jul 24.',
-  },
-  {
-    id: 'HOSP-PAT-005', ngoRefId: 'PAT-2026-9551', name: 'Kamla Bai', age: 50, gender: 'Female',
-    diagnosis: 'Metastatic Ovarian Adenocarcinoma', cancerStage: 'Stage IV',
-    treatmentStatus: 'Emergency', assignedDoctor: 'Dr. Siddharth Roy (Surgical Oncology)',
-    admissionDate: 'Jul 21, 2026', city: 'Faridabad, Haryana', phone: '+91 98990 11223',
-    reportsCount: 2, prescriptionUploaded: true, remarks: 'Admitted to ICU following severe dyspnea. Palliative paracentesis performed.',
-  },
-];
-
 // ---- Hospital Awareness Campaigns ----
 export const INITIAL_HOSPITAL_CAMPAIGNS: HospitalCampaign[] = [
   {
