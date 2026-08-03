@@ -1,5 +1,7 @@
 -r requirements.txt
-pytest==8.3.4
-pytest-asyncio==0.25.0
+pytest==9.1.1
+# 0.25.0 caps at pytest<9, incompatible with the pytest 9.1.1 bump above --
+# 1.4.0 is the current release and has no such cap.
+pytest-asyncio==1.4.0
 httpx==0.28.1
-pip-audit==2.7.3
+pip-audit==2.10.1
