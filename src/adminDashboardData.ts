@@ -80,22 +80,3 @@ export interface AdminFeedback {
   response?: string;
 }
 
-// ---- KPI Overview Metrics ----
-export const INITIAL_KPI_METRICS = {
-  totalPatients: 1420,
-  totalVolunteers: 2400,
-  partnerHospitals: 4,
-  activeCampaigns: 6,
-  pendingHospitalTieups: 3,
-  financialAidRequests: 12,
-  donationsReceived: 840500, // INR
-  upcomingEvents: 3,
-  recentActivities: [
-    { id: 'act-1', text: 'Volunteer "Rahul Verma" approved by Admin', time: '10 mins ago', type: 'volunteer' },
-    { id: 'act-2', text: 'New tie-up request submitted by "Fortis Healthcare"', time: '1 hour ago', type: 'hospital' },
-    { id: 'act-3', text: 'Free Screening Camp scheduled in Rewari, Haryana', time: '3 hours ago', type: 'campaign' },
-    { id: 'act-4', text: 'Donation of ₹25,000 received from "Ananya Mehta"', time: '5 hours ago', type: 'donation' },
-    { id: 'act-5', text: 'Patient "Suresh Kumar" assigned to Apex Dwarka', time: '1 day ago', type: 'patient' },
-  ]
-};
-

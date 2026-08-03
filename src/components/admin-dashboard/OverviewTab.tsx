@@ -16,18 +16,29 @@ interface SummaryKpis {
   financialAidRequests: number;
 }
 
-interface KpiMetrics {
-  recentActivities: RecentActivity[];
-  [key: string]: any;
+interface MonthlyCount {
+  month: string;
+  count: number;
+}
+
+// "2026-08" -> "Aug"
+function shortMonthLabel(yearMonth: string): string {
+  const [year, month] = yearMonth.split('-');
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  return date.toLocaleDateString('en-US', { month: 'short' });
 }
 
 export default function OverviewTab({
   summaryKpis,
-  kpiMetrics,
+  recentActivities,
+  intakeMonthly,
+  intakeLoading,
   setActiveTab,
 }: {
   summaryKpis: SummaryKpis;
-  kpiMetrics: KpiMetrics;
+  recentActivities: RecentActivity[];
+  intakeMonthly: MonthlyCount[];
+  intakeLoading: boolean;
   setActiveTab: (tab: string) => void;
 }) {
   return (
@@ -55,54 +66,58 @@ export default function OverviewTab({
       {/* Second row: Activity & Quick Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        {/* Visual Chart Placeholder */}
+        {/* Patient Intake Trend */}
         <div className="lg:col-span-8 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs">
           <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-primary" /> Active Intake Trend (Last 6 Months)
+            <TrendingUp className="w-4 h-4 text-primary" /> Patient Intake Trend
           </h3>
-          <div className="flex items-end justify-between gap-4 h-48 pt-4">
-            {[
-              { month: 'Feb', val: 120, label: '120 Patients' },
-              { month: 'Mar', val: 150, label: '150 Patients' },
-              { month: 'Apr', val: 210, label: '210 Patients' },
-              { month: 'May', val: 190, label: '190 Patients' },
-              { month: 'Jun', val: 240, label: '240 Patients' },
-              { month: 'Jul', val: 310, label: '310 Patients' },
-            ].map((m, i) => {
-              const heightPercent = (m.val / 350) * 100;
-              return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
-                  <span className="text-[10px] font-bold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {m.val}
-                  </span>
-                  <div className="w-full relative rounded-t-lg overflow-hidden bg-slate-100" style={{ height: '100%' }}>
-                    <div
-                      className="absolute bottom-0 w-full rounded-t-lg bg-gradient-to-t from-primary to-primary-container transition-all duration-700 group-hover:from-secondary group-hover:to-secondary/80"
-                      style={{ height: `${heightPercent}%` }}
-                    />
+          {intakeLoading ? (
+            <p className="text-xs text-slate-400 py-6 text-center">Loading...</p>
+          ) : intakeMonthly.length === 0 ? (
+            <p className="text-xs text-slate-400 py-6 text-center">No patient enquiries recorded yet.</p>
+          ) : (
+            <div className="flex items-end justify-between gap-4 h-48 pt-4">
+              {intakeMonthly.map((m, i) => {
+                const max = Math.max(...intakeMonthly.map(x => x.count));
+                const pct = max > 0 ? (m.count / max) * 100 : 0;
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+                    <span className="text-[10px] font-bold text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {m.count}
+                    </span>
+                    <div className="w-full relative rounded-t-lg overflow-hidden bg-slate-100" style={{ height: '100%' }}>
+                      <div
+                        className="absolute bottom-0 w-full rounded-t-lg bg-gradient-to-t from-primary to-primary-container transition-all duration-700 group-hover:from-secondary group-hover:to-secondary/80"
+                        style={{ height: `${pct}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-semibold text-slate-500">{shortMonthLabel(m.month)}</span>
                   </div>
-                  <span className="text-[10px] font-semibold text-slate-500">{m.month}</span>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Recent Activities Panel */}
         <div className="lg:col-span-4 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs flex flex-col justify-between">
           <div>
-            <h3 className="text-sm font-bold text-slate-900 mb-4">Audit Logs / Recent Activity</h3>
-            <div className="space-y-3.5">
-              {kpiMetrics.recentActivities.map((act) => (
-                <div key={act.id} className="flex items-start space-x-3 text-xs leading-relaxed">
-                  <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-slate-700 font-medium">{act.text}</p>
-                    <span className="text-[10px] text-slate-400 mt-0.5 block">{act.time}</span>
+            <h3 className="text-sm font-bold text-slate-900 mb-4">Recent Activity</h3>
+            {recentActivities.length === 0 ? (
+              <p className="text-xs text-slate-400 py-6 text-center">No recent activity yet.</p>
+            ) : (
+              <div className="space-y-3.5">
+                {recentActivities.map((act) => (
+                  <div key={act.id} className="flex items-start space-x-3 text-xs leading-relaxed">
+                    <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-slate-700 font-medium">{act.text}</p>
+                      <span className="text-[10px] text-slate-400 mt-0.5 block">{act.time}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
           <button
             onClick={() => setActiveTab('notifications')}

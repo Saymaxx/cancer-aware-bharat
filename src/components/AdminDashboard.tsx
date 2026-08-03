@@ -4,7 +4,7 @@ import {
   BarChart3, Settings, LogOut, Bell, FileCheck,
   DollarSign, BookOpen, MessageSquare, Terminal, Menu, Stethoscope,
 } from 'lucide-react';
-import { useApiEnquiries, useApiHospitals, useApiNotifications, useBlogs, useCampaignRequests, useDonations, useEvents, usePartnerRequests, usePatientRecords, useStaffMe, useVolunteerFeedback, useVolunteers } from '../api/hooks';
+import { useApiEnquiries, useApiHospitals, useApiNotifications, useBlogs, useCampaignRequests, useDonations, useEvents, usePartnerRequests, usePatientIntakeMonthly, usePatientRecords, useStaffMe, useVolunteerFeedback, useVolunteers } from '../api/hooks';
 import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, changeStaffPassword, createBlog, createEvent, createPatientRecord, deleteBlog, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, respondToVolunteerFeedback, scheduleCampaignRequest, sendDonationReceipt, updatePatientRecord, updateStaffMe } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
@@ -15,7 +15,6 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { csvCell, downloadCsv } from '../utils/csvExport';
 
 import {
-  INITIAL_KPI_METRICS,
   type Patient, type AdminVolunteer, type PartnerHospital,
   type CampaignRequest, type AdminDonation, type AdminFeedback
 } from '../adminDashboardData';
@@ -146,8 +145,6 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const [timelineEnquiry, setTimelineEnquiry] = useState<PatientEnquiry | null>(null);
   const [enquiryFilter, setEnquiryFilter] = useState('All');
 
-  const [kpiMetrics, setKpiMetrics] = useState(INITIAL_KPI_METRICS);
-
   // Search & Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [patientFilter, setPatientFilter] = useState('All');
@@ -230,14 +227,47 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   // Sync summary figures
   const summaryKpis = useMemo(() => {
     return {
-      totalPatients: patients.length + 1415, // offsets mock database base count
-      totalVolunteers: volunteers.length + 2395,
+      totalPatients: patients.length,
+      totalVolunteers: volunteers.length,
       activeCampaigns: events.filter(e => e.status === 'Scheduled').length,
-      donationsReceived: donations.reduce((acc, curr) => acc + curr.amount, 650000),
+      donationsReceived: donations.reduce((acc, curr) => acc + curr.amount, 0),
       pendingHospitalTieups: hospitalRequests.filter(h => h.status === 'Pending Tie-up').length,
       financialAidRequests: patients.filter(p => p.financialAidStatus === 'Pending Review').length,
     };
   }, [patients, volunteers, hospitalRequests, donations, events]);
+
+  const { data: intakeMonthly, loading: intakeLoading } = usePatientIntakeMonthly(apiToken);
+
+  // "Recent Activity" on the Overview tab -- deliberately built from data
+  // Admin already has full access to (its own enquiries/donations/
+  // volunteers/hospital requests), not the org-wide audit log. That log
+  // carries actor emails, IP addresses, and account-suspension/security
+  // events that shouldn't be broadly exposed to every Admin account; it
+  // stays superadmin-only.
+  const recentActivities = useMemo(() => {
+    const items: { id: string; text: string; type: string; at: number }[] = [];
+    for (const e of enquiries) {
+      items.push({ id: `enq-${e.id}`, text: `New enquiry from "${e.patientName}"`, type: 'patient', at: new Date(e.createdAt).getTime() });
+    }
+    for (const d of apiDonations) {
+      items.push({ id: `don-${d.id}`, text: `Donation of ₹${d.amount.toLocaleString()} received from "${d.donorName}"`, type: 'donation', at: new Date(d.createdAt).getTime() });
+    }
+    for (const v of apiVolunteers) {
+      items.push({ id: `vol-${v.id}`, text: `Volunteer "${v.name}" registered`, type: 'volunteer', at: new Date(v.createdAt).getTime() });
+    }
+    for (const pr of partnerRequests) {
+      items.push({ id: `hosp-${pr.id}`, text: `New tie-up request submitted by "${pr.hospitalName}"`, type: 'hospital', at: new Date(pr.createdAt).getTime() });
+    }
+    return items
+      .sort((a, b) => b.at - a.at)
+      .slice(0, 5)
+      .map(({ id, text, type, at }) => ({
+        id,
+        text,
+        type,
+        time: new Date(at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
+      }));
+  }, [enquiries, apiDonations, apiVolunteers, partnerRequests]);
 
   // ==========================================
   // PATIENT UTILITIES
@@ -747,7 +777,9 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
           {activeTab === 'dashboard' && (
             <OverviewTab
               summaryKpis={summaryKpis}
-              kpiMetrics={kpiMetrics}
+              recentActivities={recentActivities}
+              intakeMonthly={intakeMonthly}
+              intakeLoading={intakeLoading}
               setActiveTab={setActiveTab}
             />
           )}
