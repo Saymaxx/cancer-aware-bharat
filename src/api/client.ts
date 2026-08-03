@@ -637,6 +637,10 @@ export function broadcastNotification(
   }, token);
 }
 
+export function markNotificationRead(id: string, token: string): Promise<ApiNotification> {
+  return request<ApiNotification>(`/notifications/${id}/read`, { method: 'POST' }, token);
+}
+
 // ---------------- Patients ----------------
 
 export interface ApiPatient {

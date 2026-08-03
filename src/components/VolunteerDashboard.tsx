@@ -5,7 +5,7 @@ import {
   BarChart3, Timer, GraduationCap, MessageSquare, IdCard, Globe, Clock3,
 } from 'lucide-react';
 import { useToast } from './common/Toast';
-import { ApiError, ApiVolunteer, getMyVolunteerProfile, logMyVolunteerHours, submitMyVolunteerFeedback } from '../api/client';
+import { ApiError, ApiVolunteer, getMyVolunteerProfile, logMyVolunteerHours, markNotificationRead, submitMyVolunteerFeedback } from '../api/client';
 import { useApiNotifications, useMyVolunteerFeedback, useMyVolunteerHours } from '../api/hooks';
 import DashboardSidebar, { SidebarFooterButton } from './common/DashboardSidebar';
 import { useSidebarState } from '../hooks/useSidebarState';
@@ -79,12 +79,14 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
 
   // Real notifications from the backend (broadcasts from Admin/Super Admin,
   // see POST /notifications/broadcast) -- the backend has no "type"
-  // (campaign/announcement/reminder/achievement) or per-recipient read-state
-  // concept, so every notification is bucketed as 'announcement' and "read"
-  // is tracked as a local-only overlay, same as every other dashboard's
-  // notification panel today (none of them call POST /notifications/{id}/read
-  // either).
-  const { notifications: apiNotifications } = useApiNotifications(volunteer?.accessToken || null);
+  // (campaign/announcement/reminder/achievement) concept, so every
+  // notification is bucketed as 'announcement'. Read state is real and
+  // per-recipient (POST /notifications/{id}/read, see NotificationRead);
+  // locallyReadIds is just an optimistic overlay so the UI updates
+  // instantly instead of waiting for the next poll. "Clearing" a
+  // notification has no backend equivalent (no archive/delete endpoint) --
+  // locallyClearedIds only hides it from this browser tab.
+  const { notifications: apiNotifications, refetch: refetchNotifications } = useApiNotifications(volunteer?.accessToken || null);
   const [locallyReadIds, setLocallyReadIds] = useState<Set<string>>(new Set());
   const [locallyClearedIds, setLocallyClearedIds] = useState<Set<string>>(new Set());
   const notifications: NotifType[] = useMemo(() => apiNotifications
@@ -188,6 +190,11 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
   const markNotifRead = (id: string) => {
     setLocallyReadIds(prev => new Set(prev).add(id));
     showToast('Notification marked as read');
+    if (!volunteer?.accessToken) return;
+    // Notifications are non-critical (matches useApiNotifications' own
+    // fail-silently stance) -- locallyReadIds already reflects "read" for
+    // this session even if the real call fails.
+    markNotificationRead(id, volunteer.accessToken).then(() => refetchNotifications()).catch(() => {});
   };
 
   const handleClearReadNotifs = () => {
@@ -417,12 +424,18 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
               filteredNotifications={filteredNotifications}
               markNotifRead={markNotifRead}
               markAllRead={() => {
+                const unread = notifications.filter(n => !n.read);
                 setLocallyReadIds(prev => {
                   const updated = new Set(prev);
                   notifications.forEach(n => updated.add(n.id));
                   return updated;
                 });
                 showToast('All notifications marked as read');
+                if (volunteer?.accessToken) {
+                  Promise.all(unread.map(n => markNotificationRead(n.id, volunteer.accessToken)))
+                    .then(() => refetchNotifications())
+                    .catch(() => {});
+                }
               }}
               handleClearReadNotifs={handleClearReadNotifs}
             />

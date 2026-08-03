@@ -7,6 +7,7 @@ from app.core.limiter import limiter
 from app.deps import DbSession, require_admin_or_superadmin, get_current_claims
 from app.models.hospital import Hospital
 from app.models.notification import Notification
+from app.models.notification_read import NotificationRead
 from app.schemas.notification import NotificationBroadcastIn, NotificationBroadcastResult, NotificationOut
 from app.services.audit import record_event
 from app.services.notifications import notify
@@ -26,6 +27,19 @@ AUDIENCE_ROLES: dict[str, tuple[str, ...]] = {
 }
 
 
+def _to_out(notification: Notification, read: bool) -> NotificationOut:
+    return NotificationOut(
+        id=notification.id,
+        target_role=notification.target_role,
+        target_hospital_id=notification.target_hospital_id,
+        title=notification.title,
+        message=notification.message,
+        enquiry_id=notification.enquiry_id,
+        read=read,
+        created_at=notification.created_at,
+    )
+
+
 @router.get("", response_model=list[NotificationOut])
 @limiter.limit("60/minute")
 def list_notifications(
@@ -36,10 +50,25 @@ def list_notifications(
     limit: int = Query(default=100, ge=1, le=200),
 ):
     role = claims["role"]
+    user_id = UUID(claims["sub"])
     query = db.query(Notification).filter(Notification.target_role == role)
     if role == "hospital":
-        query = query.filter(Notification.target_hospital_id == UUID(claims["sub"]))
-    return query.order_by(Notification.created_at.desc()).offset(skip).limit(limit).all()
+        query = query.filter(Notification.target_hospital_id == user_id)
+    notifications = query.order_by(Notification.created_at.desc()).offset(skip).limit(limit).all()
+
+    # read state is per-recipient (see NotificationRead), not the shared
+    # Notification.read column -- one broadcast row is visible to every
+    # user with the target role, so that column can't tell "I read it"
+    # apart from "someone with my role read it".
+    read_ids = {
+        row.notification_id
+        for row in db.query(NotificationRead.notification_id).filter(
+            NotificationRead.user_id == user_id,
+            NotificationRead.notification_id.in_([n.id for n in notifications]),
+        )
+    } if notifications else set()
+
+    return [_to_out(n, n.id in read_ids) for n in notifications]
 
 
 @router.post("/broadcast", response_model=NotificationBroadcastResult, status_code=status.HTTP_201_CREATED)
@@ -80,7 +109,13 @@ def mark_read(request: Request, notification_id: UUID, db: DbSession, claims: An
     # other hospital's notification by guessing/enumerating its UUID.
     if claims["role"] == "hospital" and notification.target_hospital_id != UUID(claims["sub"]):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Not your notification")
-    notification.read = True
-    db.commit()
-    db.refresh(notification)
-    return notification
+
+    user_id = UUID(claims["sub"])
+    already_read = db.query(NotificationRead).filter(
+        NotificationRead.notification_id == notification.id,
+        NotificationRead.user_id == user_id,
+    ).first()
+    if already_read is None:
+        db.add(NotificationRead(notification_id=notification.id, user_id=user_id))
+        db.commit()
+    return _to_out(notification, read=True)

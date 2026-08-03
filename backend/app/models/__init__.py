@@ -12,6 +12,7 @@ from app.models.campaign_request import CampaignRequest
 from app.models.custom_role import CustomRole
 from app.models.enquiry import PatientEnquiry, TimelineEvent, AppointmentDetails, UploadedReport
 from app.models.notification import Notification
+from app.models.notification_read import NotificationRead
 from app.models.revoked_token import RevokedToken
 from app.models.audit_log import AuditLog
 from app.models.backup_record import BackupRecord
@@ -40,6 +41,7 @@ __all__ = [
     "AppointmentDetails",
     "UploadedReport",
     "Notification",
+    "NotificationRead",
     "RevokedToken",
     "AuditLog",
     "BackupRecord",

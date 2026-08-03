@@ -66,6 +66,57 @@ class TestNotificationList:
         assert len(resp.json()) <= 1
 
 
+class TestNotificationReadState:
+    def test_mark_read_is_per_recipient_not_shared_by_role(self, client, admin_token):
+        from tests.test_volunteers import register_and_approve_volunteer
+
+        v1 = register_and_approve_volunteer(client, admin_token, email="reader1@example.com", phone="+91 90000 17171")
+        v2 = register_and_approve_volunteer(client, admin_token, email="reader2@example.com", phone="+91 90000 18181")
+        v1_token = client.post("/auth/volunteer/login", json={"email": "reader1@example.com", "password": v1["password"]}).json()["accessToken"]
+        v2_token = client.post("/auth/volunteer/login", json={"email": "reader2@example.com", "password": v2["password"]}).json()["accessToken"]
+
+        client.post(
+            "/notifications/broadcast",
+            json={"audience": "Volunteers", "title": "Shared Broadcast", "message": "one row, two recipients"},
+            headers=auth_header(admin_token),
+        )
+
+        v1_notifs = client.get("/notifications", headers=auth_header(v1_token)).json()
+        target = next(n for n in v1_notifs if n["title"] == "Shared Broadcast")
+        assert target["read"] is False
+
+        resp = client.post(f"/notifications/{target['id']}/read", headers=auth_header(v1_token))
+        assert resp.status_code == 200
+        assert resp.json()["read"] is True
+
+        # v1 marking it read must not affect v2 -- they share the same
+        # underlying Notification row (one per role-broadcast), so this is
+        # exactly the bug the NotificationRead table exists to prevent.
+        v1_after = next(n for n in client.get("/notifications", headers=auth_header(v1_token)).json() if n["id"] == target["id"])
+        v2_after = next(n for n in client.get("/notifications", headers=auth_header(v2_token)).json() if n["id"] == target["id"])
+        assert v1_after["read"] is True
+        assert v2_after["read"] is False
+
+    def test_marking_read_twice_is_idempotent(self, client, admin_token):
+        from tests.test_volunteers import register_and_approve_volunteer
+
+        v1 = register_and_approve_volunteer(client, admin_token, email="reader3@example.com", phone="+91 90000 19191")
+        v1_token = client.post("/auth/volunteer/login", json={"email": "reader3@example.com", "password": v1["password"]}).json()["accessToken"]
+
+        client.post(
+            "/notifications/broadcast",
+            json={"audience": "Volunteers", "title": "Idempotent Test", "message": "m"},
+            headers=auth_header(admin_token),
+        )
+        target = next(n for n in client.get("/notifications", headers=auth_header(v1_token)).json() if n["title"] == "Idempotent Test")
+
+        first = client.post(f"/notifications/{target['id']}/read", headers=auth_header(v1_token))
+        second = client.post(f"/notifications/{target['id']}/read", headers=auth_header(v1_token))
+        assert first.status_code == 200
+        assert second.status_code == 200
+        assert second.json()["read"] is True
+
+
 class TestNotificationBroadcast:
     def test_requires_staff_auth(self, client):
         resp = client.post("/notifications/broadcast", json={"audience": "Volunteers", "title": "t", "message": "m"})
