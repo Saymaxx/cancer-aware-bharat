@@ -7,15 +7,15 @@ from sqlalchemy.orm import Session
 from app.core.limiter import limiter
 from app.deps import DbSession, current_hospital_id
 from app.models.hospital_doctor import HospitalDoctor
+from app.models.patient_record import PatientRecord
 from app.schemas.hospital_doctor import HospitalDoctorIn, HospitalDoctorOut, HospitalDoctorPatch
 
 router = APIRouter(prefix="/hospital-doctors", tags=["hospital-doctors"])
 
 
-def _out(doctor: HospitalDoctor) -> HospitalDoctorOut:
-    # assigned_patients_count is a placeholder 0 until Phase N3 adds
-    # PatientRecord.assigned_doctor_id -- see the field's own docstring.
-    return HospitalDoctorOut.model_validate(doctor)
+def _out(db: Session, doctor: HospitalDoctor) -> HospitalDoctorOut:
+    count = db.query(PatientRecord).filter(PatientRecord.assigned_doctor_id == doctor.id).count()
+    return HospitalDoctorOut.model_validate(doctor).model_copy(update={"assigned_patients_count": count})
 
 
 def _get_own_doctor_or_404(db: Session, hospital_id: UUID, doctor_id: UUID) -> HospitalDoctor:
@@ -42,7 +42,7 @@ def list_my_doctors(
         .order_by(HospitalDoctor.name)
         .all()
     )
-    return [_out(d) for d in doctors]
+    return [_out(db, d) for d in doctors]
 
 
 @router.post("/mine", response_model=HospitalDoctorOut, status_code=status.HTTP_201_CREATED)
@@ -57,7 +57,7 @@ def add_my_doctor(
     db.add(doctor)
     db.commit()
     db.refresh(doctor)
-    return _out(doctor)
+    return _out(db, doctor)
 
 
 @router.patch("/mine/{doctor_id}", response_model=HospitalDoctorOut)
@@ -73,7 +73,7 @@ def update_my_doctor_availability(
     doctor.availability = payload.availability
     db.commit()
     db.refresh(doctor)
-    return _out(doctor)
+    return _out(db, doctor)
 
 
 @router.delete("/mine/{doctor_id}", status_code=status.HTTP_204_NO_CONTENT)

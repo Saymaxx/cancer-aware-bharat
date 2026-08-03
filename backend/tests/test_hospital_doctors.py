@@ -91,6 +91,26 @@ class TestUpdateMyDoctorAvailability:
         assert resp.status_code == 404
 
 
+class TestAssignedPatientsCount:
+    def test_reflects_real_assignments(self, client, admin_token, hospital1_token, hospitals):
+        doctor = _create_doctor(client, hospital1_token).json()
+        assert doctor["assignedPatientsCount"] == 0
+
+        record = client.post("/patient-records", json={
+            "name": "Count Test Patient", "age": 40, "gender": "Female", "diagnosis": "X",
+            "hospitalId": hospitals[0]["id"],
+        }, headers=auth_header(admin_token)).json()
+        client.patch(
+            f"/patient-records/mine/{record['id']}",
+            json={"assignedDoctorId": doctor["id"]},
+            headers=auth_header(hospital1_token),
+        )
+
+        resp = client.get("/hospital-doctors/mine", headers=auth_header(hospital1_token))
+        updated = next(d for d in resp.json() if d["id"] == doctor["id"])
+        assert updated["assignedPatientsCount"] == 1
+
+
 class TestRemoveMyDoctor:
     def test_removes_own_doctor(self, client, hospital1_token):
         doctor = _create_doctor(client, hospital1_token).json()

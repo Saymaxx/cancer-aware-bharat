@@ -33,8 +33,8 @@ class HospitalDoctorOut(CamelModel):
     phone: str
     email: str
     availability: str
-    # Computed at read time from PatientRecord.assigned_doctor_id once
-    # Phase N3 lands that column -- honest 0 until then, not faked.
+    # Computed at read time in the router from PatientRecord.assigned_doctor_id
+    # -- the 0 default here only applies before that override runs.
     assigned_patients_count: int = 0
     created_at: datetime
     updated_at: datetime
