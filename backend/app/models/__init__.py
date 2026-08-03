@@ -18,6 +18,7 @@ from app.models.backup_record import BackupRecord
 from app.models.org_settings import OrgSettings
 from app.models.hospital_doctor import HospitalDoctor
 from app.models.ngo_referral import NgoReferral
+from app.models.hospital_report import HospitalReport
 
 __all__ = [
     "User",
@@ -45,4 +46,5 @@ __all__ = [
     "OrgSettings",
     "HospitalDoctor",
     "NgoReferral",
+    "HospitalReport",
 ]

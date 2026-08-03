@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from starlette.concurrency import run_in_threadpool
 
 from app.core.limiter import limiter
-from app.core.storage import get_storage
+from app.core.storage import ALLOWED_REPORT_TYPES, MAX_REPORT_BYTES, get_storage, matches_declared_type
 from app.deps import (
     DbSession,
     current_hospital_id,
@@ -33,24 +33,6 @@ from app.schemas.enquiry import (
 from app.services import enquiry_workflow
 
 router = APIRouter(prefix="/enquiries", tags=["enquiries"])
-
-ALLOWED_REPORT_TYPES = {"application/pdf", "image/jpeg", "image/png"}
-MAX_REPORT_BYTES = 10 * 1024 * 1024  # 10 MB
-
-# Magic-byte signatures for the 3 types we accept. The client-supplied
-# Content-Type header is trivially spoofable (it's just a form field), so it
-# can only be used to pick a signature to check against, never trusted on
-# its own.
-_MAGIC_SIGNATURES: dict[str, tuple[bytes, ...]] = {
-    "application/pdf": (b"%PDF-",),
-    "image/jpeg": (b"\xff\xd8\xff",),
-    "image/png": (b"\x89PNG\r\n\x1a\n",),
-}
-
-
-def _matches_declared_type(contents: bytes, declared_type: str) -> bool:
-    signatures = _MAGIC_SIGNATURES.get(declared_type, ())
-    return any(contents.startswith(sig) for sig in signatures)
 
 
 def _staff_name(db: Session, claims: dict) -> str:
@@ -239,7 +221,7 @@ async def upload_report(
     contents = await file.read(MAX_REPORT_BYTES + 1)
     if len(contents) > MAX_REPORT_BYTES:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "File exceeds the 10 MB limit")
-    if not _matches_declared_type(contents, file.content_type):
+    if not matches_declared_type(contents, file.content_type):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "File content doesn't match its declared type")
 
     # file.filename is fully client-controlled. Path(...).name strips any

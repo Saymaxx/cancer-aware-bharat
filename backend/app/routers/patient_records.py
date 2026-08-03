@@ -3,17 +3,40 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.limiter import limiter
 from app.core.security import generate_numeric_id
 from app.deps import DbSession, current_hospital_id, require_admin_or_superadmin
 from app.models.hospital_doctor import HospitalDoctor
+from app.models.hospital_report import HospitalReport
 from app.models.patient_record import PatientRecord
 from app.schemas.patient_record import PatientRecordHospitalPatch, PatientRecordIn, PatientRecordOut
 from app.services.audit import record_event
 
 router = APIRouter(prefix="/patient-records", tags=["patient-records"])
+
+
+def _out(db: Session, record: PatientRecord) -> PatientRecordOut:
+    count = db.query(HospitalReport).filter(HospitalReport.patient_record_id == record.id).count()
+    return PatientRecordOut.model_validate(record).model_copy(update={"reports_count": count})
+
+
+def _out_many(db: Session, records: list[PatientRecord]) -> list[PatientRecordOut]:
+    if not records:
+        return []
+    ids = [r.id for r in records]
+    counts = dict(
+        db.query(HospitalReport.patient_record_id, func.count())
+        .filter(HospitalReport.patient_record_id.in_(ids))
+        .group_by(HospitalReport.patient_record_id)
+        .all()
+    )
+    return [
+        PatientRecordOut.model_validate(r).model_copy(update={"reports_count": counts.get(r.id, 0)})
+        for r in records
+    ]
 
 
 @router.get("", response_model=list[PatientRecordOut])
@@ -25,13 +48,14 @@ def list_patient_records(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=500, ge=1, le=1000),
 ):
-    return (
+    records = (
         db.query(PatientRecord)
         .order_by(PatientRecord.created_at.desc())
         .offset(skip)
         .limit(limit)
         .all()
     )
+    return _out_many(db, records)
 
 
 @router.post("", response_model=PatientRecordOut, status_code=status.HTTP_201_CREATED)
@@ -51,7 +75,7 @@ def create_patient_record(
     record_event(db, "patient_record_created", role=claims["role"], actor_id=UUID(claims["sub"]), detail=record.name)
     db.commit()
     db.refresh(record)
-    return record
+    return _out(db, record)
 
 
 def _get_patient_record_or_404(db: Session, record_id: UUID) -> PatientRecord:
@@ -82,12 +106,13 @@ def list_my_patient_records(
     """Patients assigned to this hospital -- either by Admin setting
     hospital_id on a PatientRecord directly, or automatically when the
     hospital accepts an NgoReferral (see ngo_referrals.py)."""
-    return (
+    records = (
         db.query(PatientRecord)
         .filter(PatientRecord.hospital_id == hospital_id)
         .order_by(PatientRecord.created_at.desc())
         .all()
     )
+    return _out_many(db, records)
 
 
 @router.patch("/mine/{record_id}", response_model=PatientRecordOut)
@@ -124,7 +149,7 @@ def update_my_patient_record(
 
     db.commit()
     db.refresh(record)
-    return record
+    return _out(db, record)
 
 
 @router.patch("/{record_id}", response_model=PatientRecordOut)
@@ -142,7 +167,7 @@ def update_patient_record(
     record_event(db, "patient_record_updated", role=claims["role"], actor_id=UUID(claims["sub"]), detail=record.name)
     db.commit()
     db.refresh(record)
-    return record
+    return _out(db, record)
 
 
 @router.delete("/{record_id}", status_code=status.HTTP_204_NO_CONTENT)

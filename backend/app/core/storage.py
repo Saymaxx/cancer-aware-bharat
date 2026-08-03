@@ -24,6 +24,25 @@ from uuid import UUID
 
 from app.core.config import settings
 
+ALLOWED_REPORT_TYPES = {"application/pdf", "image/jpeg", "image/png"}
+MAX_REPORT_BYTES = 10 * 1024 * 1024  # 10 MB
+
+# Magic-byte signatures for the 3 types we accept. The client-supplied
+# Content-Type header is trivially spoofable (it's just a form field), so it
+# can only be used to pick a signature to check against, never trusted on
+# its own. Shared by every report-upload endpoint (enquiry reports, hospital
+# medical reports) so a fix to this check lands everywhere at once.
+_MAGIC_SIGNATURES: dict[str, tuple[bytes, ...]] = {
+    "application/pdf": (b"%PDF-",),
+    "image/jpeg": (b"\xff\xd8\xff",),
+    "image/png": (b"\x89PNG\r\n\x1a\n",),
+}
+
+
+def matches_declared_type(contents: bytes, declared_type: str) -> bool:
+    signatures = _MAGIC_SIGNATURES.get(declared_type, ())
+    return any(contents.startswith(sig) for sig in signatures)
+
 
 class ReportStorage(abc.ABC):
     @abc.abstractmethod
