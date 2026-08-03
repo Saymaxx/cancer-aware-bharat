@@ -16,12 +16,12 @@ export default function DonationsTab({
     <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Cumulative Donations Received', val: donationsReceived, prefix: '₹' },
-          { label: 'Total Receipts Dispatched', val: '100%', prefix: '' },
-          { label: 'Corporate CSR Grants', val: '2 sponsors', prefix: '' },
+          { label: 'Cumulative Donations Received', val: '₹' + donationsReceived.toLocaleString() },
+          { label: 'Total Receipts Dispatched', val: donations.length === 0 ? '—' : `${Math.round((donations.filter(d => d.receiptSent).length / donations.length) * 100)}%` },
+          { label: 'Corporate CSR Grants', val: `${donations.filter(d => d.donorType === 'Corporate').length} sponsors` },
         ].map((stat, i) => (
           <div key={i} className="bg-white p-5 border border-outline-variant/30 rounded-2xl text-center">
-            <p className="text-2xl font-black text-slate-900">{stat.prefix}{stat.val.toLocaleString()}</p>
+            <p className="text-2xl font-black text-slate-900">{stat.val}</p>
             <p className="text-xs text-slate-500 font-semibold mt-1">{stat.label}</p>
           </div>
         ))}

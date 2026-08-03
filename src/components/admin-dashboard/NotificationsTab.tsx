@@ -4,6 +4,7 @@ import { AppNotification } from '../../types';
 
 export default function NotificationsTab({
   notifSuccessToast,
+  lastBroadcastRecipientCount,
   handleSendAnnouncement,
   announcementTitle,
   setAnnouncementTitle,
@@ -12,6 +13,7 @@ export default function NotificationsTab({
   adminNotifications,
 }: {
   notifSuccessToast: boolean;
+  lastBroadcastRecipientCount: number;
   handleSendAnnouncement: (e: React.FormEvent) => void;
   announcementTitle: string;
   setAnnouncementTitle: (val: string) => void;
@@ -30,7 +32,7 @@ export default function NotificationsTab({
 
         {notifSuccessToast && (
           <div className="mb-4 p-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5">
-            <CheckCircle2 className="w-4.5 h-4.5" /> Broadcast alert sent to 2,400+ volunteers!
+            <CheckCircle2 className="w-4.5 h-4.5" /> Broadcast alert sent to {lastBroadcastRecipientCount} volunteer{lastBroadcastRecipientCount === 1 ? '' : 's'}!
           </div>
         )}
 

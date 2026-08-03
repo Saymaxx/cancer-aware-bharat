@@ -1,19 +1,29 @@
 import { Download } from 'lucide-react';
 
+interface SuperAdminCampaign {
+  id: string;
+  title: string;
+  date: string;
+  type: string;
+  loc: string;
+  registrations: string;
+  status: string;
+}
+
 export default function CampaignsTab({
   campaigns,
   handleExportCampaignsCSV,
 }: {
-  campaigns: any[];
+  campaigns: SuperAdminCampaign[];
   handleExportCampaignsCSV: () => void;
 }) {
   return (
     <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[
-          { label: 'Active Campaigns', value: String(campaigns.length), color: 'text-indigo-700 bg-indigo-50 border-indigo-200' },
-          { label: 'Total Drives This Year', value: '18', color: 'text-purple-700 bg-purple-50 border-purple-200' },
-          { label: 'People Screened', value: '4,200+', color: 'text-slate-700 bg-slate-50 border-slate-200' },
+          { label: 'Total Drives', value: String(campaigns.length), color: 'text-indigo-700 bg-indigo-50 border-indigo-200' },
+          { label: 'Scheduled', value: String(campaigns.filter(c => c.status === 'Scheduled').length), color: 'text-purple-700 bg-purple-50 border-purple-200' },
+          { label: 'Completed', value: String(campaigns.filter(c => c.status === 'Completed').length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
         ].map((s, i) => (
           <div key={i} className={`${s.color} rounded-2xl border p-4 text-center`}>
             <p className="text-2xl font-black">{s.value}</p>

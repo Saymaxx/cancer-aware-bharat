@@ -16,9 +16,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { csvCell, downloadCsv } from '../utils/csvExport';
 
 import {
-  INITIAL_SENT_NOTIFICATIONS,
-  type SuperAdminAccount, type HospitalApplication,
-  type SentNotification
+  type SuperAdminAccount, type HospitalApplication
 } from '../superAdminDashboardData';
 
 import {
@@ -177,13 +175,6 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   }), [partnerRequests, locallyRequestedInfoIds]);
   const { auditLogs } = useAuditLogs(apiToken);
   const { roles, refetch: refetchRoles } = useRoles(apiToken);
-  const [sentNotifications, setSentNotifications] = useState<SentNotification[]>(() => {
-    const stored = localStorage.getItem('aware_bharat_superadmin_sent_notifications');
-    if (stored) {
-      try { return JSON.parse(stored); } catch (e) {}
-    }
-    return INITIAL_SENT_NOTIFICATIONS;
-  });
   const { health: databaseHealth, loading: databaseHealthLoading } = useDatabaseHealth(apiToken);
   const { backups, refetch: refetchBackups } = useBackups(apiToken);
   const [creatingBackup, setCreatingBackup] = useState(false);
@@ -521,18 +512,6 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
     try {
       const result = await broadcastNotification(apiToken, notifAudience as NotificationAudience, notifTitle, notifMessage);
-
-      const newNotif: SentNotification = {
-        id: 'NOTIF-S' + (sentNotifications.length + 1),
-        title: notifTitle, message: notifMessage, audience: notifAudience,
-        sentAt: new Date().toLocaleString('en-IN'), sentBy: 'board@awarebharat.org',
-        recipientCount: result.recipientCount,
-      };
-      setSentNotifications(prev => {
-        const updated = [newNotif, ...prev];
-        localStorage.setItem('aware_bharat_superadmin_sent_notifications', JSON.stringify(updated));
-        return updated;
-      });
       setNotifTitle('');
       setNotifMessage('');
       showToast(`Notification broadcast to ${result.recipientCount} recipient(s) in ${notifAudience}!`);

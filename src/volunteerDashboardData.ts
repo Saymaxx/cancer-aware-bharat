@@ -174,15 +174,3 @@ export const TRAINING_RESOURCES: TrainingResource[] = [
   { id: 'res-5', title: 'Volunteer Safety & Emergency Protocol', description: 'Safety procedures, emergency contacts, and incident reporting guidelines.', type: 'Handbook', category: 'Volunteer Guide', duration: '15 min read', progress: 50, link: '#' },
   { id: 'res-6', title: 'Cancer Awareness Quiz', description: 'Test your knowledge on cancer prevention, screening, and early detection.', type: 'Quiz', category: 'Cancer Awareness', duration: '10 min quiz', progress: 0, link: '#' },
 ];
-
-
-// ---- Monthly Impact Data (for charts) ----
-export const MONTHLY_IMPACT = [
-  { month: 'Jan', hours: 8, campaigns: 1, people: 120 },
-  { month: 'Feb', hours: 12, campaigns: 1, people: 180 },
-  { month: 'Mar', hours: 10, campaigns: 1, people: 150 },
-  { month: 'Apr', hours: 16, campaigns: 2, people: 210 },
-  { month: 'May', hours: 14, campaigns: 1, people: 190 },
-  { month: 'Jun', hours: 20, campaigns: 2, people: 240 },
-  { month: 'Jul', hours: 16, campaigns: 1, people: 150 },
-];

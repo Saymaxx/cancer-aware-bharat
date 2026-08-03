@@ -383,7 +383,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
               volunteerCity={volunteerCity}
               currentQuote={currentQuote}
               myCampaigns={myCampaigns}
-              userStats={userStats}
+              userStats={{ ...userStats, volunteerHours: profile?.totalHours ?? 0 }}
               notifications={notifications}
               setActiveTab={setActiveTab}
               handleCheckIn={handleCheckIn}

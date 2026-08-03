@@ -179,6 +179,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const [announcementTitle, setAnnouncementTitle] = useState('');
   const [announcementMessage, setAnnouncementMessage] = useState('');
   const [notifSuccessToast, setNotifSuccessToast] = useState(false);
+  const [lastBroadcastRecipientCount, setLastBroadcastRecipientCount] = useState(0);
 
   // Form states (Feedback Response)
   const [activeFeedbackId, setActiveFeedbackId] = useState<string | null>(null);
@@ -217,12 +218,6 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
       setChangingPassword(false);
     }
   };
-
-  // Get active administrative session metadata
-  const adminDetails = useMemo(() => {
-    const stored = localStorage.getItem('aware_bharat_logged_in_staff');
-    return stored ? JSON.parse(stored) : { email: 'dwarka@awarebharat.org', hospital: 'Apex Oncology Institute', sessionKey: 'STAFF-MOCKKEY' };
-  }, []);
 
   // Sync summary figures
   const summaryKpis = useMemo(() => {
@@ -531,6 +526,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
       const result = await broadcastNotification(apiToken, 'Volunteers', announcementTitle, announcementMessage);
       setAnnouncementTitle('');
       setAnnouncementMessage('');
+      setLastBroadcastRecipientCount(result.recipientCount);
       setNotifSuccessToast(true);
       setTimeout(() => setNotifSuccessToast(false), 3000);
       toast.success('Broadcast Alert Sent', `Notification dispatched to ${result.recipientCount} volunteer(s).`);
@@ -940,6 +936,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
           {activeTab === 'notifications' && (
             <NotificationsTab
               notifSuccessToast={notifSuccessToast}
+              lastBroadcastRecipientCount={lastBroadcastRecipientCount}
               handleSendAnnouncement={handleSendAnnouncement}
               announcementTitle={announcementTitle}
               setAnnouncementTitle={setAnnouncementTitle}
