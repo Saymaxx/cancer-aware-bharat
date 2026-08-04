@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyCampaigns, listMyEvents, listMyHospitalDoctors, listMyHospitalReports, listMyNgoReferrals, listMyPatientEnquiries, listMyPatientRecords, listMyVolunteerFeedback, listMyVolunteerHours, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteerHoursMonthly, listVolunteers } from './client';
+import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyCampaigns, listMyEvents, listMyHospitalDoctors, listMyHospitalReports, listMyNgoReferrals, listMyPatientEnquiries, listMyPatientRecords, listMyTrainingProgress, listMyVolunteerFeedback, listMyVolunteerHours, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listRoles, listVolunteerFeedback, listVolunteerHoursMonthly, listVolunteers } from './client';
 import { mapApiAdmin, mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiCustomRole, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -368,6 +368,24 @@ export function useMyCampaigns(token: string | null) {
     campaigns: query.data ?? [],
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load your campaigns' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** The logged-in volunteer's own training completion progress (Volunteer
+ * Dashboard Training tab) -- merged onto the static TRAINING_RESOURCES
+ * catalog client-side; a resource with no row here is 0% for this volunteer. */
+export function useMyTrainingProgress(token: string | null) {
+  const query = useQuery({
+    queryKey: ['my-training-progress', token],
+    queryFn: () => listMyTrainingProgress(token as string),
+    enabled: !!token,
+  });
+
+  return {
+    progress: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load your training progress' : null,
     refetch: query.refetch,
   };
 }

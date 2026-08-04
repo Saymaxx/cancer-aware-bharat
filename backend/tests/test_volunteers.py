@@ -273,3 +273,67 @@ class TestVolunteerHours:
 
         resp = client.get("/volunteers/me/hours", headers=auth_header(token_b))
         assert resp.json() == []
+
+
+class TestTrainingProgress:
+    def test_requires_volunteer_auth(self, client):
+        resp = client.get("/volunteers/me/training")
+        assert resp.status_code == 401
+
+    def test_starts_empty(self, client, admin_token):
+        volunteer = register_and_approve_volunteer(client, admin_token, email="training.empty@example.com")
+        token = login_as_volunteer(client, volunteer)
+        resp = client.get("/volunteers/me/training", headers=auth_header(token))
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_can_update_progress(self, client, admin_token):
+        volunteer = register_and_approve_volunteer(client, admin_token, email="training.update@example.com")
+        token = login_as_volunteer(client, volunteer)
+        resp = client.patch("/volunteers/me/training/res-1", json={"progress": 40}, headers=auth_header(token))
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["resourceId"] == "res-1"
+        assert body["progress"] == 40
+        assert body["completedAt"] is None
+
+    def test_progress_persists_and_lists(self, client, admin_token):
+        volunteer = register_and_approve_volunteer(client, admin_token, email="training.list@example.com")
+        token = login_as_volunteer(client, volunteer)
+        client.patch("/volunteers/me/training/res-1", json={"progress": 40}, headers=auth_header(token))
+        client.patch("/volunteers/me/training/res-2", json={"progress": 100}, headers=auth_header(token))
+
+        resp = client.get("/volunteers/me/training", headers=auth_header(token))
+        assert resp.status_code == 200
+        by_resource = {r["resourceId"]: r for r in resp.json()}
+        assert by_resource["res-1"]["progress"] == 40
+        assert by_resource["res-2"]["progress"] == 100
+        assert by_resource["res-2"]["completedAt"] is not None
+
+    def test_updating_same_resource_again_overwrites_not_duplicates(self, client, admin_token):
+        volunteer = register_and_approve_volunteer(client, admin_token, email="training.overwrite@example.com")
+        token = login_as_volunteer(client, volunteer)
+        client.patch("/volunteers/me/training/res-1", json={"progress": 40}, headers=auth_header(token))
+        client.patch("/volunteers/me/training/res-1", json={"progress": 100}, headers=auth_header(token))
+
+        resp = client.get("/volunteers/me/training", headers=auth_header(token))
+        rows = [r for r in resp.json() if r["resourceId"] == "res-1"]
+        assert len(rows) == 1
+        assert rows[0]["progress"] == 100
+
+    def test_rejects_out_of_range_progress(self, client, admin_token):
+        volunteer = register_and_approve_volunteer(client, admin_token, email="training.badrange@example.com")
+        token = login_as_volunteer(client, volunteer)
+        resp = client.patch("/volunteers/me/training/res-1", json={"progress": 150}, headers=auth_header(token))
+        assert resp.status_code == 422
+
+    def test_one_volunteers_progress_not_visible_to_another(self, client, admin_token):
+        volunteer_a = register_and_approve_volunteer(client, admin_token, email="training.a@example.com")
+        volunteer_b = register_and_approve_volunteer(client, admin_token, email="training.b@example.com")
+        token_a = login_as_volunteer(client, volunteer_a)
+        token_b = login_as_volunteer(client, volunteer_b)
+
+        client.patch("/volunteers/me/training/res-1", json={"progress": 100}, headers=auth_header(token_a))
+
+        resp = client.get("/volunteers/me/training", headers=auth_header(token_b))
+        assert resp.json() == []

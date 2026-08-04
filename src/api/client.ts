@@ -307,6 +307,27 @@ export function logMyVolunteerHours(payload: LogVolunteerHoursPayload, token: st
   }, token);
 }
 
+// ---------------- Volunteer Training Progress ----------------
+
+export interface ApiVolunteerTrainingProgress {
+  id: string;
+  resourceId: string;
+  progress: number;
+  completedAt: string | null;
+  updatedAt: string;
+}
+
+export function listMyTrainingProgress(token: string): Promise<ApiVolunteerTrainingProgress[]> {
+  return request<ApiVolunteerTrainingProgress[]>('/volunteers/me/training', {}, token);
+}
+
+export function updateMyTrainingProgress(resourceId: string, progress: number, token: string): Promise<ApiVolunteerTrainingProgress> {
+  return request<ApiVolunteerTrainingProgress>(`/volunteers/me/training/${resourceId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ progress }),
+  }, token);
+}
+
 export function listVolunteers(token: string): Promise<ApiVolunteer[]> {
   return request<ApiVolunteer[]>('/volunteers', {}, token);
 }

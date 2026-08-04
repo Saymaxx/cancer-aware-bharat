@@ -5,8 +5,8 @@ import {
   BarChart3, Timer, GraduationCap, MessageSquare, IdCard, Globe, Clock3,
 } from 'lucide-react';
 import { useToast } from './common/Toast';
-import { ApiError, ApiVolunteer, checkInToCampaign, enrollInCampaign, getMyVolunteerProfile, logMyVolunteerHours, markNotificationRead, submitMyVolunteerFeedback } from '../api/client';
-import { useApiNotifications, useEvents, useMyCampaigns, useMyVolunteerFeedback, useMyVolunteerHours } from '../api/hooks';
+import { ApiError, ApiVolunteer, checkInToCampaign, enrollInCampaign, getMyVolunteerProfile, logMyVolunteerHours, markNotificationRead, submitMyVolunteerFeedback, updateMyTrainingProgress } from '../api/client';
+import { useApiNotifications, useEvents, useMyCampaigns, useMyTrainingProgress, useMyVolunteerFeedback, useMyVolunteerHours } from '../api/hooks';
 import DashboardSidebar, { SidebarFooterButton } from './common/DashboardSidebar';
 import { useSidebarState } from '../hooks/useSidebarState';
 import { useEscapeKey } from '../hooks/useEscapeKey';
@@ -137,7 +137,15 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
   };
 
   const [scheduleList, setScheduleList] = useState<ScheduleItem[]>(TODAYS_SCHEDULE);
-  const [trainingModules, setTrainingModules] = useState<TrainingResource[]>(TRAINING_RESOURCES);
+  // Real per-volunteer completion progress merged onto the static resource
+  // catalog -- a resource with no backend row yet is 0% for this volunteer,
+  // not the catalog's old hardcoded per-resource "everyone sees the same
+  // progress" numbers.
+  const { progress: trainingProgress, refetch: refetchTrainingProgress } = useMyTrainingProgress(volunteer?.accessToken || null);
+  const trainingModules: TrainingResource[] = useMemo(() => {
+    const byResource = new Map(trainingProgress.map(p => [p.resourceId, p.progress]));
+    return TRAINING_RESOURCES.map(res => ({ ...res, progress: byResource.get(res.id) ?? 0 }));
+  }, [trainingProgress]);
   const [notifFilter, setNotifFilter] = useState<string>('All');
   const [userStats] = useState(() => {
     const stored = localStorage.getItem('aware_bharat_volunteer_stats');
@@ -241,14 +249,16 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
     showToast('Read notifications cleared.');
   };
 
-  const handleCompleteTraining = (resId: string) => {
-    setTrainingModules(prev => prev.map(res => {
-      if (res.id === resId) {
-        showToast(`🎉 Congratulations! Course "${res.title}" completed. +100 XP Earned!`);
-        return { ...res, progress: 100 };
-      }
-      return res;
-    }));
+  const handleCompleteTraining = async (resId: string) => {
+    if (!volunteer?.accessToken) return;
+    const res = TRAINING_RESOURCES.find(r => r.id === resId);
+    try {
+      await updateMyTrainingProgress(resId, 100, volunteer.accessToken);
+      showToast(`🎉 Congratulations! Course "${res?.title ?? ''}" completed. +100 XP Earned!`);
+      refetchTrainingProgress();
+    } catch (err) {
+      toast.error('Could Not Save Progress', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
     setActiveTrainingModal(null);
     setTrainingQuizAnswer(null);
   };

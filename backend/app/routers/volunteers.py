@@ -10,9 +10,11 @@ from app.deps import DbSession, require_admin_or_superadmin, require_volunteer
 from app.models.volunteer import Volunteer
 from app.models.volunteer_campaign_enrollment import VolunteerCampaignEnrollment
 from app.models.volunteer_hours_log import VolunteerHoursLog
+from app.models.volunteer_training_progress import VolunteerTrainingProgress
 from app.schemas.volunteer import VolunteerOut, VolunteerRejectIn
 from app.schemas.volunteer_campaign_enrollment import VolunteerCampaignEnrollmentOut
 from app.schemas.volunteer_hours import VolunteerHoursLogIn, VolunteerHoursLogOut
+from app.schemas.volunteer_training_progress import VolunteerTrainingProgressIn, VolunteerTrainingProgressOut
 from app.services.audit import record_event
 
 router = APIRouter(prefix="/volunteers", tags=["volunteers"])
@@ -104,6 +106,42 @@ def check_in_to_campaign(
         db.commit()
         db.refresh(enrollment)
     return enrollment
+
+
+@router.get("/me/training", response_model=list[VolunteerTrainingProgressOut])
+@limiter.limit("60/minute")
+def list_my_training(request: Request, db: DbSession, claims: Annotated[dict, Depends(require_volunteer)]):
+    return (
+        db.query(VolunteerTrainingProgress)
+        .filter(VolunteerTrainingProgress.volunteer_id == UUID(claims["sub"]))
+        .all()
+    )
+
+
+@router.patch("/me/training/{resource_id}", response_model=VolunteerTrainingProgressOut)
+@limiter.limit("30/minute")
+def update_my_training(
+    request: Request,
+    resource_id: str,
+    payload: VolunteerTrainingProgressIn,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_volunteer)],
+):
+    volunteer_id = UUID(claims["sub"])
+    row = db.query(VolunteerTrainingProgress).filter(
+        VolunteerTrainingProgress.volunteer_id == volunteer_id,
+        VolunteerTrainingProgress.resource_id == resource_id,
+    ).first()
+    if row is None:
+        row = VolunteerTrainingProgress(volunteer_id=volunteer_id, resource_id=resource_id, progress=payload.progress)
+        db.add(row)
+    else:
+        row.progress = payload.progress
+    if payload.progress == 100 and row.completed_at is None:
+        row.completed_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(row)
+    return row
 
 
 def _get_volunteer_or_404(db: Session, volunteer_id: UUID) -> Volunteer:
