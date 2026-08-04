@@ -19,6 +19,7 @@ from app.schemas.hospital import (
     HospitalPartnerRequestOut,
     HospitalRecommendIn,
     HospitalRejectIn,
+    HospitalRequestInfoIn,
 )
 from app.services.audit import record_event
 from app.services.notifications import notify
@@ -145,6 +146,36 @@ def recommend_partner_request(
     return partner_request
 
 
+@router.post("/partner-requests/{request_id}/request-info", response_model=HospitalPartnerRequestOut)
+@limiter.limit("30/minute")
+def request_more_info(
+    request: Request,
+    request_id: UUID,
+    payload: HospitalRequestInfoIn,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_roles("superadmin"))],
+):
+    """Super Admin asks the applicant for more detail before deciding --
+    doesn't block a later approve/reject, it's just a status/notes flag
+    (see the "Info Requested" branch in those endpoints' guards below)."""
+    partner_request = _get_partner_request_or_404(db, request_id)
+    if partner_request.status not in ("Pending", "Recommended", "Info Requested"):
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"Cannot request info on a request that is currently '{partner_request.status}'",
+        )
+    partner_request.status = "Info Requested"
+    if payload.notes:
+        partner_request.decision_notes = payload.notes
+
+    record_event(db, "hospital_info_requested", role=claims["role"], actor_id=UUID(claims["sub"]),
+                 detail=partner_request.hospital_name)
+
+    db.commit()
+    db.refresh(partner_request)
+    return partner_request
+
+
 @router.post("/partner-requests/{request_id}/approve", response_model=HospitalApprovalResult)
 @limiter.limit("15/minute")
 def approve_partner_request(
@@ -161,7 +192,7 @@ def approve_partner_request(
     approving admin to relay manually; never stored in plaintext, never
     logged (see HospitalApprovalResult)."""
     partner_request = _get_partner_request_or_404(db, request_id)
-    if partner_request.status not in ("Pending", "Recommended"):
+    if partner_request.status not in ("Pending", "Recommended", "Info Requested"):
         raise HTTPException(
             status.HTTP_409_CONFLICT,
             f"Cannot approve a request that is currently '{partner_request.status}'",
@@ -231,7 +262,7 @@ def reject_partner_request(
     approval does -- an Admin can decline a clearly-unsuitable application
     immediately rather than waiting on Super Admin for every rejection."""
     partner_request = _get_partner_request_or_404(db, request_id)
-    if partner_request.status not in ("Pending", "Recommended"):
+    if partner_request.status not in ("Pending", "Recommended", "Info Requested"):
         raise HTTPException(
             status.HTTP_409_CONFLICT,
             f"Cannot reject a request that is currently '{partner_request.status}'",

@@ -63,6 +63,71 @@ class TestRecommend:
         assert resp.json()["decisionNotes"] == "Docs verified, looks solid."
 
 
+class TestRequestInfo:
+    def test_superadmin_can_request_info(self, client, superadmin_token):
+        req = submit_partner_request(client, email="info1@example.com")
+        resp = client.post(
+            f"/hospitals/partner-requests/{req['id']}/request-info",
+            json={"notes": "Please share NABH accreditation documents."},
+            headers=auth_header(superadmin_token),
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["status"] == "Info Requested"
+        assert resp.json()["decisionNotes"] == "Please share NABH accreditation documents."
+
+    def test_admin_cannot_request_info(self, client, admin_token):
+        req = submit_partner_request(client, email="info2@example.com")
+        resp = client.post(
+            f"/hospitals/partner-requests/{req['id']}/request-info",
+            json={},
+            headers=auth_header(admin_token),
+        )
+        assert resp.status_code == 403
+
+    def test_request_info_requires_staff_auth(self, client):
+        req = submit_partner_request(client, email="info3@example.com")
+        resp = client.post(f"/hospitals/partner-requests/{req['id']}/request-info", json={})
+        assert resp.status_code == 401
+
+    def test_request_info_after_recommend_succeeds(self, client, admin_token, superadmin_token):
+        req = submit_partner_request(client, email="info4@example.com")
+        client.post(f"/hospitals/partner-requests/{req['id']}/recommend", json={}, headers=auth_header(admin_token))
+        resp = client.post(
+            f"/hospitals/partner-requests/{req['id']}/request-info",
+            json={},
+            headers=auth_header(superadmin_token),
+        )
+        assert resp.status_code == 200, resp.text
+
+    def test_cannot_request_info_on_approved(self, client, superadmin_token):
+        req = submit_partner_request(client, email="info5@example.com")
+        client.post(f"/hospitals/partner-requests/{req['id']}/approve", json=APPROVE_PAYLOAD, headers=auth_header(superadmin_token))
+        resp = client.post(f"/hospitals/partner-requests/{req['id']}/request-info", json={}, headers=auth_header(superadmin_token))
+        assert resp.status_code == 409
+
+    def test_approve_after_request_info_succeeds(self, client, superadmin_token):
+        """Info Requested shouldn't be a dead end -- Super Admin can still
+        approve once the applicant (or admin) follows up."""
+        req = submit_partner_request(client, email="info6@example.com")
+        client.post(f"/hospitals/partner-requests/{req['id']}/request-info", json={}, headers=auth_header(superadmin_token))
+        resp = client.post(
+            f"/hospitals/partner-requests/{req['id']}/approve",
+            json=APPROVE_PAYLOAD,
+            headers=auth_header(superadmin_token),
+        )
+        assert resp.status_code == 200, resp.text
+
+    def test_reject_after_request_info_succeeds(self, client, superadmin_token):
+        req = submit_partner_request(client, email="info7@example.com")
+        client.post(f"/hospitals/partner-requests/{req['id']}/request-info", json={}, headers=auth_header(superadmin_token))
+        resp = client.post(
+            f"/hospitals/partner-requests/{req['id']}/reject",
+            json={"reason": "No response after follow-up."},
+            headers=auth_header(superadmin_token),
+        )
+        assert resp.status_code == 200, resp.text
+
+
 class TestApprove:
     def test_superadmin_can_approve_pending_directly(self, client, superadmin_token):
         req = submit_partner_request(client, email="app1@example.com")

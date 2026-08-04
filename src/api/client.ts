@@ -571,7 +571,7 @@ export interface ApiHospitalPartnerRequest {
   city: string;
   specialties: string | null;
   motivation: string | null;
-  status: 'Pending' | 'Recommended' | 'Approved' | 'Rejected';
+  status: 'Pending' | 'Recommended' | 'Info Requested' | 'Approved' | 'Rejected';
   decisionNotes: string | null;
   createdAt: string;
 }
@@ -614,6 +614,13 @@ export function rejectPartnerRequest(id: string, token: string, reason: string):
   return request<ApiHospitalPartnerRequest>(`/hospitals/partner-requests/${id}/reject`, {
     method: 'POST',
     body: JSON.stringify({ reason }),
+  }, token);
+}
+
+export function requestPartnerRequestInfo(id: string, token: string, notes?: string): Promise<ApiHospitalPartnerRequest> {
+  return request<ApiHospitalPartnerRequest>(`/hospitals/partner-requests/${id}/request-info`, {
+    method: 'POST',
+    body: JSON.stringify({ notes }),
   }, token);
 }
 

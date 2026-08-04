@@ -6,7 +6,7 @@ import {
   Database, ShieldCheck, FileText,
 } from 'lucide-react';
 import { useAdmins, useApiEnquiries, useApiNotifications, useApiHospitals, useAuditLogs, useBackups, useBlogs, useDatabaseHealth, useDonations, useEvents, useIntegrationStatus, useOrgSettings, usePartnerRequests, usePatientRecords, useRoles, useStaffMe, useVolunteers } from '../api/hooks';
-import { activateAdmin, assignAdminRole, assignHospital, ApiError, approvePartnerRequest, broadcastNotification, changeStaffPassword, createAdmin, createBackup, createBlog, createRole, deleteAdmin as deleteAdminAccount, deleteBlog, getStaffSession, rejectPartnerRequest, suspendAdmin, updateAdmin, updateOrgSettings, updateStaffMe, type ApiOrgSettings, type NotificationAudience } from '../api/client';
+import { activateAdmin, assignAdminRole, assignHospital, ApiError, approvePartnerRequest, broadcastNotification, changeStaffPassword, createAdmin, createBackup, createBlog, createRole, deleteAdmin as deleteAdminAccount, deleteBlog, getStaffSession, rejectPartnerRequest, requestPartnerRequestInfo, suspendAdmin, updateAdmin, updateOrgSettings, updateStaffMe, type ApiOrgSettings, type NotificationAudience } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, Hospital } from '../types';
 import { useToast } from './common/Toast';
@@ -138,16 +138,12 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
   const { partnerRequests, refetch: refetchPartnerRequests } = usePartnerRequests(apiToken);
   const { blogs, refetch: refetchBlogs } = useBlogs();
-  // 'Info Requested' has no backend status of its own (no request-info
-  // endpoint exists) -- kept as a local-only overlay, same as
-  // AdminDashboard's documentVerified gate.
-  const [locallyRequestedInfoIds, setLocallyRequestedInfoIds] = useState<Set<string>>(new Set());
   const hospitals: HospitalApplication[] = useMemo(() => partnerRequests.map(pr => {
     const status: HospitalApplication['status'] =
       pr.status === 'Approved' ? 'Approved' :
       pr.status === 'Rejected' ? 'Rejected' :
       pr.status === 'Recommended' ? 'Recommended by Admin' :
-      locallyRequestedInfoIds.has(pr.id) ? 'Info Requested' :
+      pr.status === 'Info Requested' ? 'Info Requested' :
       'Pending Review';
     return {
       id: pr.id,
@@ -172,7 +168,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
       // anywhere after that response.
       generatedCredentials: undefined,
     };
-  }), [partnerRequests, locallyRequestedInfoIds]);
+  }), [partnerRequests]);
   const { auditLogs } = useAuditLogs(apiToken);
   const { roles, refetch: refetchRoles } = useRoles(apiToken);
   const { health: databaseHealth, loading: databaseHealthLoading } = useDatabaseHealth(apiToken);
@@ -500,9 +496,15 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     }
   };
 
-  const requestMoreInfo = (id: string) => {
-    setLocallyRequestedInfoIds(prev => new Set(prev).add(id));
-    showToast('Additional information requested from hospital.');
+  const requestMoreInfo = async (id: string) => {
+    if (!apiToken) return;
+    try {
+      await requestPartnerRequestInfo(id, apiToken);
+      showToast('Additional information requested from hospital.');
+      refetchPartnerRequests();
+    } catch (err) {
+      toast.error('Request Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   // ---- Notifications ----

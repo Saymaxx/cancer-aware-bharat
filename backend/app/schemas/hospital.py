@@ -46,6 +46,10 @@ class HospitalRecommendIn(CamelModel):
     notes: str | None = Field(default=None, max_length=2000)
 
 
+class HospitalRequestInfoIn(CamelModel):
+    notes: str | None = Field(default=None, max_length=2000)
+
+
 class HospitalRejectIn(CamelModel):
     reason: str = Field(min_length=1, max_length=2000)
 

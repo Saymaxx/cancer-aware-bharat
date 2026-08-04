@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
-PARTNER_REQUEST_STATUSES = ("Pending", "Recommended", "Approved", "Rejected")
+PARTNER_REQUEST_STATUSES = ("Pending", "Recommended", "Info Requested", "Approved", "Rejected")
 
 
 class Hospital(Base):
