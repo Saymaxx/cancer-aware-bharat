@@ -113,48 +113,6 @@ export const DEFAULT_VOLUNTEER_STATS = {
   certificatesEarned: 3,
 };
 
-// ---- My Active (Enrolled) Campaigns ----
-export const MY_ACTIVE_CAMPAIGNS: ActiveCampaign[] = [
-  {
-    id: 'active-1',
-    name: 'Free Oral Cancer Screening Drive',
-    type: 'Screening Camp',
-    date: 'Sat, 26 Jul 2026',
-    time: '8:00 AM – 2:00 PM',
-    location: 'Lions Club Grounds, Dwarka, New Delhi',
-    organizer: 'Dr. Ramesh Sharma',
-    organizerPhone: '+91 98765 43210',
-    attendanceStatus: 'Confirmed',
-    targetDate: '2026-07-26T08:00:00+05:30',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD67aBEzQ4mH7MDO2L157RQifaSnmDCt3cgR1mBA8TH9TrWOEVtfrO-LXwPvszbWFRhSqm0iXQWTAIIR9OboD39r61QZ-YZCeSRPwF1OR5sTAR1C41FQ_vE_bR33rhXQiCFAzEIlwPlVTKJ6O7A3QiRFi1YXJOgUb-9v9v0-kIPjAR44d5XSt4nKwVOsMj6FbMMzo3uXulQG9eN-sMU5SFguVUub1iTlqnnpe1xgdE_2zA6nvpvZSMfIw',
-  },
-  {
-    id: 'active-2',
-    name: 'Rural Village Screening — Haryana',
-    type: 'Community Outreach',
-    date: 'Sat, 2 Aug 2026',
-    time: '7:00 AM – 3:00 PM',
-    location: 'Govt. Primary School, Rewari, Haryana',
-    organizer: 'Amit Kumar',
-    organizerPhone: '+91 98765 12345',
-    attendanceStatus: 'Pending',
-    targetDate: '2026-08-02T07:00:00+05:30',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAGIjteBD0CWXW7KgteodS7d-DgD-XuVwGItAT-l6I7lGspLnQe-OTq-H8TXiUcjOWdbptTp4-nZIN7FAu9-zdREXhoNTAzOkPjMHZ8RnnYKIM7kYGlLYiE5KpSV4BkFXynSzHEJjwp7VVvMNDw1bDqE-ScPuLJY5TvnYNhOVGZI2eb7vDckiItLiy5vlfchPcRQaoc5WkD9Com-SwmLGUqW1QCP0PViJLWaPZEVivtluQAiRrMYOvypg',
-  },
-  {
-    id: 'active-3',
-    name: 'Cancer Survivor Support Circle',
-    type: 'Workshop',
-    date: 'Sun, 3 Aug 2026',
-    time: '11:00 AM – 1:00 PM',
-    location: 'CareWell Cancer Hospital, Mumbai',
-    organizer: 'Rajeshwar Sen',
-    organizerPhone: '+91 98765 67890',
-    attendanceStatus: 'Confirmed',
-    targetDate: '2026-08-03T11:00:00+05:30',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCiimMIp06okX9NfuejkTXPJloibs626thfTEGbFezWCp9zlLJ-iarNGyegNfBDcii0YegTaf1NZWfFREz3CITpIuLKSe1XAVAGfxHWVf7QuU7aKp9ZmXBXJe-eN6u61iC5aHkE_mfxbjOpOyQpcw7ibDvsLC0qOuFGoO7zyEaH5YaFscbc4b4N2NcVrSeUO64u07Da-Tm4Ln1BWrxmJsVwep4IOn64G6DWOGU_djXvc2IlKXz4KRp-1Q',
-  },
-];
 
 // ---- Today's Schedule ----
 export const TODAYS_SCHEDULE: ScheduleItem[] = [

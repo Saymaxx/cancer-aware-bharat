@@ -47,7 +47,9 @@ export function EventPassModal({
           <div className="p-3 bg-slate-50 rounded-xl text-left text-[11px] space-y-1.5 border border-slate-200/60">
             <p><strong className="text-slate-700">Date & Time:</strong> {campaign.date} ({campaign.time})</p>
             <p><strong className="text-slate-700">Venue:</strong> {campaign.location}</p>
-            <p><strong className="text-slate-700">Coordinator:</strong> {campaign.organizer} ({campaign.organizerPhone})</p>
+            {campaign.organizer && (
+              <p><strong className="text-slate-700">Coordinator:</strong> {campaign.organizer} ({campaign.organizerPhone})</p>
+            )}
           </div>
           <div className="flex gap-2 pt-2">
             <button
@@ -92,7 +94,9 @@ export function ProtocolModal({ campaign, onClose }: { campaign: ActiveCampaign;
             <li>Wear official CAB volunteer lanyard and badge at all times.</li>
             <li>Maintain strict patient confidentiality for all screening records and medical histories.</li>
             <li>Ensure hygiene kits (sanitizers, masks, gloves) are stocked at registration tables.</li>
-            <li>For any emergency or medical escalation, contact Regional Lead <strong>{campaign.organizer}</strong> immediately.</li>
+            {campaign.organizer && (
+              <li>For any emergency or medical escalation, contact Regional Lead <strong>{campaign.organizer}</strong> immediately.</li>
+            )}
           </ul>
         </div>
         <button

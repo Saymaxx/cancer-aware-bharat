@@ -1083,6 +1083,28 @@ export function deleteEvent(id: string, token: string): Promise<void> {
   return request<void>(`/events/${id}`, { method: 'DELETE' }, token);
 }
 
+// ---------------- Volunteer Campaign Enrollment ----------------
+
+export interface ApiVolunteerCampaignEnrollment {
+  id: string;
+  eventId: string;
+  enrolledAt: string;
+  checkedInAt: string | null;
+  event: ApiEvent;
+}
+
+export function listMyCampaigns(token: string): Promise<ApiVolunteerCampaignEnrollment[]> {
+  return request<ApiVolunteerCampaignEnrollment[]>('/volunteers/me/campaigns', {}, token);
+}
+
+export function enrollInCampaign(eventId: string, token: string): Promise<ApiVolunteerCampaignEnrollment> {
+  return request<ApiVolunteerCampaignEnrollment>(`/events/${eventId}/enroll`, { method: 'POST' }, token);
+}
+
+export function checkInToCampaign(eventId: string, token: string): Promise<ApiVolunteerCampaignEnrollment> {
+  return request<ApiVolunteerCampaignEnrollment>(`/volunteers/me/campaigns/${eventId}/check-in`, { method: 'POST' }, token);
+}
+
 // ---------------- Campaign Requests (Campaigns Scheduler pipeline) ----------------
 
 export interface ApiCampaignRequest {

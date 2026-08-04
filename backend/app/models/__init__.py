@@ -4,6 +4,7 @@ from app.models.event import Event
 from app.models.blog import BlogArticle
 from app.models.volunteer import Volunteer
 from app.models.volunteer_hours_log import VolunteerHoursLog
+from app.models.volunteer_campaign_enrollment import VolunteerCampaignEnrollment
 from app.models.patient import OtpCode, Patient
 from app.models.patient_record import PatientRecord
 from app.models.donation import Donation
@@ -29,6 +30,7 @@ __all__ = [
     "BlogArticle",
     "Volunteer",
     "VolunteerHoursLog",
+    "VolunteerCampaignEnrollment",
     "Patient",
     "OtpCode",
     "PatientRecord",

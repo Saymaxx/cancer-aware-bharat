@@ -5,15 +5,15 @@ import {
   BarChart3, Timer, GraduationCap, MessageSquare, IdCard, Globe, Clock3,
 } from 'lucide-react';
 import { useToast } from './common/Toast';
-import { ApiError, ApiVolunteer, getMyVolunteerProfile, logMyVolunteerHours, markNotificationRead, submitMyVolunteerFeedback } from '../api/client';
-import { useApiNotifications, useMyVolunteerFeedback, useMyVolunteerHours } from '../api/hooks';
+import { ApiError, ApiVolunteer, checkInToCampaign, enrollInCampaign, getMyVolunteerProfile, logMyVolunteerHours, markNotificationRead, submitMyVolunteerFeedback } from '../api/client';
+import { useApiNotifications, useEvents, useMyCampaigns, useMyVolunteerFeedback, useMyVolunteerHours } from '../api/hooks';
 import DashboardSidebar, { SidebarFooterButton } from './common/DashboardSidebar';
 import { useSidebarState } from '../hooks/useSidebarState';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 
 import {
   MOTIVATIONAL_QUOTES, DEFAULT_VOLUNTEER_STATS,
-  MY_ACTIVE_CAMPAIGNS, TODAYS_SCHEDULE,
+  TODAYS_SCHEDULE,
   TRAINING_RESOURCES,
   type ActiveCampaign, type Notification as NotifType, type ScheduleItem,
   type TrainingResource,
@@ -100,8 +100,42 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
       read: n.read || locallyReadIds.has(n.id),
     })), [apiNotifications, locallyReadIds, locallyClearedIds]);
 
-  // Data States
-  const [myCampaigns, setMyCampaigns] = useState<ActiveCampaign[]>(MY_ACTIVE_CAMPAIGNS);
+  // Real campaign enrollment (Event model) -- organizer/organizerPhone and
+  // targetDate have no backing field on Event (freeform date/time strings,
+  // no coordinator contact), so those are left blank rather than fabricated;
+  // CampaignsTab hides the countdown/coordinator UI when they're empty.
+  const { campaigns: myEnrollments, refetch: refetchMyCampaigns } = useMyCampaigns(volunteer?.accessToken || null);
+  const { events: allEvents } = useEvents();
+  const myCampaigns: ActiveCampaign[] = useMemo(() => myEnrollments.map(e => ({
+    id: e.eventId,
+    name: e.event.title,
+    type: e.event.type,
+    date: e.event.date,
+    time: e.event.time,
+    location: e.event.location,
+    organizer: '',
+    organizerPhone: '',
+    attendanceStatus: e.checkedInAt ? 'Checked In' as const : 'Confirmed' as const,
+    targetDate: '',
+    image: e.event.image || '',
+  })), [myEnrollments]);
+  const enrolledEventIds = useMemo(() => new Set(myEnrollments.map(e => e.eventId)), [myEnrollments]);
+  const openCampaigns = useMemo(
+    () => allEvents.filter(ev => ev.status === 'Scheduled' && !enrolledEventIds.has(ev.id)),
+    [allEvents, enrolledEventIds],
+  );
+
+  const handleEnroll = async (eventId: string) => {
+    if (!volunteer?.accessToken) return;
+    try {
+      await enrollInCampaign(eventId, volunteer.accessToken);
+      showToast('Enrolled! Find it under Approved Campaigns.');
+      refetchMyCampaigns();
+    } catch (err) {
+      toast.error('Enrollment Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
+  };
+
   const [scheduleList, setScheduleList] = useState<ScheduleItem[]>(TODAYS_SCHEDULE);
   const [trainingModules, setTrainingModules] = useState<TrainingResource[]>(TRAINING_RESOURCES);
   const [notifFilter, setNotifFilter] = useState<string>('All');
@@ -166,14 +200,15 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
   const currentQuote = MOTIVATIONAL_QUOTES[quoteIndex];
 
   // Action Handlers
-  const handleCheckIn = (campId: string) => {
-    setMyCampaigns(prev => prev.map(c => {
-      if (c.id === campId) {
-        showToast(`✓ Checked in successfully for ${c.name} at ${new Date().toLocaleTimeString()}!`);
-        return { ...c, attendanceStatus: 'Checked In' as const };
-      }
-      return c;
-    }));
+  const handleCheckIn = async (campId: string) => {
+    if (!volunteer?.accessToken) return;
+    try {
+      await checkInToCampaign(campId, volunteer.accessToken);
+      showToast(`✓ Checked in successfully at ${new Date().toLocaleTimeString()}!`);
+      refetchMyCampaigns();
+    } catch (err) {
+      toast.error('Check-In Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   const handleScheduleToggle = (id: string) => {
@@ -401,6 +436,8 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
           {activeTab === 'campaigns' && (
             <CampaignsTab
               myCampaigns={myCampaigns}
+              openCampaigns={openCampaigns}
+              handleEnroll={handleEnroll}
               handleCheckIn={handleCheckIn}
               setActivePassModal={setActivePassModal}
               setActiveProtocolModal={setActiveProtocolModal}

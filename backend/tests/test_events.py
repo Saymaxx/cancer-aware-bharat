@@ -1,6 +1,14 @@
 from tests.conftest import auth_header
 
 
+def _approved_volunteer_token(client, admin_token, **overrides) -> str:
+    from tests.test_volunteers import register_and_approve_volunteer
+
+    volunteer = register_and_approve_volunteer(client, admin_token, **overrides)
+    login = client.post("/auth/volunteer/login", json={"email": volunteer["email"], "password": volunteer["password"]})
+    return login.json()["accessToken"]
+
+
 def sample_event_payload(**overrides) -> dict:
     payload = {
         "title": "Pytest Screening Camp",
@@ -129,6 +137,102 @@ class TestDeleteEvent:
         created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
         resp = client.delete(f"/events/{created['id']}", headers=auth_header(hospital1_token))
         assert resp.status_code == 403
+
+
+class TestCampaignEnrollment:
+    def test_requires_volunteer_auth(self, client, admin_token):
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        resp = client.post(f"/events/{created['id']}/enroll")
+        assert resp.status_code == 401
+
+    def test_staff_role_cannot_enroll(self, client, admin_token):
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        resp = client.post(f"/events/{created['id']}/enroll", headers=auth_header(admin_token))
+        assert resp.status_code == 403
+
+    def test_volunteer_can_enroll(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        resp = client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token))
+        assert resp.status_code == 201, resp.text
+        body = resp.json()
+        assert body["event"]["id"] == created["id"]
+        assert body["checkedInAt"] is None
+
+    def test_cannot_enroll_twice(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token))
+        resp = client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token))
+        assert resp.status_code == 409
+
+    def test_cannot_enroll_in_cancelled_event(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        created = client.post("/events", json=sample_event_payload(status="Cancelled"), headers=auth_header(admin_token)).json()
+        resp = client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token))
+        assert resp.status_code == 409
+
+    def test_enroll_nonexistent_event_404s(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        resp = client.post("/events/00000000-0000-0000-0000-000000000000/enroll", headers=auth_header(volunteer_token))
+        assert resp.status_code == 404
+
+
+class TestListMyCampaigns:
+    def test_requires_volunteer_auth(self, client):
+        resp = client.get("/volunteers/me/campaigns")
+        assert resp.status_code == 401
+
+    def test_starts_empty(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        resp = client.get("/volunteers/me/campaigns", headers=auth_header(volunteer_token))
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_shows_enrolled_campaign(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        created = client.post("/events", json=sample_event_payload(title="My Enrolled Camp"), headers=auth_header(admin_token)).json()
+        client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token))
+        resp = client.get("/volunteers/me/campaigns", headers=auth_header(volunteer_token))
+        assert resp.status_code == 200
+        assert [c["event"]["title"] for c in resp.json()] == ["My Enrolled Camp"]
+
+    def test_only_shows_own_enrollments(self, client, admin_token):
+        volunteer1_token = _approved_volunteer_token(client, admin_token, email="enroll1@example.com", phone="+91 90000 21212")
+        volunteer2_token = _approved_volunteer_token(client, admin_token, email="enroll2@example.com", phone="+91 90000 22222")
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer1_token))
+        resp = client.get("/volunteers/me/campaigns", headers=auth_header(volunteer2_token))
+        assert resp.json() == []
+
+
+class TestCampaignCheckIn:
+    def test_requires_volunteer_auth(self, client, admin_token):
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        resp = client.post(f"/volunteers/me/campaigns/{created['id']}/check-in")
+        assert resp.status_code == 401
+
+    def test_check_in_requires_enrollment(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        resp = client.post(f"/volunteers/me/campaigns/{created['id']}/check-in", headers=auth_header(volunteer_token))
+        assert resp.status_code == 404
+
+    def test_volunteer_can_check_in_after_enrolling(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token))
+        resp = client.post(f"/volunteers/me/campaigns/{created['id']}/check-in", headers=auth_header(volunteer_token))
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["checkedInAt"] is not None
+
+    def test_check_in_is_idempotent(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token))
+        first = client.post(f"/volunteers/me/campaigns/{created['id']}/check-in", headers=auth_header(volunteer_token))
+        second = client.post(f"/volunteers/me/campaigns/{created['id']}/check-in", headers=auth_header(volunteer_token))
+        assert first.json()["checkedInAt"] == second.json()["checkedInAt"]
 
 
 class TestListMyEvents:

@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Annotated
 from uuid import UUID
 
@@ -7,8 +8,10 @@ from sqlalchemy.orm import Session
 from app.core.limiter import limiter
 from app.deps import DbSession, require_admin_or_superadmin, require_volunteer
 from app.models.volunteer import Volunteer
+from app.models.volunteer_campaign_enrollment import VolunteerCampaignEnrollment
 from app.models.volunteer_hours_log import VolunteerHoursLog
 from app.schemas.volunteer import VolunteerOut, VolunteerRejectIn
+from app.schemas.volunteer_campaign_enrollment import VolunteerCampaignEnrollmentOut
 from app.schemas.volunteer_hours import VolunteerHoursLogIn, VolunteerHoursLogOut
 from app.services.audit import record_event
 
@@ -69,6 +72,38 @@ def log_my_hours(
     db.commit()
     db.refresh(log)
     return log
+
+
+@router.get("/me/campaigns", response_model=list[VolunteerCampaignEnrollmentOut])
+@limiter.limit("60/minute")
+def list_my_campaigns(request: Request, db: DbSession, claims: Annotated[dict, Depends(require_volunteer)]):
+    return (
+        db.query(VolunteerCampaignEnrollment)
+        .filter(VolunteerCampaignEnrollment.volunteer_id == UUID(claims["sub"]))
+        .order_by(VolunteerCampaignEnrollment.enrolled_at.desc())
+        .all()
+    )
+
+
+@router.post("/me/campaigns/{event_id}/check-in", response_model=VolunteerCampaignEnrollmentOut)
+@limiter.limit("30/minute")
+def check_in_to_campaign(
+    request: Request,
+    event_id: UUID,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_volunteer)],
+):
+    enrollment = db.query(VolunteerCampaignEnrollment).filter(
+        VolunteerCampaignEnrollment.volunteer_id == UUID(claims["sub"]),
+        VolunteerCampaignEnrollment.event_id == event_id,
+    ).first()
+    if enrollment is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Not enrolled in this campaign")
+    if enrollment.checked_in_at is None:
+        enrollment.checked_in_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(enrollment)
+    return enrollment
 
 
 def _get_volunteer_or_404(db: Session, volunteer_id: UUID) -> Volunteer:
