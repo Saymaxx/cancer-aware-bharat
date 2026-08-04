@@ -697,16 +697,13 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   };
 
   // ---- Filters ----
+  // Super Admin can see and act on every application directly -- an Admin
+  // recommendation is optional context, not a gate (the backend has always
+  // allowed approve/reject/request-info straight from 'Pending').
   const filteredHospitals = useMemo(() => {
     return hospitals.filter(h => {
-      // 2-TIER WORKFLOW ENFORCEMENT:
-      // Applications only reach Super Admin after Regional Admin recommendation or Super Admin action.
-      // Raw applications with status 'Pending Review' or 'Pending Tie-up' remain strictly in Regional Admin queue.
-      const isRecommendedOrProcessed = h.status === 'Recommended by Admin' || (h.status as string) === 'Recommended to Super Admin' || h.status === 'Approved' || h.status === 'Rejected' || h.status === 'Info Requested';
-      if (!isRecommendedOrProcessed && hospitalFilter !== 'Pending Review') return false;
-
       const matchSearch = h.name.toLowerCase().includes(searchTerm.toLowerCase()) || h.city.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchFilter = hospitalFilter === 'All' ? isRecommendedOrProcessed : h.status === hospitalFilter;
+      const matchFilter = hospitalFilter === 'All' || h.status === hospitalFilter;
       return matchSearch && matchFilter;
     });
   }, [hospitals, searchTerm, hospitalFilter]);

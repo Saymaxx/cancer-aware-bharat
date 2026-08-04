@@ -28,7 +28,7 @@ export default function HospitalsTab({
         <Crown className="w-5 h-5 shrink-0 text-purple-600 mt-0.5" />
         <div>
           <p className="font-bold">Super Admin Executive Authority — Hospital Partnership Approvals & Tie-ups</p>
-          <p className="text-purple-800/85 mt-0.5">As Super Admin, you hold final executive authority to <strong>Approve & Activate</strong> or <strong>Reject</strong> hospital tie-ups nationwide. Regional Admins evaluate documentation and submit recommendations for your final decision.</p>
+          <p className="text-purple-800/85 mt-0.5">As Super Admin, you hold executive authority to <strong>Approve & Activate</strong> or <strong>Reject</strong> hospital tie-ups nationwide as soon as they arrive — no Admin recommendation is required first, though Admin's document review notes will show here if one was submitted.</p>
         </div>
       </div>
 
@@ -39,7 +39,7 @@ export default function HospitalsTab({
           <input type="text" placeholder="Search hospital applications..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none text-xs w-full" />
         </div>
         <div className="flex gap-1.5 flex-wrap">
-          {['All', 'Recommended by Admin', 'Info Requested', 'Approved', 'Rejected'].map(f => (
+          {['All', 'Pending Review', 'Recommended by Admin', 'Info Requested', 'Approved', 'Rejected'].map(f => (
             <button key={f} onClick={() => setHospitalFilter(f)} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${hospitalFilter === f ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{f}</button>
           ))}
         </div>

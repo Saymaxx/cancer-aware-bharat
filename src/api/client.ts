@@ -597,6 +597,25 @@ export interface ApiHospitalPartnerRequest {
   createdAt: string;
 }
 
+export interface SubmitPartnerRequestPayload {
+  hospitalName: string;
+  contactName: string;
+  designation?: string;
+  email: string;
+  phone: string;
+  city: string;
+  specialties?: string;
+  motivation?: string;
+}
+
+// Public - the hospital partnership application form (HospitalAuthPage register flow).
+export function submitPartnerRequest(payload: SubmitPartnerRequestPayload): Promise<ApiHospitalPartnerRequest> {
+  return request<ApiHospitalPartnerRequest>('/hospitals/partner-requests', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
 export function listPartnerRequests(token: string): Promise<ApiHospitalPartnerRequest[]> {
   return request<ApiHospitalPartnerRequest[]>('/hospitals/partner-requests/all', {}, token);
 }

@@ -7,7 +7,7 @@ import {
   HelpCircle, ChevronDown, ChevronUp, Download, Layers, Users, CheckSquare, Info,
   X, UserCheck, Calendar, DollarSign, Globe, ExternalLink, RefreshCw, Printer
 } from 'lucide-react';
-import { ApiError, loginHospital, setHospitalSession } from '../api/client';
+import { ApiError, loginHospital, setHospitalSession, submitPartnerRequest } from '../api/client';
 import PremiumSection from './common/PremiumSection';
 
 interface HospitalAuthPageProps {
@@ -261,7 +261,7 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
   };
 
   // ---- Partnership Application Final Submit ----
-  const handleApplicationSubmit = (e: React.FormEvent) => {
+  const handleApplicationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -271,46 +271,29 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
     }
 
     setIsSubmitting(true);
-    const appId = 'CAB-HOSP-APP-2026-' + Math.floor(1000 + Math.random() * 9000);
-    setGeneratedAppId(appId);
-
-    setTimeout(() => {
-      const newApplication = {
-        id: appId,
-        name: hospName,
-        licenseNo: licenseNo || 'REG-PENDING',
+    try {
+      const created = await submitPartnerRequest({
+        hospitalName: hospName,
+        contactName: repName,
+        designation: designation || undefined,
+        email,
+        phone,
         city,
-        state,
-        address,
-        contactEmail: email,
-        contactPhone: phone,
-        appliedDate: new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
-        submittedAt: new Date().toLocaleString(),
-        nabhAccredited,
-        bedCount: parseInt(bedCount) || 150,
-        specialties,
-        documents: [
-          { name: 'NABH Accreditation Certificate', verified: !!docNabhFile, fileName: docNabhFile?.name || null, fileSize: docNabhFile?.size || null },
-          { name: 'Hospital Registration License', verified: !!docLicenseFile, fileName: docLicenseFile?.name || null, fileSize: docLicenseFile?.size || null },
-          { name: 'Fire Safety Clearance', verified: !!docFireFile, fileName: docFireFile?.name || null, fileSize: docFireFile?.size || null },
-        ],
-        recommendedBy: null,
-        recommendationNotes: null,
-        status: 'Pending Review',
-      };
-
-      const existing = localStorage.getItem('aware_bharat_hospital_requests');
-      const list = existing ? JSON.parse(existing) : [];
-      list.push(newApplication);
-      localStorage.setItem('aware_bharat_hospital_requests', JSON.stringify(list));
+        specialties: specialties.join(', ') || undefined,
+      });
+      const appId = 'CAB-HOSP-APP-' + created.id.slice(0, 8).toUpperCase();
+      setGeneratedAppId(appId);
 
       // Clear draft
       localStorage.removeItem('aware_bharat_hospital_draft');
 
-      setIsSubmitting(false);
       setLoggedInHospital({ name: hospName, email, city, appId });
       setSubmitSuccess(true);
-    }, 1800);
+    } catch (err) {
+      setErrorMessage(err instanceof ApiError ? err.message : 'Unable to reach the server. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // ---- SUBMISSION CONFIRMATION SPLASH PAGE ----
