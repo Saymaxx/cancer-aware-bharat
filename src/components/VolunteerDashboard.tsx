@@ -5,7 +5,7 @@ import {
   BarChart3, Timer, GraduationCap, MessageSquare, IdCard, Globe, Clock3,
 } from 'lucide-react';
 import { useToast } from './common/Toast';
-import { ApiError, ApiVolunteer, checkInToCampaign, enrollInCampaign, getMyVolunteerProfile, logMyVolunteerHours, markNotificationRead, submitMyVolunteerFeedback, updateMyTrainingProgress } from '../api/client';
+import { ApiError, ApiVolunteer, checkInToCampaign, enrollInCampaign, getMyVolunteerProfile, logMyVolunteerHours, markNotificationRead, submitMyVolunteerFeedback, submitMyVolunteerIssue, updateMyTrainingProgress } from '../api/client';
 import { useApiNotifications, useEvents, useMyCampaigns, useMyTrainingProgress, useMyVolunteerFeedback, useMyVolunteerHours } from '../api/hooks';
 import DashboardSidebar, { SidebarFooterButton } from './common/DashboardSidebar';
 import { useSidebarState } from '../hooks/useSidebarState';
@@ -263,12 +263,17 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
     setTrainingQuizAnswer(null);
   };
 
-  const handleReportIssueSubmit = (e: React.FormEvent) => {
+  const handleReportIssueSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!issueDescription.trim()) return;
-    setShowReportIssueModal(false);
-    setIssueDescription('');
-    showToast('Issue report dispatched to Regional Lead & Helpdesk.');
+    if (!issueDescription.trim() || !volunteer?.accessToken) return;
+    try {
+      await submitMyVolunteerIssue({ category: issueCategory, description: issueDescription.trim() }, volunteer.accessToken);
+      setShowReportIssueModal(false);
+      setIssueDescription('');
+      showToast('Issue report submitted for admin review.');
+    } catch (err) {
+      toast.error('Could Not Submit Report', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
   };
 
   const handleFeedbackSubmit = async () => {

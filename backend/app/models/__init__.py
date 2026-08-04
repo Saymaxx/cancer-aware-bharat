@@ -6,6 +6,7 @@ from app.models.volunteer import Volunteer
 from app.models.volunteer_hours_log import VolunteerHoursLog
 from app.models.volunteer_campaign_enrollment import VolunteerCampaignEnrollment
 from app.models.volunteer_training_progress import VolunteerTrainingProgress
+from app.models.volunteer_issue_report import VolunteerIssueReport
 from app.models.patient import OtpCode, Patient
 from app.models.patient_record import PatientRecord
 from app.models.donation import Donation
@@ -33,6 +34,7 @@ __all__ = [
     "VolunteerHoursLog",
     "VolunteerCampaignEnrollment",
     "VolunteerTrainingProgress",
+    "VolunteerIssueReport",
     "Patient",
     "OtpCode",
     "PatientRecord",

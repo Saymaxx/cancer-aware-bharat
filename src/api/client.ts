@@ -1015,6 +1015,47 @@ export function submitMyVolunteerFeedback(payload: SubmitVolunteerFeedbackPayloa
   }, token);
 }
 
+// ---------------- Volunteer Issue Reports ----------------
+
+export interface ApiVolunteerIssueReport {
+  id: string;
+  volunteerId: string;
+  volunteerName: string;
+  category: string;
+  description: string;
+  status: 'New' | 'Reviewed' | 'Resolved';
+  resolutionNotes: string | null;
+  createdAt: string;
+}
+
+export function listVolunteerIssues(token: string): Promise<ApiVolunteerIssueReport[]> {
+  return request<ApiVolunteerIssueReport[]>('/volunteer-issues', {}, token);
+}
+
+export function resolveVolunteerIssue(id: string, token: string, resolutionNotes?: string): Promise<ApiVolunteerIssueReport> {
+  return request<ApiVolunteerIssueReport>(`/volunteer-issues/${id}/resolve`, {
+    method: 'POST',
+    body: JSON.stringify({ resolutionNotes }),
+  }, token);
+}
+
+// Volunteer self-service: their own submitted issue reports.
+export function listMyVolunteerIssues(token: string): Promise<ApiVolunteerIssueReport[]> {
+  return request<ApiVolunteerIssueReport[]>('/volunteer-issues/mine', {}, token);
+}
+
+export interface SubmitVolunteerIssuePayload {
+  category: string;
+  description: string;
+}
+
+export function submitMyVolunteerIssue(payload: SubmitVolunteerIssuePayload, token: string): Promise<ApiVolunteerIssueReport> {
+  return request<ApiVolunteerIssueReport>('/volunteer-issues/mine', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }, token);
+}
+
 // ---------------- Blog Articles ----------------
 
 export interface ApiBlogArticle {

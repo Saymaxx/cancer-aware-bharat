@@ -4,8 +4,8 @@ import {
   BarChart3, Settings, LogOut, Bell, FileCheck,
   DollarSign, BookOpen, MessageSquare, Terminal, Menu, Stethoscope,
 } from 'lucide-react';
-import { useApiEnquiries, useApiHospitals, useApiNotifications, useBlogs, useCampaignRequests, useDonations, useEvents, usePartnerRequests, usePatientIntakeMonthly, usePatientRecords, useStaffMe, useVolunteerFeedback, useVolunteers } from '../api/hooks';
-import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, changeStaffPassword, createBlog, createEvent, createPatientRecord, deleteBlog, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, respondToVolunteerFeedback, scheduleCampaignRequest, sendDonationReceipt, updatePatientRecord, updateStaffMe } from '../api/client';
+import { useApiEnquiries, useApiHospitals, useApiNotifications, useBlogs, useCampaignRequests, useDonations, useEvents, usePartnerRequests, usePatientIntakeMonthly, usePatientRecords, useStaffMe, useVolunteerFeedback, useVolunteerIssues, useVolunteers } from '../api/hooks';
+import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, changeStaffPassword, createBlog, createEvent, createPatientRecord, deleteBlog, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, resolveVolunteerIssue, respondToVolunteerFeedback, scheduleCampaignRequest, sendDonationReceipt, updatePatientRecord, updateStaffMe } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
@@ -61,6 +61,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const { patientRecords: apiPatientRecords, refetch: refetchPatientRecords } = usePatientRecords(apiToken);
   const { donations: apiDonations, refetch: refetchDonations } = useDonations(apiToken);
   const { feedback: apiFeedback, refetch: refetchFeedback } = useVolunteerFeedback(apiToken);
+  const { issues: volunteerIssues, refetch: refetchIssues } = useVolunteerIssues(apiToken);
   const { blogs, refetch: refetchBlogs } = useBlogs();
   const { events, refetch: refetchEvents } = useEvents();
   const { campaignRequests, refetch: refetchCampaignRequests } = useCampaignRequests(apiToken);
@@ -515,6 +516,17 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     }
   };
 
+  const handleResolveIssue = async (id: string) => {
+    if (!apiToken) return;
+    try {
+      await resolveVolunteerIssue(id, apiToken);
+      toast.success('Issue Resolved', 'Marked as resolved.');
+      refetchIssues();
+    } catch (err) {
+      toast.error('Resolve Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
+  };
+
   // ==========================================
   // ANNOUNCEMENTS & BLOG UTILITIES
   // ==========================================
@@ -927,6 +939,8 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
               feedbackReplyText={feedbackReplyText}
               setFeedbackReplyText={setFeedbackReplyText}
               handleSendFeedbackReply={handleSendFeedbackReply}
+              issues={volunteerIssues}
+              handleResolveIssue={handleResolveIssue}
             />
           )}
 

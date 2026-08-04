@@ -1,4 +1,5 @@
 import type { AdminFeedback } from '../../adminDashboardData';
+import type { ApiVolunteerIssueReport } from '../../api/client';
 
 export default function FeedbackTab({
   feedbacks,
@@ -7,6 +8,8 @@ export default function FeedbackTab({
   feedbackReplyText,
   setFeedbackReplyText,
   handleSendFeedbackReply,
+  issues,
+  handleResolveIssue,
 }: {
   feedbacks: AdminFeedback[];
   activeFeedbackId: string | null;
@@ -14,9 +17,46 @@ export default function FeedbackTab({
   feedbackReplyText: string;
   setFeedbackReplyText: (val: string) => void;
   handleSendFeedbackReply: (id: string) => void;
+  issues: ApiVolunteerIssueReport[];
+  handleResolveIssue: (id: string) => void;
 }) {
   return (
-    <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
+    <div className="space-y-6 animate-[fadeInUp_0.4s_ease-out]">
+      {issues.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-bold text-slate-900">Volunteer Issue Reports</h3>
+          <div className="grid grid-cols-1 gap-3">
+            {issues.map((issue) => (
+              <div key={issue.id} className="bg-white rounded-2xl border border-outline-variant/30 p-4 shadow-xs text-xs space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <span className="font-bold text-slate-900 text-sm">{issue.volunteerName}</span>
+                    <p className="text-slate-400 text-[10px] mt-0.5">{new Date(issue.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] border ${issue.status === 'Resolved' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
+                    {issue.category}
+                  </span>
+                </div>
+                <p className="text-slate-700 leading-relaxed">{issue.description}</p>
+                {issue.status === 'Resolved' ? (
+                  <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                    <p className="font-bold text-primary text-[10px] uppercase tracking-wider">Resolved</p>
+                    {issue.resolutionNotes && <p className="text-slate-600 mt-1">{issue.resolutionNotes}</p>}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleResolveIssue(issue.id)}
+                    className="px-3 py-1.5 border border-outline-variant/50 hover:bg-slate-50 rounded-lg font-bold text-slate-700 cursor-pointer"
+                  >
+                    Mark Resolved
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4">
         {feedbacks.map((f) => (
           <div key={f.id} className="bg-white rounded-2xl border border-outline-variant/30 p-5 shadow-xs text-xs space-y-3">
