@@ -1,24 +1,40 @@
 import React, { useState } from 'react';
 import { MapPin, Info, Phone, ExternalLink, Minimize2, Maximize2, Map } from 'lucide-react';
-import { INITIAL_HOSPITALS } from '../data';
 import { Hospital } from '../types';
 
 interface MapContainerProps {
+  hospitals: Hospital[];
   onSelectHospital: (hospital: Hospital) => void;
   onOpenContact: (hospitalId: string) => void;
 }
 
-export default function MapContainer({ onSelectHospital, onOpenContact }: MapContainerProps) {
+// Approximate relative percentages for each region's rough position over the
+// India map illustration -- not real geo-projection (the background is a
+// static stylized image, not a real map library), just enough to place a
+// pin in the right quadrant of the country.
+const REGION_BASE_POSITIONS: Record<Hospital['region'], { top: number; left: number }> = {
+  north: { top: 35, left: 42 },
+  west: { top: 56, left: 34 },
+  east: { top: 54, left: 72 },
+  south: { top: 75, left: 46 },
+};
+
+// Spreads multiple hospitals sharing a region around their base point
+// instead of stacking every pin from that region on the exact same spot.
+function pinPosition(hospital: Hospital, indexInRegion: number): { top: string; left: string } {
+  const base = REGION_BASE_POSITIONS[hospital.region] || { top: 50, left: 50 };
+  const angle = (indexInRegion * 47) % 360; // 47 -- coprime-ish spread, avoids repeating patterns
+  const radius = indexInRegion === 0 ? 0 : 6;
+  const top = base.top + radius * Math.sin((angle * Math.PI) / 180);
+  const left = base.left + radius * Math.cos((angle * Math.PI) / 180);
+  return { top: `${top}%`, left: `${left}%` };
+}
+
+export default function MapContainer({ hospitals, onSelectHospital, onOpenContact }: MapContainerProps) {
   const [selectedPin, setSelectedPin] = useState<Hospital | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Approximate relative percentages for positioning hospital pins over India Map illustration
-  const pinPositions: Record<string, { top: string; left: string }> = {
-    'hosp-1': { top: '35%', left: '42%' }, // New Delhi (North)
-    'hosp-2': { top: '56%', left: '34%' }, // Mumbai (West)
-    'hosp-3': { top: '54%', left: '72%' }, // Kolkata (East)
-    'hosp-4': { top: '75%', left: '46%' }  // Bangalore (South)
-  };
+  const regionCounts: Partial<Record<Hospital['region'], number>> = {};
 
   const handlePinClick = (hosp: Hospital) => {
     setSelectedPin(hosp === selectedPin ? null : hosp);
@@ -67,8 +83,10 @@ export default function MapContainer({ onSelectHospital, onOpenContact }: MapCon
         </div>
 
         {/* Map Pins */}
-        {INITIAL_HOSPITALS.map(hosp => {
-          const pos = pinPositions[hosp.id] || { top: '50%', left: '50%' };
+        {hospitals.map(hosp => {
+          const indexInRegion = regionCounts[hosp.region] ?? 0;
+          regionCounts[hosp.region] = indexInRegion + 1;
+          const pos = pinPosition(hosp, indexInRegion);
           const isSelected = selectedPin?.id === hosp.id;
           
           return (

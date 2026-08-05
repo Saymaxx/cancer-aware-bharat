@@ -6,6 +6,7 @@ import {
   HeartHandshake, ChevronRight, Phone, Mail, Award, Target, Eye, LogIn
 } from 'lucide-react';
 import PremiumSection from './common/PremiumSection';
+import { ApiError, registerVolunteer } from '../api/client';
 
 interface VolunteerRole {
   id: string;
@@ -61,37 +62,49 @@ export default function JoinUsTab() {
   const [phone, setPhone] = useState('');
   const [districtState, setDistrictState] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [refId, setRefId] = useState('');
+  const [formError, setFormError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName || !phone || !districtState) return;
+    setFormError('');
+
+    if (!fullName || !phone || !districtState || !email || !password) {
+      setFormError('कृपया सभी आवश्यक फ़ील्ड भरें। (Please fill in all required fields.)');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setFormError('पासवर्ड मेल नहीं खाते। (Passwords do not match.)');
+      return;
+    }
+    if (password.length < 8) {
+      setFormError('पासवर्ड कम से कम 8 अक्षरों का होना चाहिए। (Password must be at least 8 characters.)');
+      return;
+    }
 
     setIsSubmitting(true);
-    const newRefId = 'VOL-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-
-    setTimeout(() => {
-      const stored = localStorage.getItem('aware_bharat_volunteer_interests');
-      const existing = stored ? JSON.parse(stored) : [];
-      const newEntry = {
-        refId: newRefId,
-        roleId: selectedRole,
-        fullName,
+    try {
+      const roleTitle = VOLUNTEER_ROLES.find(r => r.id === selectedRole)?.titleEn ?? selectedRole;
+      const volunteer = await registerVolunteer({
+        name: fullName,
+        email: email.trim(),
         phone,
-        districtState,
-        email,
-        notes,
-        createdAt: new Date().toLocaleString()
-      };
-      localStorage.setItem('aware_bharat_volunteer_interests', JSON.stringify([newEntry, ...existing]));
-
-      setRefId(newRefId);
-      setIsSubmitting(false);
+        password,
+        area: districtState,
+        motivation: notes ? `${roleTitle} -- ${notes}` : roleTitle,
+      });
+      setRefId(volunteer.volunteerId);
       setIsSubmitted(true);
-    }, 800);
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'सर्वर से संपर्क नहीं हो सका। कृपया पुनः प्रयास करें। (Unable to reach the server. Please try again.)');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -304,13 +317,13 @@ export default function JoinUsTab() {
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <h3 className="font-headline-lg text-xl sm:text-2xl font-black">
-              बधाई! आपकी स्वयंसेवक अभिरुचि दर्ज कर ली गई है!
+              बधाई! आपका स्वयंसेवक आवेदन सबमिट हो गया है!
             </h3>
             <p className="text-xs sm:text-sm text-slate-800 max-w-md mx-auto leading-relaxed">
-              Cancer Aware Bharat की जिला समन्वय टीम जल्द ही आपसे संपर्क कर ओरिएंटेशन और स्वयंसेवक गाइड साझा करेगी।
+              आपका आवेदन प्रशासन की स्वीकृति हेतु लंबित है (Pending Approval)। स्वीकृति मिलने पर Cancer Aware Bharat की टीम आपसे संपर्क कर ओरिएंटेशन और स्वयंसेवक गाइड साझा करेगी। आप नीचे दिए गए लॉगिन से अपनी स्थिति देख सकते हैं।
             </p>
             <div className="inline-block bg-white px-4 py-2 rounded-xl border border-slate-300 font-mono text-xs font-bold text-slate-800 shadow-xs">
-              स्वयंसेवक रेफरेंस ID: <span className="text-primary">{refId}</span>
+              स्वयंसेवक ID: <span className="text-primary">{refId}</span>
             </div>
             <div className="pt-4 flex flex-wrap justify-center gap-3">
               <button
@@ -373,10 +386,11 @@ export default function JoinUsTab() {
               {/* Email Address */}
               <div className="space-y-2">
                 <label className="block text-xs font-bold text-slate-700">
-                  ईमेल पता (Email Address - Optional)
+                  ईमेल पता (Email Address) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
+                  required
                   placeholder="amit@example.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -384,7 +398,45 @@ export default function JoinUsTab() {
                 />
               </div>
 
+              {/* Password */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700">
+                  पासवर्ड बनाएं (Create Password) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  placeholder="कम से कम 8 अक्षर"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-xs bg-slate-50 focus:bg-white transition-all"
+                />
+              </div>
+
+              {/* Confirm Password */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-700">
+                  पासवर्ड की पुष्टि करें (Confirm Password) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  placeholder="पासवर्ड दोबारा लिखें"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-xs bg-slate-50 focus:bg-white transition-all"
+                />
+              </div>
+
             </div>
+
+            {formError && (
+              <p className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+                {formError}
+              </p>
+            )}
 
             {/* Past Experience / Notes */}
             <div className="space-y-2">

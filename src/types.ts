@@ -44,18 +44,6 @@ export interface BlogArticle {
   tags: string[];
 }
 
-export interface VolunteerRegistration {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  area: string;
-  availableDays: string[];
-  motivation: string;
-  date: string;
-  volunteerId: string;
-}
-
 export type EnquiryStatus =
   | 'Pending Admin Review'
   | 'Rejected by Admin'

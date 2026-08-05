@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { Heart, Eye, EyeOff, CheckCircle, Shield, Users, Calendar, ArrowRight, User, Mail, Phone, Lock, MapPin, Briefcase, Sparkles } from 'lucide-react';
 import { ApiError, getMyVolunteerProfile, loginVolunteer, registerVolunteer, setVolunteerSession } from '../api/client';
 import PremiumSection from './common/PremiumSection';
@@ -27,7 +27,8 @@ interface RegisterForm {
 
 export default function VolunteerAuthPage({}: VolunteerAuthPageProps) {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<AuthMode>('login');
+  const [searchParams] = useSearchParams();
+  const [mode, setMode] = useState<AuthMode>(searchParams.get('mode') === 'register' ? 'register' : 'login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

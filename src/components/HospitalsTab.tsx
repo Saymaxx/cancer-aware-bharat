@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Search, MapPin, Phone, Mail, Globe, ShieldCheck, Heart, Info, ArrowUpRight, CheckCircle, Map, Building2 } from 'lucide-react';
-import { INITIAL_HOSPITALS } from '../data';
-import { Hospital, HospitalPartnerRequest } from '../types';
+import { Search, MapPin, Phone, Mail, Info, ArrowUpRight, Map, Building2 } from 'lucide-react';
+import { useApiHospitals } from '../api/hooks';
+import { Hospital } from '../types';
 import MapContainer from './MapContainer';
 import PremiumSection from './common/PremiumSection';
 
@@ -12,25 +12,13 @@ interface HospitalsTabProps {
 
 export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
   const navigate = useNavigate();
+  const { hospitals } = useApiHospitals();
   const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [regionFilter, setRegionFilter] = useState<'all' | 'north' | 'south' | 'east' | 'west'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'Center of Excellence' | 'Community Partner'>('all');
 
-  // Partnership form states
-  const [showRequestForm, setShowRequestForm] = useState(false);
-  const [formSubmitted, setFormSubmitted] = useState(false);
-  const [hospName, setHospName] = useState('');
-  const [repName, setRepName] = useState('');
-  const [designation, setDesignation] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [city, setCity] = useState('');
-  const [specialties, setSpecialties] = useState('');
-  const [motivation, setMotivation] = useState('');
-  const [formError, setFormError] = useState('');
-
-  const filteredHospitals = INITIAL_HOSPITALS.filter(h => {
+  const filteredHospitals = hospitals.filter(h => {
     const matchesSearch = h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           h.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           h.specialties.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -40,64 +28,6 @@ export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
 
     return matchesSearch && matchesRegion && matchesType;
   });
-
-  const handlePartnerRequestSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!hospName || !repName || !email || !phone || !city) {
-      setFormError('Please fill in all the required fields.');
-      return;
-    }
-
-    const newRequest = {
-      id: 'HOSP-APP-' + Math.floor(1000 + Math.random() * 9000),
-      name: hospName,
-      hospitalName: hospName,
-      contactName: repName,
-      designation,
-      contactEmail: email,
-      email,
-      contactPhone: phone,
-      phone,
-      city,
-      state: 'Delhi',
-      address: `${city}, India`,
-      specialties: specialties ? specialties.split(',').map(s => s.trim()) : ['General Oncology'],
-      motivation,
-      appliedDate: new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
-      nabhAccredited: true,
-      bedCount: 150,
-      documents: [
-        { name: 'NABH Accreditation Certificate', verified: true },
-        { name: 'Hospital Registration License', verified: true },
-        { name: 'Fire Safety Clearance', verified: true },
-      ],
-      recommendedBy: null,
-      recommendationNotes: null,
-      status: 'Pending Review'
-    };
-
-    // Save request to LocalStorage
-    const existing = localStorage.getItem('aware_bharat_hospital_requests');
-    const list = existing ? JSON.parse(existing) : [];
-    list.push(newRequest);
-    localStorage.setItem('aware_bharat_hospital_requests', JSON.stringify(list));
-
-    setFormSubmitted(true);
-    setFormError('');
-  };
-
-  const handleResetForm = () => {
-    setShowRequestForm(false);
-    setFormSubmitted(false);
-    setHospName('');
-    setRepName('');
-    setDesignation('');
-    setEmail('');
-    setPhone('');
-    setCity('');
-    setSpecialties('');
-    setMotivation('');
-  };
 
   return (
     <>
@@ -144,9 +74,10 @@ export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
         </div>
 
         {/* Map Rendering Container */}
-        <MapContainer 
-          onSelectHospital={(h) => setSelectedHospital(h)} 
-          onOpenContact={(id) => onOpenEnquiry(id)} 
+        <MapContainer
+          hospitals={hospitals}
+          onSelectHospital={(h) => setSelectedHospital(h)}
+          onOpenContact={(id) => onOpenEnquiry(id)}
         />
       </section>
 
@@ -385,190 +316,6 @@ export default function HospitalsTab({ onOpenEnquiry }: HospitalsTabProps) {
           </div>
         </div>
       </section>
-
-      {/* Enroll Hospital Modal/Form section */}
-      {showRequestForm && (
-        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="relative bg-white w-full max-w-xl rounded-xl shadow-[0px_12px_32px_rgba(0,0,0,0.15)] border border-outline-variant/30 overflow-hidden flex flex-col max-h-[90vh]">
-            
-            {/* Header */}
-            <div className="bg-secondary px-6 py-4 flex justify-between items-center text-white">
-              <div className="flex items-center space-x-2">
-                <ShieldCheck className="w-5 h-5 text-secondary-container" />
-                <span className="font-headline-lg text-lg font-bold">Join our Nationwide Network</span>
-              </div>
-              <button onClick={handleResetForm} className="text-white hover:text-white p-1 rounded-full">
-                ✕
-              </button>
-            </div>
-
-            {/* Scrollable Form Content */}
-            <div className="p-6 overflow-y-auto flex-grow">
-              {!formSubmitted ? (
-                <form onSubmit={handlePartnerRequestSubmit} className="space-y-4">
-                  
-                  {formError && (
-                    <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs font-medium">
-                      {formError}
-                    </div>
-                  )}
-
-                  <p className="text-xs text-on-surface-variant leading-relaxed">
-                    Are you a hospital coordinator, chief oncologist, or executive director wanting to join Cancer Aware Bharat? Apply below to integrate your facility's diagnostic channels and screening slots into our network.
-                  </p>
-
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
-                        Hospital/Clinical Center Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={hospName}
-                        onChange={e => setHospName(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-white text-sm"
-                        placeholder="e.g. Apollo Cancer Center Pune"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
-                          Contact Representative Name <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={repName}
-                          onChange={e => setRepName(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-white text-sm"
-                          placeholder="e.g. Dr. Siddharth Roy"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
-                          Designation
-                        </label>
-                        <input
-                          type="text"
-                          value={designation}
-                          onChange={e => setDesignation(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-white text-sm"
-                          placeholder="e.g. Chief Medical Director"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
-                          Official Email <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="email"
-                          required
-                          value={email}
-                          onChange={e => setEmail(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-white text-sm"
-                          placeholder="coordinator@hospital.org"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
-                          City of Operation <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={city}
-                          onChange={e => setCity(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-white text-sm"
-                          placeholder="e.g. Pune, Maharashtra"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
-                        Contact Phone <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="tel"
-                        required
-                        value={phone}
-                        onChange={e => setPhone(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-white text-sm"
-                        placeholder="Direct contact number"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
-                        Cancer Specialties Offered (e.g. Mammography, Chemo)
-                      </label>
-                      <input
-                        type="text"
-                        value={specialties}
-                        onChange={e => setSpecialties(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-white text-sm"
-                        placeholder="e.g. Immunotherapy, Surgical Oncology, Free PAP Screening"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
-                        Why does your facility want to partner with us?
-                      </label>
-                      <textarea
-                        rows={3}
-                        value={motivation}
-                        onChange={e => setMotivation(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-outline-variant bg-white text-sm"
-                        placeholder="Share your interest in running free camps or assisting patient navigation..."
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-2 pt-4 border-t border-outline-variant/10">
-                    <button
-                      type="button"
-                      onClick={handleResetForm}
-                      className="w-1/3 py-2 rounded-lg border border-outline text-xs font-semibold text-on-surface-variant"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-grow py-2 rounded-lg bg-secondary text-white font-bold text-xs"
-                    >
-                      Submit Application
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <div className="text-center py-6 px-4 space-y-4 flex flex-col items-center">
-                  <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center text-primary">
-                    <CheckCircle className="w-10 h-10" />
-                  </div>
-                  <div>
-                    <h3 className="font-headline-lg text-lg text-primary font-bold">Application Registered</h3>
-                    <p className="text-xs text-on-surface-variant mt-1 max-w-sm leading-relaxed">
-                      Thank you for applying, <strong>{repName}</strong>. Our clinical alliance coordinator will review <strong>{hospName}</strong>'s infrastructure capabilities and contact you within 3 business days to set up screening standards protocols.
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleResetForm}
-                    className="px-6 py-2 bg-primary text-white text-xs font-bold rounded-lg"
-                  >
-                    Done
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
       </PremiumSection>
     </>

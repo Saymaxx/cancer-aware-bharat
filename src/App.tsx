@@ -16,7 +16,6 @@ import { ToastProvider } from './components/common/Toast';
 // Modals -- always mounted (visibility toggled by isOpen), used from
 // essentially every page, so lazy-loading these would add Suspense
 // overhead without shrinking the bundle that actually matters.
-import VolunteerModal from './components/VolunteerModal';
 import ChatAssistant from './components/ChatAssistant';
 import SitemapModal from './components/SitemapModal';
 import DonateModal from './components/DonateModal';
@@ -202,7 +201,6 @@ function PublicLayout({
 // ---------- App Inner Component ----------
 function AppContent() {
   const navigate = useNavigate();
-  const [volunteerOpen, setVolunteerOpen] = useState(false);
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [sitemapOpen, setSitemapOpen] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
@@ -221,7 +219,7 @@ function AppContent() {
   };
 
   const publicLayoutProps = {
-    onOpenVolunteer: () => setVolunteerOpen(true),
+    onOpenVolunteer: () => navigate('/volunteer/login?mode=register'),
     onOpenEnquiry: () => handleOpenEnquiryForHospital(undefined),
     onOpenSitemap: () => setSitemapOpen(true),
     onOpenDonate: () => setDonateOpen(true),
@@ -235,7 +233,7 @@ function AppContent() {
           <PublicLayout {...publicLayoutProps}>
             <main className="flex-grow">
               <HomeTab
-                onOpenVolunteer={() => setVolunteerOpen(true)}
+                onOpenVolunteer={() => navigate('/volunteer/login?mode=register')}
                 onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
               />
             </main>
@@ -245,7 +243,7 @@ function AppContent() {
           <PublicLayout {...publicLayoutProps}>
             <main className="flex-grow">
               <AboutTab
-                onOpenVolunteer={() => setVolunteerOpen(true)}
+                onOpenVolunteer={() => navigate('/volunteer/login?mode=register')}
               />
             </main>
           </PublicLayout>
@@ -286,7 +284,7 @@ function AppContent() {
           <PublicLayout {...publicLayoutProps}>
             <main className="flex-grow">
               <GalleryTab
-                onOpenVolunteer={() => setVolunteerOpen(true)}
+                onOpenVolunteer={() => navigate('/volunteer/login?mode=register')}
                 onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
               />
             </main>
@@ -296,7 +294,7 @@ function AppContent() {
           <PublicLayout {...publicLayoutProps}>
             <main className="flex-grow">
               <MissionTab
-                onOpenVolunteer={() => setVolunteerOpen(true)}
+                onOpenVolunteer={() => navigate('/volunteer/login?mode=register')}
                 onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
               />
             </main>
@@ -314,7 +312,7 @@ function AppContent() {
             <main className="flex-grow">
               <DoctorsTab
                 onOpenEnquiry={(hName) => handleOpenEnquiryForHospital(hName)}
-                onOpenVolunteer={() => setVolunteerOpen(true)}
+                onOpenVolunteer={() => navigate('/volunteer/login?mode=register')}
               />
             </main>
           </PublicLayout>
@@ -467,11 +465,6 @@ function AppContent() {
       </Routes>
 
       {/* High-fidelity Interactive Modals */}
-      <VolunteerModal
-        isOpen={volunteerOpen}
-        onClose={() => setVolunteerOpen(false)}
-      />
-
       <ChatAssistant
         isOpen={enquiryOpen}
         onClose={handleCloseEnquiry}
@@ -480,7 +473,7 @@ function AppContent() {
       <SitemapModal
         isOpen={sitemapOpen}
         onClose={() => setSitemapOpen(false)}
-        onOpenVolunteer={() => setVolunteerOpen(true)}
+        onOpenVolunteer={() => navigate('/volunteer/login?mode=register')}
         onOpenEnquiry={() => handleOpenEnquiryForHospital(undefined)}
       />
 

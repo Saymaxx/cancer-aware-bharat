@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 // Was duplicated (with the addEventListener/removeEventListener
-// boilerplate copy-pasted each time) across EnquiryModal, VolunteerModal,
+// boilerplate copy-pasted each time) across EnquiryModal,
 // AdminDashboard, SuperAdminDashboard, and VolunteerDashboard. Covers both
 // shapes that existed: a single controlled modal (`enabled` = isOpen,
 // `onEscape` = onClose) and a dashboard resetting several modal states at
