@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getDatabaseHealth, getIntegrationStatus, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyCampaigns, listMyEvents, listMyHospitalDoctors, listMyHospitalReports, listMyNgoReferrals, listMyPatientEnquiries, listMyPatientRecords, listMyTrainingProgress, listMyVolunteerFeedback, listMyVolunteerHours, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listPendingCampaignEnrollments, listRoles, listVolunteerFeedback, listVolunteerHoursMonthly, listVolunteerIssues, listVolunteers } from './client';
+import { getDatabaseHealth, getIntegrationStatus, getMyHospitalProfile, getOrgSettings, getStaffMe, listAdmins, listAuditLogs, listBackups, listBlogs, listCampaignRequests, listDonations, listDonationsMonthly, listEnquiries, listEvents, listHospitals, listMyCampaigns, listMyEvents, listMyHospitalDoctors, listMyHospitalReports, listMyNgoReferrals, listMyPatientEnquiries, listMyPatientRecords, listMyTrainingProgress, listMyVolunteerFeedback, listMyVolunteerHours, listNotifications, listPartnerRequests, listPatientIntakeMonthly, listPatientRecords, listPendingCampaignEnrollments, listRoles, listSurvivorStories, listVolunteerFeedback, listVolunteerHoursMonthly, listVolunteerIssues, listVolunteers } from './client';
 import { mapApiAdmin, mapApiAuditLog, mapApiBlog, mapApiCampaignRequest, mapApiCustomRole, mapApiEnquiry, mapApiEvent, mapApiHospital, mapApiNotification } from './mappers';
 
 const POLL_INTERVAL_MS = 20000;
@@ -218,6 +218,41 @@ export function useVolunteerFeedback(token: string | null) {
     feedback: query.data ?? [],
     loading: query.isLoading,
     error: query.error ? (query.error as Error).message || 'Failed to load volunteer feedback' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** The logged-in hospital's own record -- address/phone/emergencyPhone/
+ * website, the fields editable from the Settings profile form. */
+export function useHospitalProfile(token: string | null) {
+  const query = useQuery({
+    queryKey: ['hospital-profile', token],
+    queryFn: () => getMyHospitalProfile(token as string),
+    enabled: !!token,
+  });
+
+  return {
+    profile: query.data ?? null,
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load hospital profile' : null,
+    refetch: query.refetch,
+  };
+}
+
+/** Public "Share Your Story" submissions (BlogsTab.tsx), pending admin
+ * approve/reject. Approving one publishes it as a real BlogArticle. */
+export function useSurvivorStories(token: string | null) {
+  const query = useQuery({
+    queryKey: ['survivor-stories', token],
+    queryFn: () => listSurvivorStories(token as string),
+    enabled: !!token,
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return {
+    stories: query.data ?? [],
+    loading: query.isLoading,
+    error: query.error ? (query.error as Error).message || 'Failed to load survivor story submissions' : null,
     refetch: query.refetch,
   };
 }

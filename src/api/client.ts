@@ -607,6 +607,31 @@ export function listHospitals(): Promise<ApiHospital[]> {
   return request<ApiHospital[]>('/hospitals');
 }
 
+export interface ApiHospitalMe {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  emergencyPhone: string | null;
+  website: string | null;
+}
+
+export interface HospitalProfileUpdatePayload {
+  address?: string;
+  phone?: string;
+  emergencyPhone?: string;
+  website?: string;
+}
+
+export function getMyHospitalProfile(token: string): Promise<ApiHospitalMe> {
+  return request<ApiHospitalMe>('/hospitals/me', {}, token);
+}
+
+export function updateMyHospitalProfile(payload: HospitalProfileUpdatePayload, token: string): Promise<ApiHospitalMe> {
+  return request<ApiHospitalMe>('/hospitals/me', { method: 'PATCH', body: JSON.stringify(payload) }, token);
+}
+
 export interface ApiHospitalPartnerRequest {
   id: string;
   hospitalName: string;
@@ -1139,6 +1164,49 @@ export function createBlog(token: string, payload: BlogArticlePayload): Promise<
 
 export function deleteBlog(id: string, token: string): Promise<void> {
   return request<void>(`/blogs/${id}`, { method: 'DELETE' }, token);
+}
+
+// ---------------- Survivor Story Submissions ----------------
+
+export interface ApiSurvivorStory {
+  id: string;
+  name: string;
+  storyTitle: string;
+  cancerType: string;
+  content: string;
+  inspiration: string | null;
+  email: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  rejectionReason: string | null;
+  blogArticleId: string | null;
+  createdAt: string;
+  reviewedAt: string | null;
+}
+
+export interface SurvivorStorySubmitPayload {
+  name: string;
+  storyTitle: string;
+  cancerType: string;
+  content: string;
+  inspiration?: string | null;
+  email: string;
+}
+
+export function submitSurvivorStory(payload: SurvivorStorySubmitPayload): Promise<ApiSurvivorStory> {
+  return request<ApiSurvivorStory>('/survivor-stories', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export function listSurvivorStories(token: string, status?: string): Promise<ApiSurvivorStory[]> {
+  const query = status ? `?status=${encodeURIComponent(status)}` : '';
+  return request<ApiSurvivorStory[]>(`/survivor-stories${query}`, {}, token);
+}
+
+export function approveSurvivorStory(id: string, token: string): Promise<ApiSurvivorStory> {
+  return request<ApiSurvivorStory>(`/survivor-stories/${id}/approve`, { method: 'POST' }, token);
+}
+
+export function rejectSurvivorStory(id: string, reason: string | undefined, token: string): Promise<ApiSurvivorStory> {
+  return request<ApiSurvivorStory>(`/survivor-stories/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }, token);
 }
 
 // ---------------- Events (public listing + Campaigns Scheduler) ----------------

@@ -44,6 +44,70 @@ class TestHospitalList:
         assert len(resp.json()) == 1
 
 
+class TestHospitalMyProfile:
+    def test_get_my_profile_requires_hospital_auth(self, client):
+        resp = client.get("/hospitals/me")
+        assert resp.status_code == 401
+
+    def test_admin_cannot_get_hospital_my_profile(self, client, admin_token):
+        resp = client.get("/hospitals/me", headers=auth_header(admin_token))
+        assert resp.status_code == 403
+
+    def test_hospital_can_get_own_profile(self, client, hospital1_token):
+        resp = client.get("/hospitals/me", headers=auth_header(hospital1_token))
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert "address" in body
+        assert "phone" in body
+
+    def test_hospital_can_update_own_profile(self, client, hospital1_token):
+        resp = client.patch(
+            "/hospitals/me",
+            json={
+                "address": "New Address, Test City",
+                "phone": "+91 90000 55555",
+                "emergencyPhone": "+91 90000 66666",
+                "website": "www.testhospital.org",
+            },
+            headers=auth_header(hospital1_token),
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["address"] == "New Address, Test City"
+        assert body["phone"] == "+91 90000 55555"
+        assert body["emergencyPhone"] == "+91 90000 66666"
+        assert body["website"] == "www.testhospital.org"
+
+        # Persists -- a fresh GET reflects the same saved values, not just
+        # the PATCH response echoing the request back.
+        refetched = client.get("/hospitals/me", headers=auth_header(hospital1_token)).json()
+        assert refetched["address"] == "New Address, Test City"
+        assert refetched["website"] == "www.testhospital.org"
+
+    def test_partial_update_leaves_other_fields_untouched(self, client, hospital1_token):
+        original = client.get("/hospitals/me", headers=auth_header(hospital1_token)).json()
+
+        resp = client.patch(
+            "/hospitals/me",
+            json={"website": "www.onlywebsite.org"},
+            headers=auth_header(hospital1_token),
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["website"] == "www.onlywebsite.org"
+        assert body["phone"] == original["phone"]
+        assert body["address"] == original["address"]
+
+    def test_hospital_cannot_update_another_hospitals_profile(self, client, hospital1_token, hospital2_token):
+        client.patch("/hospitals/me", json={"website": "www.hospital-one.org"}, headers=auth_header(hospital1_token))
+        hospital2_profile = client.get("/hospitals/me", headers=auth_header(hospital2_token)).json()
+        assert hospital2_profile["website"] != "www.hospital-one.org"
+
+    def test_update_requires_hospital_auth(self, client):
+        resp = client.patch("/hospitals/me", json={"website": "www.example.org"})
+        assert resp.status_code == 401
+
+
 class TestHospitalPartnerRequests:
     def test_submit_partner_request_is_public(self, client):
         resp = client.post("/hospitals/partner-requests", json={

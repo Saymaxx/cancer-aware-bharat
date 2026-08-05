@@ -3,6 +3,7 @@ import { Search, BookOpen, Clock, User, ChevronLeft, Send, CheckCircle, Heart } 
 import { useBlogs } from '../api/hooks';
 import { BlogArticle } from '../types';
 import PremiumSection from './common/PremiumSection';
+import { ApiError, submitSurvivorStory } from '../api/client';
 
 export default function BlogsTab() {
   const [selectedArticle, setSelectedArticle] = useState<BlogArticle | null>(null);
@@ -19,6 +20,7 @@ export default function BlogsTab() {
   const [inspiration, setInspiration] = useState('');
   const [email, setEmail] = useState('');
   const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { blogs } = useBlogs();
 
@@ -32,32 +34,30 @@ export default function BlogsTab() {
     return matchesSearch && matchesCategory;
   });
 
-  const handleStorySubmit = (e: React.FormEvent) => {
+  const handleStorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!storyName || !storyTitle || !storyContent || !email) {
       setFormError('Please fill in all the required fields.');
       return;
     }
 
-    const newStory = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: storyName,
-      title: storyTitle,
-      cancerType,
-      content: storyContent,
-      inspiration,
-      email,
-      date: new Date().toLocaleDateString(),
-    };
-
-    // Save story to localstorage
-    const existing = localStorage.getItem('aware_bharat_survivor_stories');
-    const list = existing ? JSON.parse(existing) : [];
-    list.push(newStory);
-    localStorage.setItem('aware_bharat_survivor_stories', JSON.stringify(list));
-
-    setStorySubmitted(true);
+    setIsSubmitting(true);
     setFormError('');
+    try {
+      await submitSurvivorStory({
+        name: storyName,
+        storyTitle,
+        cancerType,
+        content: storyContent,
+        inspiration: inspiration || undefined,
+        email,
+      });
+      setStorySubmitted(true);
+    } catch (err) {
+      setFormError(err instanceof ApiError ? err.message : 'Unable to reach the server. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleResetStoryForm = () => {
@@ -69,6 +69,7 @@ export default function BlogsTab() {
     setStoryContent('');
     setInspiration('');
     setEmail('');
+    setFormError('');
   };
 
   return (
@@ -405,9 +406,10 @@ export default function BlogsTab() {
                         </button>
                         <button
                           type="submit"
-                          className="flex-grow py-2 rounded-lg bg-primary text-white font-bold text-xs flex items-center justify-center gap-1"
+                          disabled={isSubmitting}
+                          className="flex-grow py-2 rounded-lg bg-primary text-white font-bold text-xs flex items-center justify-center gap-1 disabled:opacity-50"
                         >
-                          <Send className="w-3.5 h-3.5" /> Submit Story for Review
+                          <Send className="w-3.5 h-3.5" /> {isSubmitting ? 'Submitting...' : 'Submit Story for Review'}
                         </button>
                       </div>
                     </form>

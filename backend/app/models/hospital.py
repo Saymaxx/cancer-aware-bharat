@@ -30,6 +30,8 @@ class Hospital(Base):
     # multi-branch record.
     email: Mapped[str] = mapped_column(String(255), nullable=False)
     address: Mapped[str] = mapped_column(String(500), nullable=False)
+    emergency_phone: Mapped[str | None] = mapped_column(String(30))
+    website: Mapped[str | None] = mapped_column(String(255))
     lat: Mapped[float] = mapped_column(Float, nullable=False)
     lng: Mapped[float] = mapped_column(Float, nullable=False)
     description: Mapped[str] = mapped_column(Text, default="")

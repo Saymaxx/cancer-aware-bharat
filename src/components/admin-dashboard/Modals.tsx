@@ -431,6 +431,61 @@ export function RejectVolunteerModal({
   );
 }
 
+// 5b. REJECT SURVIVOR STORY MODAL
+export function RejectSurvivorStoryModal({
+  onClose,
+  rejectReason,
+  setRejectReason,
+  onReject,
+}: {
+  onClose: () => void;
+  rejectReason: string;
+  setRejectReason: (val: string) => void;
+  onReject: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reject-story-modal-title"
+    >
+      <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4 text-xs">
+        <h3 id="reject-story-modal-title" className="font-bold text-slate-900 text-sm">Reject Survivor Story</h3>
+        <p className="text-slate-600">Optionally explain why this survivor story submission is being rejected (not published).</p>
+
+        <div>
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Rejection Reason (Optional)</label>
+          <textarea
+            rows={3}
+            value={rejectReason}
+            onChange={e => setRejectReason(e.target.value)}
+            className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none text-xs"
+            placeholder="e.g. Needs medical detail verification before publishing..."
+          />
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onReject}
+            className="flex-1 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 cursor-pointer"
+          >
+            Reject Story
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function RejectEnrollmentModal({
   onClose,
   rejectReason,

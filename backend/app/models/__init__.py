@@ -23,6 +23,7 @@ from app.models.org_settings import OrgSettings
 from app.models.hospital_doctor import HospitalDoctor
 from app.models.ngo_referral import NgoReferral
 from app.models.hospital_report import HospitalReport
+from app.models.survivor_story import SurvivorStorySubmission
 
 __all__ = [
     "User",
@@ -55,4 +56,5 @@ __all__ = [
     "HospitalDoctor",
     "NgoReferral",
     "HospitalReport",
+    "SurvivorStorySubmission",
 ]

@@ -5,8 +5,8 @@ import {
   DollarSign, Bell, TrendingUp, Terminal, CheckCircle2,
   HelpCircle, Settings, LogOut, Activity, Globe, Menu
 } from 'lucide-react';
-import { useApiEnquiries, useApiNotifications, useHospitalDoctors, useNgoReferrals, useMyPatientRecords, useMyHospitalReports, useMyEvents } from '../api/hooks';
-import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, addMyHospitalDoctor, updateMyHospitalDoctorAvailability, acceptMyNgoReferral, declineMyNgoReferral, updateMyPatientRecord, verifyMyPatientCost, uploadMyHospitalReport, downloadMyHospitalReport, changeHospitalPassword, ApiError, getHospitalSession } from '../api/client';
+import { useApiEnquiries, useApiNotifications, useHospitalDoctors, useHospitalProfile, useNgoReferrals, useMyPatientRecords, useMyHospitalReports, useMyEvents } from '../api/hooks';
+import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, addMyHospitalDoctor, updateMyHospitalDoctorAvailability, acceptMyNgoReferral, declineMyNgoReferral, updateMyPatientRecord, verifyMyPatientCost, uploadMyHospitalReport, downloadMyHospitalReport, changeHospitalPassword, updateMyHospitalProfile, ApiError, getHospitalSession } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
@@ -178,34 +178,22 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   const [editProfileEmergency, setEditProfileEmergency] = useState(profile.emergencyPhone);
   const [editProfileWebsite, setEditProfileWebsite] = useState(profile.website);
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    const updated = {
-      ...profile,
-      address: editProfileAddress,
-      phone: editProfilePhone,
-      emergencyPhone: editProfileEmergency,
-      website: editProfileWebsite
-    };
-    setProfile(updated);
-    setIsEditingProfile(false);
-    showToast('Hospital profile details saved.');
-    addLog('Updated hospital profile metadata', 'Hospital Profile');
-
-    const storedRequests = localStorage.getItem('aware_bharat_hospital_requests');
-    if (storedRequests) {
-      try {
-        const list = JSON.parse(storedRequests);
-        const updatedList = list.map((h: any) => {
-          if ((h.contactEmail && h.contactEmail.toLowerCase() === profile.email.toLowerCase()) ||
-              (h.hospitalName && h.hospitalName.toLowerCase() === profile.name.toLowerCase()) ||
-              (h.name && h.name.toLowerCase() === profile.name.toLowerCase())) {
-            return { ...h, address: editProfileAddress, contactPhone: editProfilePhone, emergencyPhone: editProfileEmergency };
-          }
-          return h;
-        });
-        localStorage.setItem('aware_bharat_hospital_requests', JSON.stringify(updatedList));
-      } catch (err) {}
+    if (!apiToken) return;
+    try {
+      await updateMyHospitalProfile({
+        address: editProfileAddress,
+        phone: editProfilePhone,
+        emergencyPhone: editProfileEmergency,
+        website: editProfileWebsite,
+      }, apiToken);
+      await refetchHospitalProfile();
+      setIsEditingProfile(false);
+      showToast('Hospital profile details saved.');
+      addLog('Updated hospital profile metadata', 'Hospital Profile');
+    } catch (err) {
+      toast.error('Save Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
     }
   };
 
@@ -277,6 +265,26 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
   // GET /enquiries already scopes results to this hospital's own JWT identity,
   // so we only need to narrow down to the stages relevant post-assignment.
   const apiToken = useMemo(() => getHospitalSession()?.accessToken || null, []);
+
+  // Real address/phone/emergencyPhone/website from the hospital's actual
+  // DB record -- overrides the localStorage-derived guesses `profile`
+  // starts with once it loads (see handleSaveProfile below for the write side).
+  const { profile: apiHospitalProfile, refetch: refetchHospitalProfile } = useHospitalProfile(apiToken);
+  useEffect(() => {
+    if (!apiHospitalProfile) return;
+    setProfile(prev => ({
+      ...prev,
+      address: apiHospitalProfile.address,
+      phone: apiHospitalProfile.phone,
+      emergencyPhone: apiHospitalProfile.emergencyPhone || apiHospitalProfile.phone,
+      website: apiHospitalProfile.website || prev.website,
+    }));
+    setEditProfileAddress(apiHospitalProfile.address);
+    setEditProfilePhone(apiHospitalProfile.phone);
+    setEditProfileEmergency(apiHospitalProfile.emergencyPhone || apiHospitalProfile.phone);
+    setEditProfileWebsite(apiHospitalProfile.website || '');
+  }, [apiHospitalProfile]);
+
   const { enquiries, refetch: refetchEnquiries } = useApiEnquiries(apiToken);
   const { notifications: hospitalNotifications } = useApiNotifications(apiToken);
   const { doctors: apiDoctors, refetch: refetchDoctors } = useHospitalDoctors(apiToken);

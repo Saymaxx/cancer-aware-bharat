@@ -267,6 +267,11 @@ def reject_volunteer(
             status.HTTP_409_CONFLICT,
             "Volunteer is already rejected",
         )
+    if volunteer.status == "Approved":
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "Volunteer is already approved",
+        )
     volunteer.status = "Rejected"
     record_event(db, "volunteer_rejected", role=claims["role"], actor_id=UUID(claims["sub"]),
                  detail=f"{volunteer.name} ({volunteer.email}): {payload.reason}")

@@ -4,8 +4,8 @@ import {
   BarChart3, Settings, LogOut, Bell, FileCheck,
   DollarSign, BookOpen, MessageSquare, Terminal, Menu, Stethoscope,
 } from 'lucide-react';
-import { useApiEnquiries, useApiHospitals, useApiNotifications, useBlogs, useCampaignRequests, useDonations, useEvents, usePartnerRequests, usePatientIntakeMonthly, usePatientRecords, usePendingCampaignEnrollments, useStaffMe, useVolunteerFeedback, useVolunteerIssues, useVolunteers } from '../api/hooks';
-import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveCampaignEnrollment, approveVolunteer, broadcastNotification, changeStaffPassword, createBlog, createEvent, createPatientRecord, deleteBlog, deleteEvent, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectCampaignEnrollment, rejectPartnerRequest, rejectVolunteer, resolveVolunteerIssue, respondToVolunteerFeedback, scheduleCampaignRequest, sendDonationReceipt, updateEvent, updatePatientRecord, updateStaffMe } from '../api/client';
+import { useApiEnquiries, useApiHospitals, useApiNotifications, useBlogs, useCampaignRequests, useDonations, useEvents, usePartnerRequests, usePatientIntakeMonthly, usePatientRecords, usePendingCampaignEnrollments, useStaffMe, useSurvivorStories, useVolunteerFeedback, useVolunteerIssues, useVolunteers } from '../api/hooks';
+import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveCampaignEnrollment, approveSurvivorStory, approveVolunteer, broadcastNotification, changeStaffPassword, createBlog, createEvent, createPatientRecord, deleteBlog, deleteEvent, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectCampaignEnrollment, rejectPartnerRequest, rejectSurvivorStory, rejectVolunteer, resolveVolunteerIssue, respondToVolunteerFeedback, scheduleCampaignRequest, sendDonationReceipt, updateEvent, updatePatientRecord, updateStaffMe } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
@@ -32,7 +32,7 @@ import FeedbackTab from './admin-dashboard/FeedbackTab';
 import NotificationsTab from './admin-dashboard/NotificationsTab';
 import SettingsTab from './admin-dashboard/SettingsTab';
 import {
-  PatientModal, ApproveEnquiryModal, RejectEnquiryModal, DeclineApplicationModal, RejectVolunteerModal, RejectEnrollmentModal,
+  PatientModal, ApproveEnquiryModal, RejectEnquiryModal, DeclineApplicationModal, RejectVolunteerModal, RejectEnrollmentModal, RejectSurvivorStoryModal,
 } from './admin-dashboard/Modals';
 
 // HospitalPartnerRequest.status (backend) -> PartnerHospital.status (this
@@ -63,6 +63,8 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const { feedback: apiFeedback, refetch: refetchFeedback } = useVolunteerFeedback(apiToken);
   const { issues: volunteerIssues, refetch: refetchIssues } = useVolunteerIssues(apiToken);
   const { blogs, refetch: refetchBlogs } = useBlogs();
+  const { stories: survivorStories, refetch: refetchSurvivorStories } = useSurvivorStories(apiToken);
+  const pendingSurvivorStories = useMemo(() => survivorStories.filter(s => s.status === 'Pending'), [survivorStories]);
   const { events, refetch: refetchEvents } = useEvents();
   const { pendingEnrollments, refetch: refetchPendingEnrollments } = usePendingCampaignEnrollments(apiToken);
   const { campaignRequests, refetch: refetchCampaignRequests } = useCampaignRequests(apiToken);
@@ -398,6 +400,41 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
       setRejectVolunteerReason('');
       toast.info('Volunteer Declined');
       refetchVolunteers();
+    } catch (err) {
+      toast.error('Rejection Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
+  };
+
+  // ==========================================
+  // SURVIVOR STORY MODERATION
+  // ==========================================
+  const [showRejectStoryModal, setShowRejectStoryModal] = useState<string | null>(null);
+  const [rejectStoryReason, setRejectStoryReason] = useState('');
+
+  const handleApproveStory = async (id: string) => {
+    if (!apiToken) return;
+    try {
+      await approveSurvivorStory(id, apiToken);
+      toast.success('Story Approved', 'Published to Blog & Event News under Survivors.');
+      refetchSurvivorStories();
+      refetchBlogs();
+    } catch (err) {
+      toast.error('Approval Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
+  };
+
+  const handleOpenRejectStory = (id: string) => {
+    setShowRejectStoryModal(id);
+  };
+
+  const handleConfirmRejectStory = async () => {
+    if (!apiToken || !showRejectStoryModal) return;
+    try {
+      await rejectSurvivorStory(showRejectStoryModal, rejectStoryReason || undefined, apiToken);
+      setShowRejectStoryModal(null);
+      setRejectStoryReason('');
+      toast.info('Story Rejected');
+      refetchSurvivorStories();
     } catch (err) {
       toast.error('Rejection Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
     }
@@ -797,7 +834,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     { id: 'hospitals', label: 'Hospital Tie-ups', icon: Building2 },
     { id: 'requests', label: 'Campaign Requests', icon: FileCheck },
     { id: 'donations', label: 'Donations Audit', icon: DollarSign },
-    { id: 'blogs', label: 'Blog & Event News', icon: BookOpen },
+    { id: 'blogs', label: 'Blog & Event News', icon: BookOpen, badge: pendingSurvivorStories.length },
     { id: 'feedback', label: 'Volunteer Feedback', icon: MessageSquare },
     { id: 'settings', label: 'Admin Settings', icon: Settings },
   ];
@@ -1037,6 +1074,9 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
               handlePublishBlog={handlePublishBlog}
               blogs={blogs}
               handleDeleteBlog={handleDeleteBlog}
+              pendingStories={pendingSurvivorStories}
+              handleApproveStory={handleApproveStory}
+              onOpenRejectStory={handleOpenRejectStory}
             />
           )}
 
@@ -1176,6 +1216,16 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
           rejectReason={rejectVolunteerReason}
           setRejectReason={setRejectVolunteerReason}
           onReject={handleConfirmRejectVolunteer}
+        />
+      )}
+
+      {/* Reject Survivor Story Modal */}
+      {showRejectStoryModal && (
+        <RejectSurvivorStoryModal
+          onClose={() => { setShowRejectStoryModal(null); setRejectStoryReason(''); }}
+          rejectReason={rejectStoryReason}
+          setRejectReason={setRejectStoryReason}
+          onReject={handleConfirmRejectStory}
         />
       )}
 

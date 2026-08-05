@@ -7,16 +7,18 @@ from sqlalchemy.orm import Session
 
 from app.core.limiter import limiter
 from app.core.security import generate_temp_password, hash_password
-from app.deps import DbSession, require_admin_or_superadmin, require_roles
+from app.deps import DbSession, current_hospital_id, require_admin_or_superadmin, require_roles
 from app.models.hospital import Hospital, HospitalPartnerRequest
 from app.models.user import User
 from app.services.email import get_email_sender
 from app.schemas.hospital import (
     HospitalApprovalResult,
     HospitalApproveIn,
+    HospitalMeOut,
     HospitalOut,
     HospitalPartnerRequestIn,
     HospitalPartnerRequestOut,
+    HospitalProfileUpdateIn,
     HospitalRecommendIn,
     HospitalRejectIn,
     HospitalRequestInfoIn,
@@ -64,6 +66,43 @@ def list_hospitals(
         .limit(limit)
         .all()
     )
+
+
+@router.get("/me", response_model=HospitalMeOut)
+@limiter.limit("60/minute")
+def get_my_hospital_profile(
+    request: Request,
+    db: DbSession,
+    hospital_id: Annotated[UUID, Depends(current_hospital_id)],
+):
+    hospital = db.query(Hospital).filter(Hospital.id == hospital_id).first()
+    if hospital is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Hospital not found")
+    return hospital
+
+
+@router.patch("/me", response_model=HospitalMeOut)
+@limiter.limit("30/minute")
+def update_my_hospital_profile(
+    request: Request,
+    payload: HospitalProfileUpdateIn,
+    db: DbSession,
+    hospital_id: Annotated[UUID, Depends(current_hospital_id)],
+):
+    hospital = db.query(Hospital).filter(Hospital.id == hospital_id).first()
+    if hospital is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Hospital not found")
+    if payload.address is not None:
+        hospital.address = payload.address
+    if payload.phone is not None:
+        hospital.phone = payload.phone
+    if payload.emergency_phone is not None:
+        hospital.emergency_phone = payload.emergency_phone
+    if payload.website is not None:
+        hospital.website = payload.website
+    db.commit()
+    db.refresh(hospital)
+    return hospital
 
 
 @router.get("/{hospital_id}", response_model=HospitalOut)

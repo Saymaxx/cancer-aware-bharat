@@ -24,6 +24,27 @@ class HospitalOut(CamelModel):
     description: str = ""
 
 
+class HospitalMeOut(CamelModel):
+    id: UUID
+    name: str
+    email: str
+    phone: str
+    address: str
+    emergency_phone: str | None = None
+    website: str | None = None
+
+
+# Self-service profile update -- only the fields a hospital can edit about
+# itself (address/contact details). Everything else (name, type, region,
+# specialties, map coordinates) is set at partner-request approval time and
+# not editable here.
+class HospitalProfileUpdateIn(CamelModel):
+    address: str | None = Field(default=None, min_length=1, max_length=500)
+    phone: str | None = Field(default=None, pattern=PHONE_PATTERN, max_length=30)
+    emergency_phone: str | None = Field(default=None, pattern=PHONE_PATTERN, max_length=30)
+    website: str | None = Field(default=None, max_length=255)
+
+
 class HospitalPartnerRequestIn(CamelModel):
     hospital_name: str = Field(min_length=1, max_length=255)
     contact_name: str = Field(min_length=1, max_length=200)
