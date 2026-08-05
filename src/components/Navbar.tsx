@@ -126,20 +126,22 @@ export default function Navbar({
             : 'bg-white/90 backdrop-blur-md'
           }`}
       >
-        <div className={`transition-all duration-300 ease-out w-full px-6 sm:px-8 lg:px-10 xl:px-14 max-w-[1480px] mx-auto flex justify-between items-center relative ${scrolled ? 'h-[72px]' : 'h-[84px]'}`}>
+        <div className={`transition-all duration-300 ease-out w-full px-3 sm:px-8 lg:px-10 xl:px-14 max-w-[1480px] mx-auto flex justify-between items-center gap-1.5 relative ${scrolled ? 'h-[72px]' : 'h-[84px]'}`}>
 
-          {/* LEFT: Brand Logo */}
+          {/* LEFT: Brand Logo -- allowed to shrink/truncate on narrow phones
+              so it never forces the row wider than the viewport; the mobile
+              action buttons (shrink-0 below) always stay fully visible. */}
           <button
             onClick={() => handleNavClick('/')}
-            className="flex items-center space-x-3 text-left hover:opacity-90 transition-opacity duration-200 focus:outline-none shrink-0 group z-10"
+            className="flex items-center space-x-1.5 sm:space-x-3 text-left hover:opacity-90 transition-opacity duration-200 focus:outline-none min-w-0 shrink group z-10"
           >
             <img
               src="/brand-logo.jpeg"
               alt="Cancer Aware Bharat Logo"
-              className={`rounded-full object-cover shadow-[0_2px_10px_rgba(22,58,95,0.12)] group-hover:shadow-[0_4px_14px_rgba(22,58,95,0.18)] transition-all duration-200 ${scrolled ? 'w-10 h-10' : 'w-11 h-11'}`}
+              className={`rounded-full object-cover shadow-[0_2px_10px_rgba(22,58,95,0.12)] group-hover:shadow-[0_4px_14px_rgba(22,58,95,0.18)] transition-all duration-200 shrink-0 ${scrolled ? 'w-8 h-8 sm:w-10 sm:h-10' : 'w-8 h-8 sm:w-11 sm:h-11'}`}
             />
-            <div className="flex flex-col">
-              <span className={`font-outfit font-extrabold text-primary tracking-tight leading-none transition-all duration-200 ${scrolled ? 'text-[19px]' : 'text-[21px]'}`}>
+            <div className="flex flex-col min-w-0">
+              <span className={`font-outfit font-extrabold text-primary tracking-tight leading-none transition-all duration-200 truncate ${scrolled ? 'text-[16px] sm:text-[19px]' : 'text-[17px] sm:text-[21px]'}`}>
                 Cancer Aware Bharat
               </span>
               <span className="text-[10px] font-semibold text-primary/50 tracking-[0.08em] uppercase hidden sm:block mt-0.5">
@@ -339,7 +341,24 @@ export default function Navbar({
 
           {/* RIGHT: Actions (Desktop) */}
           <div className="hidden lg:flex items-center space-x-3 shrink-0 z-10">
-            {loggedInVolunteer ? (
+            {loggedInStaff ? (
+              <>
+                <button
+                  onClick={() => navigate(loggedInStaff.role === 'superadmin' ? '/superadmin/dashboard' : '/admin/dashboard')}
+                  className="px-5 py-2.5 rounded-full bg-primary/[0.06] text-primary border border-primary/10 text-[14px] font-semibold hover:bg-primary/[0.1] transition-all duration-200 cursor-pointer inline-flex items-center space-x-2 focus:outline-none"
+                >
+                  <Shield className="w-4 h-4 text-primary" />
+                  <span>{loggedInStaff.role === 'superadmin' ? 'Super Admin Console' : 'Admin Console'}</span>
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-10 h-10 rounded-full bg-red-50 text-red-500 border border-red-100/80 flex items-center justify-center hover:bg-red-100 transition-all duration-200 cursor-pointer focus:outline-none"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </>
+            ) : loggedInVolunteer ? (
               <>
                 <button
                   onClick={() => navigate('/volunteer/dashboard')}
@@ -432,23 +451,25 @@ export default function Navbar({
             </button>
           </div>
 
-          {/* Mobile Actions */}
-          <div className="lg:hidden flex items-center space-x-2.5">
+          {/* Mobile Actions -- shrink-0 so these never lose room to the
+              (now-truncating) brand logo on narrow phones. Compact by
+              default; a little roomier from sm: (640px) up. */}
+          <div className="lg:hidden flex items-center gap-1 sm:gap-2 shrink-0">
             <button
               onClick={onOpenDonate}
-              className="px-3.5 py-2 rounded-full border-2 border-primary text-primary text-[12px] font-semibold hover:bg-primary/5 transition-colors"
+              className="px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-full border-2 border-primary text-primary text-[11px] sm:text-[12px] font-semibold hover:bg-primary/5 transition-colors whitespace-nowrap"
             >
               Donate
             </button>
             <button
               onClick={() => onOpenEnquiry()}
-              className="px-3.5 py-2 rounded-full bg-primary text-white text-[12px] font-semibold hover:opacity-95 transition-opacity shadow-sm"
+              className="px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-full bg-primary text-white text-[11px] sm:text-[12px] font-semibold hover:opacity-95 transition-opacity shadow-sm whitespace-nowrap"
             >
               Enquiry
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-primary hover:bg-primary/[0.05] focus:outline-none transition-colors"
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-primary hover:bg-primary/[0.05] focus:outline-none transition-colors shrink-0"
               aria-label="Toggle Menu"
             >
               <Menu className="w-5 h-5" />
@@ -657,7 +678,30 @@ export default function Navbar({
               {/* ── Auth Section ── */}
               <div className="px-5 py-4 border-t border-slate-100/80">
                 <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 mb-3 px-1">Account</p>
-                {loggedInVolunteer ? (
+                {loggedInStaff ? (
+                  <div className="space-y-2.5">
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate(loggedInStaff.role === 'superadmin' ? '/superadmin/dashboard' : '/admin/dashboard');
+                      }}
+                      className="w-full h-[48px] rounded-xl bg-primary/[0.06] text-primary font-semibold text-[14px] flex items-center justify-center gap-2.5 transition-all duration-200 hover:bg-primary/[0.1]"
+                    >
+                      <Shield className="w-4 h-4" />
+                      {loggedInStaff.role === 'superadmin' ? 'Super Admin Console' : 'Admin Console'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full h-[44px] rounded-xl border border-red-100/80 text-red-500 font-semibold text-[14px] flex items-center justify-center gap-2 transition-all duration-200 hover:bg-red-50"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                ) : loggedInVolunteer ? (
                   <div className="space-y-2.5">
                     <button
                       onClick={() => {
@@ -672,8 +716,30 @@ export default function Navbar({
                     <button
                       onClick={() => {
                         setMobileMenuOpen(false);
-                        localStorage.removeItem('aware_bharat_logged_in_volunteer');
-                        navigate('/');
+                        handleLogout();
+                      }}
+                      className="w-full h-[44px] rounded-xl border border-red-100/80 text-red-500 font-semibold text-[14px] flex items-center justify-center gap-2 transition-all duration-200 hover:bg-red-50"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                ) : loggedInHospital ? (
+                  <div className="space-y-2.5">
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate('/hospital/dashboard');
+                      }}
+                      className="w-full h-[48px] rounded-xl bg-primary/[0.06] text-primary font-semibold text-[14px] flex items-center justify-center gap-2.5 transition-all duration-200 hover:bg-primary/[0.1]"
+                    >
+                      <Building2 className="w-4 h-4" />
+                      Hospital Portal
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleLogout();
                       }}
                       className="w-full h-[44px] rounded-xl border border-red-100/80 text-red-500 font-semibold text-[14px] flex items-center justify-center gap-2 transition-all duration-200 hover:bg-red-50"
                     >

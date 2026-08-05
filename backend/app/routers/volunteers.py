@@ -12,7 +12,11 @@ from app.models.volunteer_campaign_enrollment import VolunteerCampaignEnrollment
 from app.models.volunteer_hours_log import VolunteerHoursLog
 from app.models.volunteer_training_progress import VolunteerTrainingProgress
 from app.schemas.volunteer import VolunteerOut, VolunteerRejectIn
-from app.schemas.volunteer_campaign_enrollment import VolunteerCampaignEnrollmentOut
+from app.schemas.volunteer_campaign_enrollment import (
+    VolunteerCampaignEnrollmentAdminOut,
+    VolunteerCampaignEnrollmentOut,
+    VolunteerCampaignEnrollmentRejectIn,
+)
 from app.schemas.volunteer_hours import VolunteerHoursLogIn, VolunteerHoursLogOut
 from app.schemas.volunteer_training_progress import VolunteerTrainingProgressIn, VolunteerTrainingProgressOut
 from app.services.audit import record_event
@@ -101,10 +105,85 @@ def check_in_to_campaign(
     ).first()
     if enrollment is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Not enrolled in this campaign")
+    if enrollment.status != "Approved":
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"Cannot check in -- this enrollment is currently '{enrollment.status}'",
+        )
     if enrollment.checked_in_at is None:
         enrollment.checked_in_at = datetime.now(timezone.utc)
         db.commit()
         db.refresh(enrollment)
+    return enrollment
+
+
+def _get_enrollment_or_404(db: Session, enrollment_id: UUID) -> VolunteerCampaignEnrollment:
+    enrollment = db.query(VolunteerCampaignEnrollment).filter(VolunteerCampaignEnrollment.id == enrollment_id).first()
+    if enrollment is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Enrollment request not found")
+    return enrollment
+
+
+@router.get("/campaign-enrollments/pending", response_model=list[VolunteerCampaignEnrollmentAdminOut])
+@limiter.limit("60/minute")
+def list_pending_campaign_enrollments(
+    request: Request,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_admin_or_superadmin)],
+):
+    """Volunteer requests to join a campaign, awaiting Admin/SuperAdmin
+    approval before the volunteer is actually enrolled."""
+    return (
+        db.query(VolunteerCampaignEnrollment)
+        .filter(VolunteerCampaignEnrollment.status == "Pending")
+        .order_by(VolunteerCampaignEnrollment.enrolled_at.asc())
+        .all()
+    )
+
+
+@router.post("/campaign-enrollments/{enrollment_id}/approve", response_model=VolunteerCampaignEnrollmentOut)
+@limiter.limit("30/minute")
+def approve_campaign_enrollment(
+    request: Request,
+    enrollment_id: UUID,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_admin_or_superadmin)],
+):
+    enrollment = _get_enrollment_or_404(db, enrollment_id)
+    if enrollment.status != "Pending":
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"Cannot approve an enrollment that is currently '{enrollment.status}'",
+        )
+    enrollment.status = "Approved"
+    record_event(db, "campaign_enrollment_approved", role=claims["role"], actor_id=UUID(claims["sub"]),
+                 detail=f"{enrollment.volunteer.name} -> {enrollment.event.title}")
+    db.commit()
+    db.refresh(enrollment)
+    return enrollment
+
+
+@router.post("/campaign-enrollments/{enrollment_id}/reject", response_model=VolunteerCampaignEnrollmentOut)
+@limiter.limit("30/minute")
+def reject_campaign_enrollment(
+    request: Request,
+    enrollment_id: UUID,
+    payload: VolunteerCampaignEnrollmentRejectIn,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_admin_or_superadmin)],
+):
+    enrollment = _get_enrollment_or_404(db, enrollment_id)
+    if enrollment.status != "Pending":
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"Cannot reject an enrollment that is currently '{enrollment.status}'",
+        )
+    enrollment.status = "Rejected"
+    enrollment.decision_notes = payload.reason
+    record_event(db, "campaign_enrollment_rejected", role=claims["role"], actor_id=UUID(claims["sub"]),
+                 detail=f"{enrollment.volunteer.name} -> {enrollment.event.title}: {payload.reason}")
+    db.commit()
+    db.refresh(enrollment)
     return enrollment
 
 
@@ -160,10 +239,10 @@ def approve_volunteer(
     claims: Annotated[dict, Depends(require_admin_or_superadmin)],
 ):
     volunteer = _get_volunteer_or_404(db, volunteer_id)
-    if volunteer.status != "Pending Approval":
+    if volunteer.status == "Approved":
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            f"Cannot approve a volunteer that is currently '{volunteer.status}'",
+            "Volunteer is already approved",
         )
     volunteer.status = "Approved"
     record_event(db, "volunteer_approved", role=claims["role"], actor_id=UUID(claims["sub"]),
@@ -183,10 +262,10 @@ def reject_volunteer(
     claims: Annotated[dict, Depends(require_admin_or_superadmin)],
 ):
     volunteer = _get_volunteer_or_404(db, volunteer_id)
-    if volunteer.status != "Pending Approval":
+    if volunteer.status == "Rejected":
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            f"Cannot reject a volunteer that is currently '{volunteer.status}'",
+            "Volunteer is already rejected",
         )
     volunteer.status = "Rejected"
     record_event(db, "volunteer_rejected", role=claims["role"], actor_id=UUID(claims["sub"]),

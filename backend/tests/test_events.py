@@ -157,6 +157,7 @@ class TestCampaignEnrollment:
         assert resp.status_code == 201, resp.text
         body = resp.json()
         assert body["event"]["id"] == created["id"]
+        assert body["status"] == "Pending"
         assert body["checkedInAt"] is None
 
     def test_cannot_enroll_twice(self, client, admin_token):
@@ -218,10 +219,18 @@ class TestCampaignCheckIn:
         resp = client.post(f"/volunteers/me/campaigns/{created['id']}/check-in", headers=auth_header(volunteer_token))
         assert resp.status_code == 404
 
-    def test_volunteer_can_check_in_after_enrolling(self, client, admin_token):
+    def test_cannot_check_in_while_pending(self, client, admin_token):
         volunteer_token = _approved_volunteer_token(client, admin_token)
         created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
         client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token))
+        resp = client.post(f"/volunteers/me/campaigns/{created['id']}/check-in", headers=auth_header(volunteer_token))
+        assert resp.status_code == 409
+
+    def test_volunteer_can_check_in_after_enrolling(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        enrollment = client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token)).json()
+        client.post(f"/volunteers/campaign-enrollments/{enrollment['id']}/approve", headers=auth_header(admin_token))
         resp = client.post(f"/volunteers/me/campaigns/{created['id']}/check-in", headers=auth_header(volunteer_token))
         assert resp.status_code == 200, resp.text
         assert resp.json()["checkedInAt"] is not None
@@ -229,10 +238,83 @@ class TestCampaignCheckIn:
     def test_check_in_is_idempotent(self, client, admin_token):
         volunteer_token = _approved_volunteer_token(client, admin_token)
         created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
-        client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token))
+        enrollment = client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token)).json()
+        client.post(f"/volunteers/campaign-enrollments/{enrollment['id']}/approve", headers=auth_header(admin_token))
         first = client.post(f"/volunteers/me/campaigns/{created['id']}/check-in", headers=auth_header(volunteer_token))
         second = client.post(f"/volunteers/me/campaigns/{created['id']}/check-in", headers=auth_header(volunteer_token))
         assert first.json()["checkedInAt"] == second.json()["checkedInAt"]
+
+
+class TestCampaignEnrollmentApproval:
+    def test_requires_staff_auth(self, client):
+        resp = client.get("/volunteers/campaign-enrollments/pending")
+        assert resp.status_code == 401
+
+    def test_new_enrollment_appears_in_pending_queue(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token))
+        resp = client.get("/volunteers/campaign-enrollments/pending", headers=auth_header(admin_token))
+        assert resp.status_code == 200
+        assert [e["event"]["id"] for e in resp.json()] == [created["id"]]
+        assert resp.json()[0]["volunteer"]["name"]
+
+    def test_approve_flips_status_and_leaves_pending_queue(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        enrollment = client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token)).json()
+        resp = client.post(f"/volunteers/campaign-enrollments/{enrollment['id']}/approve", headers=auth_header(admin_token))
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["status"] == "Approved"
+        pending = client.get("/volunteers/campaign-enrollments/pending", headers=auth_header(admin_token))
+        assert pending.json() == []
+
+    def test_cannot_approve_twice(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        enrollment = client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token)).json()
+        client.post(f"/volunteers/campaign-enrollments/{enrollment['id']}/approve", headers=auth_header(admin_token))
+        resp = client.post(f"/volunteers/campaign-enrollments/{enrollment['id']}/approve", headers=auth_header(admin_token))
+        assert resp.status_code == 409
+
+    def test_reject_requires_reason(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        enrollment = client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token)).json()
+        resp = client.post(f"/volunteers/campaign-enrollments/{enrollment['id']}/reject", json={"reason": ""}, headers=auth_header(admin_token))
+        assert resp.status_code == 422
+
+    def test_reject_flips_status_with_reason(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        enrollment = client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token)).json()
+        resp = client.post(
+            f"/volunteers/campaign-enrollments/{enrollment['id']}/reject",
+            json={"reason": "Camp is at capacity"},
+            headers=auth_header(admin_token),
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["status"] == "Rejected"
+        assert resp.json()["decisionNotes"] == "Camp is at capacity"
+
+    def test_cannot_check_in_after_rejection(self, client, admin_token):
+        volunteer_token = _approved_volunteer_token(client, admin_token)
+        created = client.post("/events", json=sample_event_payload(), headers=auth_header(admin_token)).json()
+        enrollment = client.post(f"/events/{created['id']}/enroll", headers=auth_header(volunteer_token)).json()
+        client.post(
+            f"/volunteers/campaign-enrollments/{enrollment['id']}/reject",
+            json={"reason": "Camp is at capacity"},
+            headers=auth_header(admin_token),
+        )
+        resp = client.post(f"/volunteers/me/campaigns/{created['id']}/check-in", headers=auth_header(volunteer_token))
+        assert resp.status_code == 409
+
+    def test_approve_nonexistent_enrollment_404s(self, client, admin_token):
+        resp = client.post(
+            "/volunteers/campaign-enrollments/00000000-0000-0000-0000-000000000000/approve",
+            headers=auth_header(admin_token),
+        )
+        assert resp.status_code == 404
 
 
 class TestListMyEvents:

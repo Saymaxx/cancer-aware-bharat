@@ -4,8 +4,8 @@ import {
   BarChart3, Settings, LogOut, Bell, FileCheck,
   DollarSign, BookOpen, MessageSquare, Terminal, Menu, Stethoscope,
 } from 'lucide-react';
-import { useApiEnquiries, useApiHospitals, useApiNotifications, useBlogs, useCampaignRequests, useDonations, useEvents, usePartnerRequests, usePatientIntakeMonthly, usePatientRecords, useStaffMe, useVolunteerFeedback, useVolunteerIssues, useVolunteers } from '../api/hooks';
-import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveVolunteer, broadcastNotification, changeStaffPassword, createBlog, createEvent, createPatientRecord, deleteBlog, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectPartnerRequest, rejectVolunteer, resolveVolunteerIssue, respondToVolunteerFeedback, scheduleCampaignRequest, sendDonationReceipt, updatePatientRecord, updateStaffMe } from '../api/client';
+import { useApiEnquiries, useApiHospitals, useApiNotifications, useBlogs, useCampaignRequests, useDonations, useEvents, usePartnerRequests, usePatientIntakeMonthly, usePatientRecords, usePendingCampaignEnrollments, useStaffMe, useVolunteerFeedback, useVolunteerIssues, useVolunteers } from '../api/hooks';
+import { adminApproveEnquiry, adminRejectEnquiry, ApiError, approveCampaignEnrollment, approveVolunteer, broadcastNotification, changeStaffPassword, createBlog, createEvent, createPatientRecord, deleteBlog, deleteEvent, deletePatientRecord, getStaffSession, recommendPartnerRequest, rejectCampaignEnrollment, rejectPartnerRequest, rejectVolunteer, resolveVolunteerIssue, respondToVolunteerFeedback, scheduleCampaignRequest, sendDonationReceipt, updateEvent, updatePatientRecord, updateStaffMe } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
@@ -32,7 +32,7 @@ import FeedbackTab from './admin-dashboard/FeedbackTab';
 import NotificationsTab from './admin-dashboard/NotificationsTab';
 import SettingsTab from './admin-dashboard/SettingsTab';
 import {
-  PatientModal, ApproveEnquiryModal, RejectEnquiryModal, DeclineApplicationModal, RejectVolunteerModal,
+  PatientModal, ApproveEnquiryModal, RejectEnquiryModal, DeclineApplicationModal, RejectVolunteerModal, RejectEnrollmentModal,
 } from './admin-dashboard/Modals';
 
 // HospitalPartnerRequest.status (backend) -> PartnerHospital.status (this
@@ -64,6 +64,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const { issues: volunteerIssues, refetch: refetchIssues } = useVolunteerIssues(apiToken);
   const { blogs, refetch: refetchBlogs } = useBlogs();
   const { events, refetch: refetchEvents } = useEvents();
+  const { pendingEnrollments, refetch: refetchPendingEnrollments } = usePendingCampaignEnrollments(apiToken);
   const { campaignRequests, refetch: refetchCampaignRequests } = useCampaignRequests(apiToken);
   const feedbacks: AdminFeedback[] = useMemo(() => apiFeedback.map(f => ({
     id: f.id,
@@ -162,13 +163,15 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   const [patientFormAid, setPatientFormAid] = useState<'Not Requested' | 'Pending Review' | 'Approved' | 'Disbursed' | 'Rejected'>('Not Requested');
   const [patientFormAidAmt, setPatientFormAidAmt] = useState('');
 
-  // Form states (Add Campaign)
+  // Form states (Add/Edit Campaign)
   const [newCampaignTitle, setNewCampaignTitle] = useState('');
   const [newCampaignType, setNewCampaignType] = useState('Screening Camp');
-  const [newCampaignDate, setNewCampaignDate] = useState('');
+  const [newCampaignDate, setNewCampaignDate] = useState('');   // YYYY-MM-DD (native date input)
+  const [newCampaignTime, setNewCampaignTime] = useState('09:00'); // HH:MM (native time input)
   const [newCampaignLocation, setNewCampaignLocation] = useState('');
   const [newCampaignCapacity, setNewCampaignCapacity] = useState('');
   const [campaignSuccessToast, setCampaignSuccessToast] = useState(false);
+  const [editingCampaignId, setEditingCampaignId] = useState<string | null>(null);
 
   // Form states (Add Blog Article)
   const [newBlogCategory, setNewBlogCategory] = useState<'Prevention' | 'Nutrition' | 'Survivors' | 'Research'>('Prevention');
@@ -403,38 +406,138 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   // ==========================================
   // CAMPAIGN UTILITIES
   // ==========================================
+  const [showRejectEnrollmentModal, setShowRejectEnrollmentModal] = useState<string | null>(null);
+  const [rejectEnrollmentReason, setRejectEnrollmentReason] = useState('');
+
+  const handleApproveEnrollment = async (id: string) => {
+    if (!apiToken) return;
+    try {
+      await approveCampaignEnrollment(id, apiToken);
+      toast.success('Enrollment Approved', 'Volunteer is now confirmed for the campaign.');
+      refetchPendingEnrollments();
+    } catch (err) {
+      toast.error('Approval Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
+  };
+
+  const handleRejectEnrollment = (id: string) => {
+    setShowRejectEnrollmentModal(id);
+  };
+
+  const handleConfirmRejectEnrollment = async () => {
+    if (!rejectEnrollmentReason.trim() || !apiToken || !showRejectEnrollmentModal) return;
+    try {
+      await rejectCampaignEnrollment(showRejectEnrollmentModal, apiToken, rejectEnrollmentReason);
+      setShowRejectEnrollmentModal(null);
+      setRejectEnrollmentReason('');
+      toast.info('Enrollment Rejected');
+      refetchPendingEnrollments();
+    } catch (err) {
+      toast.error('Rejection Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
+  };
+
+  const handleEditCampaign = (event: import('../types').Event) => {
+    setEditingCampaignId(event.id);
+    setNewCampaignTitle(event.title);
+    setNewCampaignType(event.type);
+    // Try to parse the stored date back to YYYY-MM-DD for the date picker.
+    // Dates created via the new calendar picker are already in YYYY-MM-DD;
+    // older free-text strings fall back to today if they can't be parsed.
+    try {
+      const parsed = new Date(event.date);
+      setNewCampaignDate(!isNaN(parsed.getTime()) ? parsed.toISOString().split('T')[0] : '');
+    } catch {
+      setNewCampaignDate('');
+    }
+    // Restore time (stored as "HH:MM AM/PM" or "HH:MM" — normalise to 24h)
+    if (event.time && event.time !== 'TBD') {
+      try {
+        const t = new Date(`1970-01-01 ${event.time}`);
+        if (!isNaN(t.getTime())) {
+          const hh = String(t.getHours()).padStart(2, '0');
+          const mm = String(t.getMinutes()).padStart(2, '0');
+          setNewCampaignTime(`${hh}:${mm}`);
+        } else {
+          setNewCampaignTime('09:00');
+        }
+      } catch {
+        setNewCampaignTime('09:00');
+      }
+    } else {
+      setNewCampaignTime('09:00');
+    }
+    setNewCampaignLocation(event.location);
+    setNewCampaignCapacity(String(event.capacity));
+  };
+
+  const handleCancelEditCampaign = () => {
+    setEditingCampaignId(null);
+    setNewCampaignTitle('');
+    setNewCampaignType('Screening Camp');
+    setNewCampaignDate('');
+    setNewCampaignTime('09:00');
+    setNewCampaignLocation('');
+    setNewCampaignCapacity('');
+  };
+
   const handleAddCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCampaignTitle || !newCampaignDate || !newCampaignLocation || !apiToken) return;
 
-    // The form collects date/time as one free-text field (e.g. "Sat, 15 Aug
-    // 2026 • 9:00 AM") -- Event stores them separately, so split on the
-    // bullet the placeholder itself suggests, falling back to date-only.
-    const [datePart, timePart] = newCampaignDate.includes('•')
-      ? newCampaignDate.split('•').map(s => s.trim())
-      : [newCampaignDate.trim(), ''];
+    // Format the date as human-readable (e.g. "Sat, 15 Aug 2026") and time
+    // as 12-hour clock (e.g. "9:00 AM") for display in cards and reports.
+    const dateObj = new Date(`${newCampaignDate}T${newCampaignTime || '00:00'}`);
+    const formattedDate = dateObj.toLocaleDateString('en-IN', {
+      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+    });
+    const formattedTime = dateObj.toLocaleTimeString('en-IN', {
+      hour: 'numeric', minute: '2-digit', hour12: true,
+    }).toUpperCase();
+
+    const payload = {
+      title: newCampaignTitle,
+      type: newCampaignType,
+      date: formattedDate,
+      time: formattedTime,
+      location: newCampaignLocation,
+      description: 'Community campaign scheduled via the Campaigns Scheduler.',
+      category: newCampaignType,
+      capacity: parseInt(newCampaignCapacity, 10) || 0,
+    };
 
     try {
-      await createEvent(apiToken, {
-        title: newCampaignTitle,
-        type: newCampaignType,
-        date: datePart,
-        time: timePart,
-        location: newCampaignLocation,
-        description: 'Community campaign scheduled via the Campaigns Scheduler.',
-        category: newCampaignType,
-        capacity: parseInt(newCampaignCapacity, 10) || 0,
-      });
+      if (editingCampaignId) {
+        await updateEvent(editingCampaignId, apiToken, payload);
+        setEditingCampaignId(null);
+        toast.success('Campaign Updated', `Campaign "${newCampaignTitle}" has been updated.`);
+      } else {
+        await createEvent(apiToken, payload);
+        toast.success('Campaign Scheduled', `Campaign "${newCampaignTitle}" is now live.`);
+      }
       await refetchEvents();
       setNewCampaignTitle('');
       setNewCampaignDate('');
+      setNewCampaignTime('09:00');
       setNewCampaignLocation('');
       setNewCampaignCapacity('');
+      setNewCampaignType('Screening Camp');
       setCampaignSuccessToast(true);
       setTimeout(() => setCampaignSuccessToast(false), 3000);
-      toast.success('Campaign Scheduled', `Campaign "${newCampaignTitle}" is now live.`);
     } catch (err) {
-      toast.error('Scheduling Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+      toast.error(editingCampaignId ? 'Update Failed' : 'Scheduling Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
+  };
+
+  const handleDeleteCampaign = async (id: string) => {
+    if (!apiToken) return;
+    if (!window.confirm('Are you sure you want to delete this campaign?')) return;
+    try {
+      await deleteEvent(id, apiToken);
+      await refetchEvents();
+      toast.info('Campaign Deleted', 'The campaign has been removed.');
+    } catch (err) {
+      toast.error('Delete Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
     }
   };
 
@@ -690,7 +793,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     { id: 'enquiries', label: 'Patient Enquiries', icon: Stethoscope, badge: pendingAdminCount },
     { id: 'patients', label: 'Patients Manager', icon: Heart },
     { id: 'volunteers', label: 'Volunteers Manager', icon: Users },
-    { id: 'campaigns', label: 'Campaigns Scheduler', icon: Calendar },
+    { id: 'campaigns', label: 'Campaigns Scheduler', icon: Calendar, badge: pendingEnrollments.length },
     { id: 'hospitals', label: 'Hospital Tie-ups', icon: Building2 },
     { id: 'requests', label: 'Campaign Requests', icon: FileCheck },
     { id: 'donations', label: 'Donations Audit', icon: DollarSign },
@@ -858,11 +961,20 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
               setNewCampaignType={setNewCampaignType}
               newCampaignDate={newCampaignDate}
               setNewCampaignDate={setNewCampaignDate}
+              newCampaignTime={newCampaignTime}
+              setNewCampaignTime={setNewCampaignTime}
               newCampaignLocation={newCampaignLocation}
               setNewCampaignLocation={setNewCampaignLocation}
               newCampaignCapacity={newCampaignCapacity}
               setNewCampaignCapacity={setNewCampaignCapacity}
               events={events}
+              editingCampaignId={editingCampaignId}
+              handleEditCampaign={handleEditCampaign}
+              handleDeleteCampaign={handleDeleteCampaign}
+              handleCancelEditCampaign={handleCancelEditCampaign}
+              pendingEnrollments={pendingEnrollments}
+              handleApproveEnrollment={handleApproveEnrollment}
+              handleRejectEnrollment={handleRejectEnrollment}
             />
           )}
 
@@ -1064,6 +1176,16 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
           rejectReason={rejectVolunteerReason}
           setRejectReason={setRejectVolunteerReason}
           onReject={handleConfirmRejectVolunteer}
+        />
+      )}
+
+      {/* Reject Campaign Enrollment Modal */}
+      {showRejectEnrollmentModal && (
+        <RejectEnrollmentModal
+          onClose={() => { setShowRejectEnrollmentModal(null); setRejectEnrollmentReason(''); }}
+          rejectReason={rejectEnrollmentReason}
+          setRejectReason={setRejectEnrollmentReason}
+          onReject={handleConfirmRejectEnrollment}
         />
       )}
 

@@ -6,13 +6,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.core.limiter import get_client_ip, limiter
 from app.core.security import create_access_token, generate_numeric_id, hash_password, verify_password
-from app.deps import DbSession, get_current_claims, require_admin_or_superadmin
+from app.deps import DbSession, get_current_claims, require_admin_or_superadmin, require_hospital
 from app.models.hospital import Hospital
 from app.models.patient import Patient
 from app.models.revoked_token import RevokedToken
 from app.models.user import User
 from app.models.volunteer import Volunteer
-from app.schemas.auth import LoginIn, StaffChangePasswordIn, StaffMeOut, StaffMeUpdateIn, TokenOut
+from app.schemas.auth import HospitalChangePasswordIn, LoginIn, StaffChangePasswordIn, StaffMeOut, StaffMeUpdateIn, TokenOut
 from app.schemas.volunteer import VolunteerOut, VolunteerRegisterIn
 from app.services.audit import record_event
 from app.services.notifications import notify
@@ -111,6 +111,26 @@ def hospital_login(request: Request, payload: LoginIn, db: DbSession):
     record_event(db, "login_success", role="hospital", actor_id=hospital.id, ip_address=get_client_ip(request))
     db.commit()
     return TokenOut(access_token=token, role="hospital", name=hospital.name)
+
+
+@router.post("/hospital/change-password", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("10/minute")
+def change_hospital_password(
+    request: Request,
+    payload: HospitalChangePasswordIn,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_hospital)],
+):
+    hospital = db.query(Hospital).filter(Hospital.id == UUID(claims["sub"])).first()
+    if hospital is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Hospital account not found")
+    if not hospital.hashed_password or not verify_password(payload.current_password, hospital.hashed_password):
+        # 400, not 401 -- see change_staff_password above for why a wrong
+        # *current password* field must not look like an expired session.
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Current password is incorrect")
+    hospital.hashed_password = hash_password(payload.new_password)
+    record_event(db, "hospital_password_updated", role="hospital", actor_id=hospital.id, ip_address=get_client_ip(request))
+    db.commit()
 
 
 @router.post("/volunteer/login", response_model=TokenOut)

@@ -1,4 +1,4 @@
-from tests.conftest import ADMIN_CREDENTIALS, SUPERADMIN_CREDENTIALS, auth_header
+from tests.conftest import ADMIN_CREDENTIALS, HOSPITAL1_CREDENTIALS, SUPERADMIN_CREDENTIALS, auth_header
 
 
 class TestAuditLog:
@@ -111,4 +111,50 @@ class TestChangePassword:
         assert old_login.status_code == 401
 
         new_login = client.post("/auth/staff/login", json={"email": ADMIN_CREDENTIALS[0], "password": "brandNewPassword456"})
+        assert new_login.status_code == 200
+
+
+class TestHospitalChangePassword:
+    def test_requires_auth(self, client):
+        resp = client.post("/auth/hospital/change-password", json={"currentPassword": "x", "newPassword": "newpassword123"})
+        assert resp.status_code == 401
+
+    def test_wrong_current_password_rejected(self, client, hospital1_token):
+        resp = client.post(
+            "/auth/hospital/change-password",
+            json={"currentPassword": "definitely-wrong", "newPassword": "newpassword123"},
+            headers=auth_header(hospital1_token),
+        )
+        assert resp.status_code == 400
+
+    def test_new_password_too_short_rejected(self, client, hospital1_token):
+        resp = client.post(
+            "/auth/hospital/change-password",
+            json={"currentPassword": HOSPITAL1_CREDENTIALS[1], "newPassword": "short"},
+            headers=auth_header(hospital1_token),
+        )
+        assert resp.status_code == 422
+
+    def test_staff_token_rejected(self, client, admin_token):
+        # A valid Bearer token for the wrong role must not be treated as a
+        # hospital session -- require_hospital should 403, not touch any row.
+        resp = client.post(
+            "/auth/hospital/change-password",
+            json={"currentPassword": "whatever", "newPassword": "newpassword123"},
+            headers=auth_header(admin_token),
+        )
+        assert resp.status_code == 403
+
+    def test_correct_current_password_updates_and_new_password_logs_in(self, client, hospital1_token):
+        resp = client.post(
+            "/auth/hospital/change-password",
+            json={"currentPassword": HOSPITAL1_CREDENTIALS[1], "newPassword": "brandNewPassword456"},
+            headers=auth_header(hospital1_token),
+        )
+        assert resp.status_code == 204, resp.text
+
+        old_login = client.post("/auth/hospital/login", json={"email": HOSPITAL1_CREDENTIALS[0], "password": HOSPITAL1_CREDENTIALS[1]})
+        assert old_login.status_code == 401
+
+        new_login = client.post("/auth/hospital/login", json={"email": HOSPITAL1_CREDENTIALS[0], "password": "brandNewPassword456"})
         assert new_login.status_code == 200

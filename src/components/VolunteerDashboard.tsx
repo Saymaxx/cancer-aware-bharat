@@ -115,7 +115,11 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
     location: e.event.location,
     organizer: '',
     organizerPhone: '',
-    attendanceStatus: e.checkedInAt ? 'Checked In' as const : 'Confirmed' as const,
+    attendanceStatus:
+      e.status === 'Rejected' ? 'Rejected' as const :
+      e.status === 'Pending' ? 'Pending' as const :
+      e.checkedInAt ? 'Checked In' as const : 'Confirmed' as const,
+    decisionNotes: e.decisionNotes || undefined,
     targetDate: '',
     image: e.event.image || '',
   })), [myEnrollments]);
@@ -129,7 +133,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
     if (!volunteer?.accessToken) return;
     try {
       await enrollInCampaign(eventId, volunteer.accessToken);
-      showToast('Enrolled! Find it under Approved Campaigns.');
+      showToast('Enrollment request submitted! Awaiting Admin approval.');
       refetchMyCampaigns();
     } catch (err) {
       toast.error('Enrollment Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
@@ -331,7 +335,7 @@ export default function VolunteerDashboard({ onPageChange, onLogout }: Volunteer
   // Sidebar navigation links
   const sidebarItems = [
     { id: 'dashboard', label: 'Dashboard Overview', icon: BarChart3 },
-    { id: 'campaigns', label: 'Approved Campaigns', icon: Calendar, badge: myCampaigns.length },
+    { id: 'campaigns', label: 'My Campaigns', icon: Calendar, badge: myCampaigns.filter(c => c.attendanceStatus !== 'Rejected').length },
     { id: 'schedule', label: 'Today\'s Agenda', icon: Timer },
     { id: 'training', label: 'Training Modules', icon: GraduationCap },
     { id: 'hours', label: 'My Hours', icon: Clock3 },

@@ -77,7 +77,7 @@ export default function OverviewTab({
           {/* Quick Stats */}
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3 lg:max-w-lg">
             {[
-              { label: 'Approved', value: myCampaigns.length, icon: Calendar },
+              { label: 'Approved', value: myCampaigns.filter(c => c.attendanceStatus === 'Confirmed' || c.attendanceStatus === 'Checked In').length, icon: Calendar },
               { label: 'Done', value: userStats.campaignsCompleted, icon: CheckCircle },
               { label: 'Hours', value: userStats.volunteerHours, icon: Clock },
               { label: 'Reached', value: userStats.peopleReached, icon: Users },
@@ -98,7 +98,7 @@ export default function OverviewTab({
       {/* Action Buttons Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[
-          { label: 'Approved Campaigns', icon: Calendar, color: 'text-primary bg-primary/10 border-primary/20', tab: 'campaigns' },
+          { label: 'My Campaigns', icon: Calendar, color: 'text-primary bg-primary/10 border-primary/20', tab: 'campaigns' },
           { label: 'Today\'s Agenda', icon: Timer, color: 'text-slate-700 bg-slate-50 border-slate-200', tab: 'schedule' },
           { label: 'Send Feedback', icon: MessageSquare, color: 'text-pink-700 bg-pink-50 border-pink-200', tab: 'feedback' },
         ].map((act, i) => {
@@ -123,18 +123,20 @@ export default function OverviewTab({
         <div className="lg:col-span-7 bg-white rounded-2xl border border-outline-variant/30 p-6 shadow-xs">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <CheckCircle2 className="w-4.5 h-4.5 text-primary" /> Admin Approved Campaigns
+              <CheckCircle2 className="w-4.5 h-4.5 text-primary" /> My Campaigns
             </h3>
             <button onClick={() => setActiveTab('campaigns')} className="text-xs font-bold text-primary hover:underline cursor-pointer">
-              View All ({myCampaigns.length})
+              View All ({myCampaigns.filter(c => c.attendanceStatus !== 'Rejected').length})
             </button>
           </div>
           <div className="space-y-3.5">
-            {myCampaigns.map((camp) => (
+            {myCampaigns.filter(c => c.attendanceStatus !== 'Rejected').map((camp) => (
               <div key={camp.id} className="p-4 border border-outline-variant/30 rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-between text-xs gap-3">
                 <div>
-                  <span className="px-2 py-0.5 rounded-full bg-slate-50 text-slate-700 text-[10px] font-bold border border-slate-200">
-                    ✓ Admin Approved
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                    camp.attendanceStatus === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-700 border-slate-200'
+                  }`}>
+                    {camp.attendanceStatus === 'Pending' ? 'Awaiting Admin Approval' : '✓ Admin Approved'}
                   </span>
                   <h4 className="font-bold text-slate-900 mt-1.5">{camp.name}</h4>
                   <p className="text-slate-500 mt-0.5">{camp.date} • {camp.location}</p>
@@ -145,7 +147,7 @@ export default function OverviewTab({
                   }`}>
                     {camp.attendanceStatus}
                   </span>
-                  {camp.attendanceStatus !== 'Checked In' && (
+                  {camp.attendanceStatus === 'Confirmed' && (
                     <button
                       onClick={() => handleCheckIn(camp.id)}
                       className="px-2.5 py-1 bg-primary text-white text-[10px] font-bold rounded-lg hover:opacity-90 shadow-xs cursor-pointer"

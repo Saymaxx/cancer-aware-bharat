@@ -27,9 +27,9 @@ export default function CampaignsTab({
       <div className="bg-slate-50 border border-slate-200 text-slate-900 p-4 rounded-2xl text-xs flex items-start gap-3 leading-relaxed">
         <CheckCircle2 className="w-5 h-5 shrink-0 text-primary-container mt-0.5" />
         <div>
-          <p className="font-bold">Verified & Admin-Approved Campaigns Only</p>
+          <p className="font-bold">Campaign Enrollment Requires Admin Approval</p>
           <p className="text-slate-800/85 mt-0.5">
-            Under CAB Regional Governance protocols, volunteers are assigned to campaigns verified and approved by the Regional Admin. Click on any campaign below to download your Digital Event Pass, access camp safety guidelines, or mark your check-in.
+            Enrolling in a campaign submits a request to the Regional Admin -- you're only confirmed for the campaign once it's approved. Once approved, click on the campaign to download your Digital Event Pass, access camp safety guidelines, or mark your check-in.
           </p>
         </div>
       </div>
@@ -78,8 +78,15 @@ export default function CampaignsTab({
                 </div>
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-primary text-white text-[10px] font-bold shadow-sm flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" /> Admin Approved
+              <span className={`absolute top-3 left-3 px-3 py-1 rounded-full text-white text-[10px] font-bold shadow-sm flex items-center gap-1 ${
+                camp.attendanceStatus === 'Pending' ? 'bg-amber-500' :
+                camp.attendanceStatus === 'Rejected' ? 'bg-red-600' :
+                'bg-primary'
+              }`}>
+                <CheckCircle className="w-3 h-3" />
+                {camp.attendanceStatus === 'Pending' ? 'Awaiting Approval' :
+                 camp.attendanceStatus === 'Rejected' ? 'Rejected' :
+                 'Admin Approved'}
               </span>
               <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-white text-[10px] font-semibold border border-white/20">
                 {camp.type}
@@ -99,7 +106,15 @@ export default function CampaignsTab({
                 </div>
               </div>
 
-              {/* Action Control Panel for Campaign */}
+              {camp.attendanceStatus === 'Rejected' ? (
+                <div className="pt-4 border-t border-slate-100">
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                    <p className="text-[10px] font-bold text-red-700 uppercase tracking-wider mb-1">Enrollment Rejected</p>
+                    <p className="text-xs text-red-700">{camp.decisionNotes || 'No reason was provided.'}</p>
+                  </div>
+                </div>
+              ) : (
+              /* Action Control Panel for Campaign */
               <div className="pt-4 border-t border-slate-100 space-y-3">
                 <div className="flex items-center justify-between">
                   {camp.targetDate ? (
@@ -112,6 +127,10 @@ export default function CampaignsTab({
                     {camp.attendanceStatus === 'Checked In' ? (
                       <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-800 border border-slate-300 flex items-center gap-1">
                         <Check className="w-3.5 h-3.5" /> Checked In
+                      </span>
+                    ) : camp.attendanceStatus === 'Pending' ? (
+                      <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                        Awaiting Admin Approval
                       </span>
                     ) : (
                       <button
@@ -148,6 +167,7 @@ export default function CampaignsTab({
                   )}
                 </div>
               </div>
+              )}
             </div>
           </div>
         ))}

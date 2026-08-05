@@ -91,27 +91,41 @@ export default function VolunteersTab({
                       {vol.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    {vol.status === 'Pending Approval' ? (
-                      <>
-                        <button
-                          onClick={() => handleApproveVolunteer(vol.id)}
-                          className="px-3 py-1.5 bg-primary text-white font-bold rounded-lg text-[10px] hover:opacity-95 cursor-pointer inline-flex items-center gap-0.5"
-                        >
-                          <Check className="w-3 h-3" /> Approve
-                        </button>
+                  <td className="px-6 py-4 text-right">
+                    <div className="inline-flex items-center gap-1.5 justify-end">
+                      {vol.status === 'Pending Approval' && (
+                        <>
+                          <button
+                            onClick={() => handleApproveVolunteer(vol.id)}
+                            className="px-3 py-1.5 bg-primary text-white font-bold rounded-lg text-[10px] hover:opacity-95 cursor-pointer inline-flex items-center gap-0.5"
+                          >
+                            <Check className="w-3 h-3" /> Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectVolunteer(vol.id)}
+                            className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-100 font-bold rounded-lg text-[10px] hover:bg-red-100 cursor-pointer inline-flex items-center gap-0.5"
+                          >
+                            <X className="w-3 h-3" /> Reject
+                          </button>
+                        </>
+                      )}
+                      {vol.status === 'Approved' && (
                         <button
                           onClick={() => handleRejectVolunteer(vol.id)}
                           className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-100 font-bold rounded-lg text-[10px] hover:bg-red-100 cursor-pointer inline-flex items-center gap-0.5"
                         >
                           <X className="w-3 h-3" /> Reject
                         </button>
-                      </>
-                    ) : (
-                      <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg">
-                        {vol.status === 'Rejected' ? 'Rejected' : 'Active Node'}
-                      </span>
-                    )}
+                      )}
+                      {vol.status === 'Rejected' && (
+                        <button
+                          onClick={() => handleApproveVolunteer(vol.id)}
+                          className="px-3 py-1.5 bg-primary text-white font-bold rounded-lg text-[10px] hover:opacity-95 cursor-pointer inline-flex items-center gap-0.5"
+                        >
+                          <Check className="w-3 h-3" /> Re-approve
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

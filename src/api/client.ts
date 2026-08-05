@@ -14,6 +14,20 @@ const VOLUNTEER_SESSION_KEY = 'aware_bharat_logged_in_volunteer';
 const PATIENT_SESSION_KEY = 'aware_bharat_logged_in_patient';
 const APP_STORAGE_PREFIX = 'aware_bharat_';
 
+// Only one portal session is ever meant to be active at a time -- logging
+// into one role while another role's session is still sitting in
+// localStorage (e.g. testing volunteer, then hospital, without logging out
+// first) left every one of those stale sessions "logged in" simultaneously,
+// so Navbar's per-role checks collided and showed inconsistent/overlapping
+// login state depending on which check happened to run first. Every
+// set*Session() call now clears the other three roles' keys first.
+const ALL_SESSION_KEYS = [STAFF_SESSION_KEY, HOSPITAL_SESSION_KEY, VOLUNTEER_SESSION_KEY, PATIENT_SESSION_KEY];
+function clearOtherSessions(keepKey: string) {
+  for (const key of ALL_SESSION_KEYS) {
+    if (key !== keepKey) localStorage.removeItem(key);
+  }
+}
+
 // Every dashboard's Patients/Campaigns/Donations/Audit-Logs/etc. tabs still
 // use localStorage as their (intentionally scoped-out) mock data layer --
 // see the audit note on this. That data used to survive logout indefinitely,
@@ -114,6 +128,7 @@ export function getStaffSession(): StaffSession | null {
 }
 
 export function setStaffSession(session: StaffSession) {
+  clearOtherSessions(STAFF_SESSION_KEY);
   localStorage.setItem(STAFF_SESSION_KEY, JSON.stringify(session));
 }
 
@@ -160,6 +175,7 @@ export function getHospitalSession(): HospitalSession | null {
 }
 
 export function setHospitalSession(session: HospitalSession) {
+  clearOtherSessions(HOSPITAL_SESSION_KEY);
   localStorage.setItem(HOSPITAL_SESSION_KEY, JSON.stringify(session));
 }
 
@@ -185,6 +201,7 @@ export function getVolunteerSession(): VolunteerSession | null {
 }
 
 export function setVolunteerSession(session: VolunteerSession) {
+  clearOtherSessions(VOLUNTEER_SESSION_KEY);
   localStorage.setItem(VOLUNTEER_SESSION_KEY, JSON.stringify(session));
 }
 
@@ -208,6 +225,7 @@ export function getPatientSession(): PatientSession | null {
 }
 
 export function setPatientSession(session: PatientSession) {
+  clearOtherSessions(PATIENT_SESSION_KEY);
   localStorage.setItem(PATIENT_SESSION_KEY, JSON.stringify(session));
 }
 
@@ -232,6 +250,13 @@ export async function loginHospital(email: string, password: string): Promise<To
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
+}
+
+export function changeHospitalPassword(token: string, currentPassword: string, newPassword: string): Promise<void> {
+  return request<void>('/auth/hospital/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  }, token);
 }
 
 export async function loginVolunteer(email: string, password: string): Promise<TokenResponse> {
@@ -1164,14 +1189,24 @@ export function deleteEvent(id: string, token: string): Promise<void> {
   return request<void>(`/events/${id}`, { method: 'DELETE' }, token);
 }
 
+export function updateEvent(id: string, token: string, payload: EventPayload): Promise<ApiEvent> {
+  return request<ApiEvent>(`/events/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }, token);
+}
+
 // ---------------- Volunteer Campaign Enrollment ----------------
 
 export interface ApiVolunteerCampaignEnrollment {
   id: string;
   eventId: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  decisionNotes: string | null;
   enrolledAt: string;
   checkedInAt: string | null;
   event: ApiEvent;
+}
+
+export interface ApiVolunteerCampaignEnrollmentAdmin extends ApiVolunteerCampaignEnrollment {
+  volunteer: { id: string; name: string; email: string };
 }
 
 export function listMyCampaigns(token: string): Promise<ApiVolunteerCampaignEnrollment[]> {
@@ -1184,6 +1219,23 @@ export function enrollInCampaign(eventId: string, token: string): Promise<ApiVol
 
 export function checkInToCampaign(eventId: string, token: string): Promise<ApiVolunteerCampaignEnrollment> {
   return request<ApiVolunteerCampaignEnrollment>(`/volunteers/me/campaigns/${eventId}/check-in`, { method: 'POST' }, token);
+}
+
+// Admin/SuperAdmin review queue for enrollment requests -- see
+// backend/app/routers/volunteers.py's /campaign-enrollments/* endpoints.
+export function listPendingCampaignEnrollments(token: string): Promise<ApiVolunteerCampaignEnrollmentAdmin[]> {
+  return request<ApiVolunteerCampaignEnrollmentAdmin[]>('/volunteers/campaign-enrollments/pending', {}, token);
+}
+
+export function approveCampaignEnrollment(enrollmentId: string, token: string): Promise<ApiVolunteerCampaignEnrollment> {
+  return request<ApiVolunteerCampaignEnrollment>(`/volunteers/campaign-enrollments/${enrollmentId}/approve`, { method: 'POST' }, token);
+}
+
+export function rejectCampaignEnrollment(enrollmentId: string, token: string, reason: string): Promise<ApiVolunteerCampaignEnrollment> {
+  return request<ApiVolunteerCampaignEnrollment>(`/volunteers/campaign-enrollments/${enrollmentId}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  }, token);
 }
 
 // ---------------- Campaign Requests (Campaigns Scheduler pipeline) ----------------

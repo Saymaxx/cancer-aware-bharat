@@ -65,7 +65,9 @@ def enroll_in_event(
     db: DbSession,
     claims: Annotated[dict, Depends(require_volunteer)],
 ):
-    """Self-enrollment -- immediate, no organizer approval step exists."""
+    """Submits an enrollment request -- starts Pending and requires an
+    Admin/SuperAdmin to approve it (see /volunteers/campaign-enrollments/*)
+    before the volunteer is actually enrolled."""
     event = _get_event_or_404(db, event_id)
     if event.status != "Scheduled":
         raise HTTPException(status.HTTP_409_CONFLICT, f"Cannot enroll in an event that is '{event.status}'")

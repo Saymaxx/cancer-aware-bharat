@@ -6,7 +6,7 @@ import {
   HelpCircle, Settings, LogOut, Activity, Globe, Menu
 } from 'lucide-react';
 import { useApiEnquiries, useApiNotifications, useHospitalDoctors, useNgoReferrals, useMyPatientRecords, useMyHospitalReports, useMyEvents } from '../api/hooks';
-import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, addMyHospitalDoctor, updateMyHospitalDoctorAvailability, acceptMyNgoReferral, declineMyNgoReferral, updateMyPatientRecord, verifyMyPatientCost, uploadMyHospitalReport, downloadMyHospitalReport, ApiError, getHospitalSession } from '../api/client';
+import { hospitalAcceptEnquiry, hospitalDeclineEnquiry, completeEnquiryTreatment, addMyHospitalDoctor, updateMyHospitalDoctorAvailability, acceptMyNgoReferral, declineMyNgoReferral, updateMyPatientRecord, verifyMyPatientCost, uploadMyHospitalReport, downloadMyHospitalReport, changeHospitalPassword, ApiError, getHospitalSession } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry } from '../types';
 import { useToast } from './common/Toast';
@@ -206,6 +206,24 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
         });
         localStorage.setItem('aware_bharat_hospital_requests', JSON.stringify(updatedList));
       } catch (err) {}
+    }
+  };
+
+  // Self-service password change (Settings tab)
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const handleChangePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
+    if (!apiToken) return false;
+    setChangingPassword(true);
+    try {
+      await changeHospitalPassword(apiToken, currentPassword, newPassword);
+      toast.success('Password Updated', 'Your password was changed successfully.');
+      return true;
+    } catch (err) {
+      toast.error('Password Change Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+      return false;
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -864,7 +882,10 @@ export default function HospitalDashboard({ onPageChange, onLogout }: { onPageCh
               TAB 12: SETTINGS
           ===================================================== */}
           {activeTab === 'settings' && (
-            <SettingsTab />
+            <SettingsTab
+              changingPassword={changingPassword}
+              onChangePassword={handleChangePassword}
+            />
           )}
 
         </div>

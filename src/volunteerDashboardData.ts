@@ -26,7 +26,8 @@ export interface ActiveCampaign {
   location: string;
   organizer: string;
   organizerPhone: string;
-  attendanceStatus: 'Confirmed' | 'Pending' | 'Checked In';
+  attendanceStatus: 'Confirmed' | 'Pending' | 'Checked In' | 'Rejected';
+  decisionNotes?: string;
   targetDate: string; // ISO string for countdown
   image: string;
 }

@@ -6,7 +6,7 @@ import {
   Database, ShieldCheck, FileText,
 } from 'lucide-react';
 import { useAdmins, useApiEnquiries, useApiNotifications, useApiHospitals, useAuditLogs, useBackups, useBlogs, useDatabaseHealth, useDonations, useEvents, useIntegrationStatus, useOrgSettings, usePartnerRequests, usePatientRecords, useRoles, useStaffMe, useVolunteers } from '../api/hooks';
-import { activateAdmin, assignAdminRole, assignHospital, ApiError, approvePartnerRequest, broadcastNotification, changeStaffPassword, createAdmin, createBackup, createBlog, createRole, deleteAdmin as deleteAdminAccount, deleteBlog, getStaffSession, rejectPartnerRequest, requestPartnerRequestInfo, suspendAdmin, updateAdmin, updateOrgSettings, updateStaffMe, type ApiOrgSettings, type NotificationAudience } from '../api/client';
+import { activateAdmin, assignAdminRole, assignHospital, ApiError, approvePartnerRequest, approveVolunteer, broadcastNotification, changeStaffPassword, createAdmin, createBackup, createBlog, createEvent, createRole, deleteAdmin as deleteAdminAccount, deleteBlog, deleteEvent, getStaffSession, rejectPartnerRequest, rejectVolunteer, requestPartnerRequestInfo, suspendAdmin, updateAdmin, updateEvent, updateOrgSettings, updateStaffMe, type ApiOrgSettings, type NotificationAudience } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, Hospital } from '../types';
 import { useToast } from './common/Toast';
@@ -60,7 +60,8 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   const apiToken = useMemo(() => staffSession?.accessToken || null, [staffSession]);
   const { enquiries, refetch: refetchEnquiries } = useApiEnquiries(apiToken);
   const { notifications: superAdminNotifications } = useApiNotifications(apiToken);
-  const { events } = useEvents();
+  const { events, refetch: refetchEvents } = useEvents();
+  const { volunteers: apiVolunteers, refetch: refetchVolunteers } = useVolunteers(apiToken);
   const pendingHospitalAssignmentCount = useMemo(() => {
     return enquiries.filter(e =>
       e.status === 'Approved by Admin' ||
@@ -214,7 +215,6 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     status: r.caseStatus,
   })), [apiPatientRecords]);
 
-  const { volunteers: apiVolunteers } = useVolunteers(apiToken);
   // domain/city/assignedCampaignsCount/attendanceRate have no backend
   // equivalent, same honest-default rationale as AdminDashboard.tsx.
   // hoursLogged is real (self-reported hours log).
@@ -318,6 +318,39 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [newRoleName, setNewRoleName] = useState('');
   const [newRoleDescription, setNewRoleDescription] = useState('');
+
+  // Campaign CRUD state (SuperAdmin)
+  const [saNewCampaignTitle, setSaNewCampaignTitle] = useState('');
+  const [saNewCampaignType, setSaNewCampaignType] = useState('Screening Camp');
+  const [saNewCampaignDate, setSaNewCampaignDate] = useState('');
+  const [saNewCampaignLocation, setSaNewCampaignLocation] = useState('');
+  const [saNewCampaignCapacity, setSaNewCampaignCapacity] = useState('');
+  const [saEditingCampaignId, setSaEditingCampaignId] = useState<string | null>(null);
+  const [saCampaignSuccessToast, setSaCampaignSuccessToast] = useState(false);
+
+  // Volunteer reject state (SuperAdmin)
+  const [showSaRejectVolunteerModal, setShowSaRejectVolunteerModal] = useState<string | null>(null);
+  const [saRejectVolunteerReason, setSaRejectVolunteerReason] = useState('');
+
+  // Campaign form data object (for CampaignsTab) -- this dashboard's
+  // campaign form still collects date/time as one free-text field (see
+  // handleSaAddCampaign's "•" split below), so `time` has no dedicated
+  // state of its own; it's threaded through only to satisfy CampaignFormData.
+  const saCampaignFormData = {
+    title: saNewCampaignTitle,
+    type: saNewCampaignType,
+    date: saNewCampaignDate,
+    time: '',
+    location: saNewCampaignLocation,
+    capacity: saNewCampaignCapacity,
+  };
+  const setSaCampaignFormData = (data: typeof saCampaignFormData) => {
+    setSaNewCampaignTitle(data.title);
+    setSaNewCampaignType(data.type);
+    setSaNewCampaignDate(data.date);
+    setSaNewCampaignLocation(data.location);
+    setSaNewCampaignCapacity(data.capacity);
+  };
 
   // Blog Notice form state
   const [newBlogCategory, setNewBlogCategory] = useState<'Prevention' | 'Nutrition' | 'Survivors' | 'Research'>('Prevention');
@@ -557,6 +590,99 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
       toast.info('Blog Article Removed');
     } catch (err) {
       toast.error('Delete Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
+  };
+
+  // ---- Campaign CRUD (SuperAdmin) ----
+  const handleSaAddCampaign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!saNewCampaignTitle || !saNewCampaignDate || !saNewCampaignLocation || !apiToken) return;
+    const [datePart, timePart] = saNewCampaignDate.includes('•')
+      ? saNewCampaignDate.split('•').map(s => s.trim())
+      : [saNewCampaignDate.trim(), 'TBD'];
+    const payload = {
+      title: saNewCampaignTitle,
+      type: saNewCampaignType,
+      date: datePart,
+      time: timePart || 'TBD',
+      location: saNewCampaignLocation,
+      description: 'National campaign scheduled via Super Admin Console.',
+      category: saNewCampaignType,
+      capacity: parseInt(saNewCampaignCapacity, 10) || 0,
+    };
+    try {
+      if (saEditingCampaignId) {
+        await updateEvent(saEditingCampaignId, apiToken, payload);
+        setSaEditingCampaignId(null);
+        toast.success('Campaign Updated', `Campaign "${saNewCampaignTitle}" updated.`);
+      } else {
+        await createEvent(apiToken, payload);
+        toast.success('Campaign Scheduled', `Campaign "${saNewCampaignTitle}" is now live.`);
+      }
+      await refetchEvents();
+      setSaNewCampaignTitle(''); setSaNewCampaignDate(''); setSaNewCampaignLocation('');
+      setSaNewCampaignCapacity(''); setSaNewCampaignType('Screening Camp');
+      setSaCampaignSuccessToast(true);
+      setTimeout(() => setSaCampaignSuccessToast(false), 3000);
+    } catch (err) {
+      toast.error(saEditingCampaignId ? 'Update Failed' : 'Scheduling Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
+  };
+
+  const handleSaEditCampaign = (campaign: { id: string; title: string; type: string; date: string; loc: string }) => {
+    setSaEditingCampaignId(campaign.id);
+    setSaNewCampaignTitle(campaign.title);
+    setSaNewCampaignType(campaign.type);
+    setSaNewCampaignDate(campaign.date);
+    setSaNewCampaignLocation(campaign.loc);
+    // Find original event capacity
+    const ev = events.find(e => e.id === campaign.id);
+    setSaNewCampaignCapacity(ev ? String(ev.capacity) : '');
+  };
+
+  const handleSaCancelEdit = () => {
+    setSaEditingCampaignId(null);
+    setSaNewCampaignTitle(''); setSaNewCampaignDate(''); setSaNewCampaignLocation('');
+    setSaNewCampaignCapacity(''); setSaNewCampaignType('Screening Camp');
+  };
+
+  const handleSaDeleteCampaign = async (id: string) => {
+    if (!apiToken || !window.confirm('Are you sure you want to delete this campaign?')) return;
+    try {
+      await deleteEvent(id, apiToken);
+      await refetchEvents();
+      toast.info('Campaign Deleted', 'The campaign has been removed.');
+    } catch (err) {
+      toast.error('Delete Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
+  };
+
+  // ---- Volunteer CRUD (SuperAdmin) ----
+  const handleSaApproveVolunteer = async (id: string) => {
+    if (!apiToken) return;
+    try {
+      await approveVolunteer(id, apiToken);
+      toast.success('Volunteer Approved', 'Volunteer granted active status.');
+      refetchVolunteers();
+    } catch (err) {
+      toast.error('Approval Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
+  };
+
+  const handleSaRejectVolunteer = (id: string) => {
+    setShowSaRejectVolunteerModal(id);
+  };
+
+  const handleSaConfirmRejectVolunteer = async () => {
+    if (!saRejectVolunteerReason.trim() || !apiToken || !showSaRejectVolunteerModal) return;
+    try {
+      await rejectVolunteer(showSaRejectVolunteerModal, apiToken, saRejectVolunteerReason);
+      setShowSaRejectVolunteerModal(null);
+      setSaRejectVolunteerReason('');
+      toast.info('Volunteer Rejected');
+      refetchVolunteers();
+    } catch (err) {
+      toast.error('Rejection Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
     }
   };
 
@@ -921,6 +1047,8 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               handleExportVolunteersCSV={handleExportVolunteersCSV}
+              handleApproveVolunteer={handleSaApproveVolunteer}
+              handleRejectVolunteer={handleSaRejectVolunteer}
             />
           )}
 
@@ -929,6 +1057,14 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
             <CampaignsTab
               campaigns={campaigns}
               handleExportCampaignsCSV={handleExportCampaignsCSV}
+              handleAddCampaign={handleSaAddCampaign}
+              handleEditCampaign={handleSaEditCampaign}
+              handleDeleteCampaign={handleSaDeleteCampaign}
+              handleCancelEdit={handleSaCancelEdit}
+              editingCampaignId={saEditingCampaignId}
+              formData={saCampaignFormData}
+              setFormData={setSaCampaignFormData}
+              successToast={saCampaignSuccessToast}
             />
           )}
 
@@ -1188,6 +1324,47 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
         onClose={() => setTimelineEnquiry(null)}
         apiToken={apiToken}
       />
+      {/* Volunteer Reject Modal (SuperAdmin) */}
+      {showSaRejectVolunteerModal && (
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4 text-xs">
+            <h3 className="font-bold text-slate-900 text-sm">Reject Volunteer Application</h3>
+            <p className="text-slate-600">Provide a reason explaining why this volunteer application is being rejected.</p>
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Rejection Reason *</label>
+              <textarea
+                rows={3}
+                required
+                value={saRejectVolunteerReason}
+                onChange={e => setSaRejectVolunteerReason(e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none text-xs"
+                placeholder="e.g. Unable to verify contact details..."
+              />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => { setShowSaRejectVolunteerModal(null); setSaRejectVolunteerReason(''); }}
+                className="flex-1 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!saRejectVolunteerReason.trim()}
+                onClick={handleSaConfirmRejectVolunteer}
+                className="flex-1 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 cursor-pointer disabled:opacity-50"
+              >
+                Reject Volunteer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

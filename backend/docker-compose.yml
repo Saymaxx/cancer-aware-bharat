@@ -16,5 +16,17 @@ services:
       timeout: 5s
       retries: 10
 
+  pgweb:
+    image: sosedoff/pgweb:latest
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      DATABASE_URL: "postgres://cab_user:cab_password@db:5432/cancer_aware_bharat?sslmode=disable"
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   cab_postgres_data:
+

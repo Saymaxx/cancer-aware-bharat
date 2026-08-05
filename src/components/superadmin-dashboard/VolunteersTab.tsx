@@ -1,4 +1,4 @@
-import { Search, Download } from 'lucide-react';
+import { Search, Download, Check, X } from 'lucide-react';
 import type { AdminVolunteer } from '../../adminDashboardData';
 
 export default function VolunteersTab({
@@ -6,11 +6,15 @@ export default function VolunteersTab({
   searchTerm,
   setSearchTerm,
   handleExportVolunteersCSV,
+  handleApproveVolunteer,
+  handleRejectVolunteer,
 }: {
   volunteers: AdminVolunteer[];
   searchTerm: string;
   setSearchTerm: (val: string) => void;
   handleExportVolunteersCSV: () => void;
+  handleApproveVolunteer?: (id: string) => void;
+  handleRejectVolunteer?: (id: string) => void;
 }) {
   return (
     <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
@@ -19,9 +23,6 @@ export default function VolunteersTab({
           { label: 'Total Volunteers', value: volunteers.length.toLocaleString(), color: 'text-slate-700 bg-slate-50 border-slate-200' },
           { label: 'Approved & Active', value: String(volunteers.filter(v => v.status === 'Approved').length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
           { label: 'Pending Verification', value: String(volunteers.filter(v => v.status === 'Pending Approval').length), color: 'text-slate-700 bg-slate-50 border-slate-200' },
-          // Real self-reported hours log now (see hoursLogged mapping in
-          // SuperAdminDashboard.tsx) -- was dropped when this tab was built
-          // because that data didn't exist yet.
           { label: 'Total Hours Logged', value: volunteers.reduce((sum, v) => sum + v.hoursLogged, 0).toLocaleString(), color: 'text-purple-700 bg-purple-50 border-purple-200' },
         ].map((s, i) => (
           <div key={i} className={`${s.color} rounded-2xl border p-4 text-center`}>
@@ -60,13 +61,16 @@ export default function VolunteersTab({
                 <th className="px-5 py-3">Contact</th>
                 <th className="px-5 py-3">Expertise / Domain</th>
                 <th className="px-5 py-3">Hours Logged</th>
-                <th className="px-5 py-3 text-right">Verification Status</th>
+                <th className="px-5 py-3">Verification Status</th>
+                {(handleApproveVolunteer || handleRejectVolunteer) && (
+                  <th className="px-5 py-3 text-right">Actions</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
               {volunteers.filter(v => v.name.toLowerCase().includes(searchTerm.toLowerCase()) || v.domain.toLowerCase().includes(searchTerm.toLowerCase())).map((v) => (
                 <tr key={v.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-5 py-4 font-mono font-bold text-indigo-700">{v.id}</td>
+                  <td className="px-5 py-4 font-mono font-bold text-indigo-700">{v.id.substring(0, 8)}...</td>
                   <td className="px-5 py-4">
                     <p className="font-bold text-slate-900">{v.name}</p>
                     <p className="text-[10px] text-slate-400">Registered: {v.registeredDate}</p>
@@ -77,11 +81,57 @@ export default function VolunteersTab({
                   </td>
                   <td className="px-5 py-4 font-semibold text-slate-800">{v.domain}</td>
                   <td className="px-5 py-4 font-bold text-purple-700">{v.hoursLogged} hrs</td>
-                  <td className="px-5 py-4 text-right">
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${v.status === 'Approved' ? 'bg-slate-50 text-slate-700 border-slate-200' : 'bg-slate-50 text-slate-700 border-slate-200'}`}>
+                  <td className="px-5 py-4">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                      v.status === 'Approved' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                      v.status === 'Rejected' ? 'bg-red-50 text-red-700 border-red-200' :
+                      'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
                       {v.status}
                     </span>
                   </td>
+                  {(handleApproveVolunteer || handleRejectVolunteer) && (
+                    <td className="px-5 py-4 text-right">
+                      <div className="inline-flex items-center gap-1.5 justify-end">
+                        {v.status === 'Pending Approval' && (
+                          <>
+                            {handleApproveVolunteer && (
+                              <button
+                                onClick={() => handleApproveVolunteer(v.id)}
+                                className="px-3 py-1.5 bg-indigo-600 text-white font-bold rounded-lg text-[10px] hover:opacity-90 cursor-pointer inline-flex items-center gap-0.5"
+                              >
+                                <Check className="w-3 h-3" /> Approve
+                              </button>
+                            )}
+                            {handleRejectVolunteer && (
+                              <button
+                                onClick={() => handleRejectVolunteer(v.id)}
+                                className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 font-bold rounded-lg text-[10px] hover:bg-red-100 cursor-pointer inline-flex items-center gap-0.5"
+                              >
+                                <X className="w-3 h-3" /> Reject
+                              </button>
+                            )}
+                          </>
+                        )}
+                        {v.status === 'Approved' && handleRejectVolunteer && (
+                          <button
+                            onClick={() => handleRejectVolunteer(v.id)}
+                            className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 font-bold rounded-lg text-[10px] hover:bg-red-100 cursor-pointer inline-flex items-center gap-0.5"
+                          >
+                            <X className="w-3 h-3" /> Reject
+                          </button>
+                        )}
+                        {v.status === 'Rejected' && handleApproveVolunteer && (
+                          <button
+                            onClick={() => handleApproveVolunteer(v.id)}
+                            className="px-3 py-1.5 bg-indigo-600 text-white font-bold rounded-lg text-[10px] hover:opacity-90 cursor-pointer inline-flex items-center gap-0.5"
+                          >
+                            <Check className="w-3 h-3" /> Re-approve
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
