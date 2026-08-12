@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
-  Award, ShieldCheck, MapPin, Calendar, Sparkles, Star, Phone,
-  PlayCircle, Stethoscope, Info, CheckCircle2, ChevronRight, HeartPulse, Building2
+  Award, ShieldCheck, Calendar, Sparkles, Star, Phone,
+  PlayCircle, Stethoscope, UserPlus
 } from 'lucide-react';
 import PremiumSection from './common/PremiumSection';
 
@@ -11,12 +11,16 @@ export interface Doctor {
   name: string;
   nameHi: string;
   title: string;
+  titleHi?: string;
   specialty: string;
   specialtyHi: string;
   degrees: string;
+  degreesHi?: string;
   regNo?: string;
   honors?: string;
+  honorsEn?: string;
   bioHi: string;
+  bioEn?: string;
   image: string;
 }
 
@@ -27,12 +31,16 @@ export const APPROVED_DOCTORS_PANEL: Doctor[] = [
     name: 'Dr. Ajay Kumar',
     nameHi: 'डॉ. अजय कुमार',
     title: 'Senior Surgical Oncologist',
+    titleHi: 'वरिष्ठ सर्जिकल ऑन्कोलॉजिस्ट',
     specialty: 'Surgical Oncology',
     specialtyHi: 'सर्जिकल ऑन्कोलॉजी (शल्य कैंसर विशेषज्ञ)',
     degrees: 'MBBS, MS (General Surgery), MCh (Surgical Oncology), Gold Medalist',
+    degreesHi: 'एमबीबीएस, एमएस (जनरल सर्जरी), एमसीएच (सर्जिकल ऑन्कोलॉजी), स्वर्ण पदक विजेता',
     regNo: 'MCI-28490',
     honors: '‘यूपी रत्न’ एवं ‘काशी रत्न’ से सम्मानित*',
+    honorsEn: "Honored with 'UP Ratna' & 'Kashi Ratna'*",
     bioHi: 'कैंसर रोगियों की सर्जरी और उपचार में कार्य करते हुए डॉ. अजय कुमार ने ऐसे अनेक परिवारों की पीड़ा देखी है, जिनमें मरीज देर से चिकित्सा सहायता तक पहुँचे। यह अनुभव केवल चिकित्सकीय चुनौती नहीं, बल्कि जनजागरुकता की आवश्यकता का स्पष्ट संकेत था। इसी सोच ने उन्हें कैंसर के प्रति जागरूकता को लोगों के बीच ले जाने के संकल्प से जोड़ा। Cancer Aware Bharat Mission में उनका चिकित्सकीय अनुभव कैंसर जागरूकता, early warning awareness और appropriate referral की दिशा में प्रेरक आधार है।',
+    bioEn: 'Through years of performing oncology surgeries and treating cancer patients, Dr. Ajay Kumar witnessed the suffering of numerous families where patients reached medical help at an advanced stage. This experience was not merely a clinical challenge, but a clear call for community awareness. This realization inspired his commitment to bring cancer awareness directly to the public. His clinical expertise serves as an inspiring pillar for early warning awareness, screening, and appropriate referrals in the Cancer Aware Bharat Mission.',
     image: '/dr-ajay-kumar.jpg'
   }
 ];
@@ -42,7 +50,7 @@ interface DoctorsTabProps {
   onOpenVolunteer: () => void;
 }
 
-export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
+export default function DoctorsTab({ onOpenEnquiry, onOpenVolunteer }: DoctorsTabProps) {
   const navigate = useNavigate();
   const [lang, setLang] = useState<'hindi' | 'english'>('hindi');
 
@@ -51,9 +59,11 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const isHindi = lang === 'hindi';
+
   return (
     <>
-      <PremiumSection variant="warm-1" withBottomDivider="wave">
+      <PremiumSection variant="warm-1">
         <div className="space-y-12 animate-[fadeIn_0.3s_ease-out]">
       
       {/* ===== 1. TOP HERO SECTION ===== */}
@@ -68,14 +78,14 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-slate-300 backdrop-blur-md text-xs font-bold uppercase tracking-wider border border-white/15">
               <Stethoscope className="w-4 h-4 text-slate-400" />
-              <span>5. OUR DOCTORS / विशेषज्ञ टीम</span>
+              <span>{isHindi ? '5. हमारे विशेषज्ञ / OUR DOCTORS' : '5. OUR DOCTORS / विशेषज्ञ टीम'}</span>
             </span>
 
             <div className="flex items-center bg-white/10 p-1 rounded-xl border border-white/15 backdrop-blur-md text-xs font-bold">
               <button
                 onClick={() => setLang('hindi')}
                 className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                  lang === 'hindi' ? 'bg-primary text-white shadow-md' : 'text-white/70 hover:text-white'
+                  isHindi ? 'bg-primary text-white shadow-md' : 'text-white/70 hover:text-white'
                 }`}
               >
                 हिंदी (Hindi)
@@ -83,7 +93,7 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
               <button
                 onClick={() => setLang('english')}
                 className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                  lang === 'english' ? 'bg-primary text-white shadow-md' : 'text-white/70 hover:text-white'
+                  !isHindi ? 'bg-primary text-white shadow-md' : 'text-white/70 hover:text-white'
                 }`}
               >
                 English
@@ -92,7 +102,7 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
           </div>
 
           <h1 className="font-headline-lg text-3xl sm:text-5xl md:text-6xl font-black leading-tight tracking-tight drop-shadow-md">
-            {lang === 'hindi' ? (
+            {isHindi ? (
               <>हमारे विशेषज्ञ <span className="text-secondary-container">ऑन्कोलॉजिस्ट व चिकित्सक।</span></>
             ) : (
               <>Empaneled Oncology <span className="text-secondary-container">Specialists Panel.</span></>
@@ -102,10 +112,16 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
           {/* User Provided Description Text */}
           <div className="bg-white/10 border border-white/15 p-5 sm:p-6 rounded-2xl backdrop-blur-md space-y-2">
             <p className="font-body-lg text-slate-100 text-sm sm:text-base leading-relaxed font-semibold">
-              "Cancer Aware Bharat के जागरूकता कार्यक्रमों, स्वास्थ्य शिविरों और प्रशिक्षण गतिविधियों में चिकित्सकों की सहभागिता उनकी उपलब्धता, विशेषज्ञता और कार्यक्रम की आवश्यकता के अनुसार होती है।"
+              {isHindi
+                ? '"Cancer Aware Bharat के जागरूकता कार्यक्रमों, स्वास्थ्य शिविरों और प्रशिक्षण गतिविधियों में चिकित्सकों की सहभागिता उनकी उपलब्धता, विशेषज्ञता और कार्यक्रम की आवश्यकता के अनुसार होती है।"'
+                : '"Participation of medical experts in cancer screening, awareness drives, and training modules depends on clinical availability, area of specialization, and community program requirements."'
+              }
             </p>
             <p className="text-xs text-slate-300 italic">
-              Participation of medical experts in cancer screening, awareness drives, and training modules depends on clinical availability, area of specialization, and community program requirements.
+              {isHindi
+                ? 'Participation of medical experts in cancer screening, awareness drives, and training modules depends on clinical availability, area of specialization, and community program requirements.'
+                : 'Cancer Aware Bharat के जागरूकता कार्यक्रमों, स्वास्थ्य शिविरों और प्रशिक्षण गतिविधियों में चिकित्सकों की सहभागिता उनकी उपलब्धता, विशेषज्ञता और कार्यक्रम की आवश्यकता के अनुसार होती है।'
+              }
             </p>
           </div>
 
@@ -114,10 +130,10 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
         {/* Live Metrics Bar */}
         <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8 pt-6 border-t border-white/15">
           {[
-            { label: 'Clinical Guidance', val: '100% Verified' },
-            { label: 'Screening Camps Supervised', val: '180+ Camps' },
-            { label: 'Specialty Coverage', val: 'Surgical & Medical' },
-            { label: 'Second Opinion Support', val: 'Priority Access' }
+            { label: isHindi ? 'नैदानिक मार्गदर्शन' : 'Clinical Guidance', val: '100% Verified' },
+            { label: isHindi ? 'निरीक्षित शिविर' : 'Screening Camps Supervised', val: '180+ Camps' },
+            { label: isHindi ? 'विशेषज्ञता कवरेज' : 'Specialty Coverage', val: 'Surgical & Medical' },
+            { label: isHindi ? 'द्वितीय राय सहायता' : 'Second Opinion Support', val: 'Priority Access' }
           ].map((st, i) => (
             <div key={i} className="bg-white/10 backdrop-blur-md rounded-2xl p-3.5 border border-white/15 text-center">
               <p className="text-lg sm:text-xl font-black text-white">{st.val}</p>
@@ -135,9 +151,11 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
             <Award className="w-5.5 h-5.5" />
           </div>
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-secondary">INSPIRATION & LEAD MENTOR</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-secondary">
+              {isHindi ? 'प्रेरणास्रोत एवं मुख्य मार्गदर्शक' : 'INSPIRATION & LEAD MENTOR'}
+            </span>
             <h2 className="font-headline-lg text-2xl sm:text-3xl font-black text-slate-900">
-              4. DR. AJAY KUMAR / प्रेरणास्रोत
+              {isHindi ? '4. डॉ. अजय कुमार / प्रेरणास्रोत' : '4. DR. AJAY KUMAR / Inspiration & Lead Mentor'}
             </h2>
           </div>
         </div>
@@ -159,16 +177,18 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
 
             <div className="space-y-1">
               <h3 className="font-headline-lg text-2xl font-black text-slate-900">
-                डॉ. अजय कुमार
+                {isHindi ? APPROVED_DOCTORS_PANEL[0].nameHi : APPROVED_DOCTORS_PANEL[0].name}
               </h3>
               <p className="text-xs font-bold text-primary">
-                Surgical Oncologist
+                {isHindi ? APPROVED_DOCTORS_PANEL[0].titleHi : APPROVED_DOCTORS_PANEL[0].title}
               </p>
               <p className="text-xs text-slate-700 font-bold">
-                {APPROVED_DOCTORS_PANEL[0].honors}
+                {isHindi ? APPROVED_DOCTORS_PANEL[0].honors : APPROVED_DOCTORS_PANEL[0].honorsEn}
               </p>
               <p className="text-[10px] text-slate-400 italic">
-                *सभी उपाधियाँ/पुरस्कार आधिकारिक दस्तावेज़ के अनुसार अंतिम किए जाएँ।
+                {isHindi
+                  ? '*सभी उपाधियाँ/पुरस्कार आधिकारिक दस्तावेज़ के अनुसार अंतिम किए जाएँ।'
+                  : '*All degrees/awards subject to verification as per official credentials.'}
               </p>
             </div>
           </div>
@@ -178,24 +198,24 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
             <div className="bg-surface-container-low p-6 sm:p-8 rounded-2xl border border-outline-variant/20 space-y-4">
               <h4 className="font-bold text-base text-primary flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-secondary" />
-                <span>कैंसर जागरूकता का प्रेरक आधार</span>
+                <span>{isHindi ? 'कैंसर जागरूकता का प्रेरक आधार' : 'Inspirational Pillar of Cancer Awareness'}</span>
               </h4>
               <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-semibold border-l-4 border-primary pl-4">
-                "{APPROVED_DOCTORS_PANEL[0].bioHi}"
+                "{isHindi ? APPROVED_DOCTORS_PANEL[0].bioHi : APPROVED_DOCTORS_PANEL[0].bioEn}"
               </p>
               <div className="text-[11px] text-slate-500 border-t border-slate-200/80 pt-3 font-semibold">
-                <strong>उपाधियाँ:</strong> {APPROVED_DOCTORS_PANEL[0].degrees}
+                <strong>{isHindi ? 'उपाधियाँ:' : 'Degrees:'}</strong> {isHindi ? (APPROVED_DOCTORS_PANEL[0].degreesHi || APPROVED_DOCTORS_PANEL[0].degrees) : APPROVED_DOCTORS_PANEL[0].degrees}
               </div>
             </div>
 
-            {/* Profile Page Action Buttons requested by user */}
+            {/* Profile Page Action Buttons */}
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => navigate('/gallery')}
                 className="px-5 py-3 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary/90 shadow-lg flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
               >
                 <PlayCircle className="w-4 h-4 text-slate-300" />
-                <span>कैंसर जागरूकता वीडियो देखें</span>
+                <span>{isHindi ? 'कैंसर जागरूकता वीडियो देखें' : 'Watch Awareness Videos'}</span>
               </button>
 
               <button
@@ -203,7 +223,7 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
                 className="px-5 py-3 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 shadow-md"
               >
                 <Calendar className="w-4 h-4 text-slate-400" />
-                <span>आगामी कैंप देखें</span>
+                <span>{isHindi ? 'आगामी कैंप देखें' : 'View Upcoming Camps'}</span>
               </button>
 
               <button
@@ -211,7 +231,15 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
                 className="px-5 py-3 rounded-xl bg-secondary text-white font-bold text-xs hover:opacity-95 shadow-lg flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
               >
                 <Stethoscope className="w-4 h-4" />
-                <span>विशेषज्ञ टीम देखें</span>
+                <span>{isHindi ? 'विशेषज्ञ टीम देखें' : 'View Specialist Panel'}</span>
+              </button>
+
+              <button
+                onClick={onOpenVolunteer}
+                className="px-5 py-3 rounded-xl bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 shadow-lg flex items-center gap-2 cursor-pointer transition-all hover:scale-105"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>{isHindi ? 'चिकित्सक पैनल से जुड़ें' : 'Join as Medical Expert'}</span>
               </button>
             </div>
           </div>
@@ -219,14 +247,14 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
         </div>
       </section>
 
-      {/* ===== 3. DOCTORS DETAIL GRID SECTION (NO FAKE DOCTORS ADDED) ===== */}
+      {/* ===== 3. DOCTORS DETAIL GRID SECTION ===== */}
       <section id="specialist-team-grid" className="space-y-6">
         
         <div className="flex items-center justify-between border-b border-slate-200 pb-4">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-primary">APPROVED DOCTORS PANEL</span>
             <h2 className="font-headline-lg text-2xl sm:text-3xl font-black text-slate-900">
-              विशेषज्ञ डॉक्टर विवरण (Doctor Cards)
+              {isHindi ? 'विशेषज्ञ डॉक्टर विवरण (Doctor Cards)' : 'Approved Specialist Doctor Profiles'}
             </h2>
           </div>
           <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
@@ -234,16 +262,16 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
           </span>
         </div>
 
-        {/* Doctor Cards (Strictly Dr. Ajay Kumar, NO dummy profiles) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Doctor Cards Container */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {APPROVED_DOCTORS_PANEL.map((doc) => (
             <div
               key={doc.id}
-              className="bg-white rounded-3xl p-6 sm:p-8 border border-outline-variant/30 shadow-md hover:shadow-2xl transition-all duration-300 flex flex-col justify-between space-y-6 group hover:-translate-y-1"
+              className="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-8 border border-outline-variant/30 shadow-md hover:shadow-2xl transition-all duration-300 flex flex-col justify-between space-y-6 group"
             >
               <div className="space-y-5">
                 
-                {/* 1. Photo & 2. Full Name & 5. Specialty */}
+                {/* Photo & Name & Specialty */}
                 <div className="flex items-start gap-4">
                   <div className="relative shrink-0">
                     <img
@@ -258,47 +286,61 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
 
                   <div className="space-y-1.5 flex-1">
                     <h3 className="font-headline-lg text-lg sm:text-xl font-black text-slate-900 group-hover:text-primary transition-colors">
-                      {doc.nameHi} ({doc.name})
+                      {isHindi ? `${doc.nameHi} (${doc.name})` : `${doc.name} (${doc.nameHi})`}
                     </h3>
 
                     <p className="text-xs font-bold text-secondary">
-                      {doc.specialtyHi}
+                      {isHindi ? doc.specialtyHi : doc.specialty}
                     </p>
 
-                    {doc.honors && (
+                    {(doc.honors || doc.honorsEn) && (
                       <p className="text-[11px] text-slate-700 font-bold">
-                        🏅 {doc.honors}
+                        🏅 {isHindi ? doc.honors : (doc.honorsEn || doc.honors)}
                       </p>
                     )}
                   </div>
                 </div>
 
-                {/* Structured Fields: 3. Verified Qualification | 4. Registration/Designation | 6. Approved Bio */}
+                {/* Structured Fields: Qualification | Designation | Specialty | Approved Bio */}
                 <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/70 space-y-3 text-xs">
                   
-                  {/* 3. Verified Qualification */}
+                  {/* Verified Qualification */}
                   <div className="flex items-start gap-2">
-                    <span className="font-bold text-slate-800 text-[11px] shrink-0">🎓 Verified Qualification:</span>
-                    <span className="font-semibold text-primary text-[11px]">{doc.degrees}</span>
+                    <span className="font-bold text-slate-800 text-[11px] shrink-0">
+                      🎓 {isHindi ? 'Verified Qualification:' : 'Verified Qualification:'}
+                    </span>
+                    <span className="font-semibold text-primary text-[11px]">
+                      {isHindi ? (doc.degreesHi || doc.degrees) : doc.degrees}
+                    </span>
                   </div>
 
-                  {/* 4. Registration / Professional Designation */}
+                  {/* Registration / Professional Designation */}
                   <div className="flex items-start gap-2">
-                    <span className="font-bold text-slate-800 text-[11px] shrink-0">📋 Designation / Reg:</span>
-                    <span className="font-semibold text-slate-700 text-[11px]">{doc.title} {doc.regNo ? `(MCI Reg: ${doc.regNo})` : ''}</span>
+                    <span className="font-bold text-slate-800 text-[11px] shrink-0">
+                      📋 {isHindi ? 'Designation / Reg:' : 'Designation / Reg:'}
+                    </span>
+                    <span className="font-semibold text-slate-700 text-[11px]">
+                      {isHindi ? (doc.titleHi || doc.title) : doc.title} {doc.regNo ? `(MCI Reg: ${doc.regNo})` : ''}
+                    </span>
                   </div>
 
-                  {/* 5. Specialty */}
+                  {/* Specialty */}
                   <div className="flex items-start gap-2">
-                    <span className="font-bold text-slate-800 text-[11px] shrink-0">🩺 Specialty:</span>
-                    <span className="font-semibold text-secondary text-[11px]">{doc.specialtyHi}</span>
+                    <span className="font-bold text-slate-800 text-[11px] shrink-0">
+                      🩺 {isHindi ? 'Specialty:' : 'Specialty:'}
+                    </span>
+                    <span className="font-semibold text-secondary text-[11px]">
+                      {isHindi ? doc.specialtyHi : doc.specialty}
+                    </span>
                   </div>
 
-                  {/* 6. 80-120 Words Approved Bio */}
+                  {/* Approved Bio */}
                   <div className="pt-2 border-t border-slate-200/70 space-y-1">
-                    <span className="font-bold text-slate-800 text-[11px] block">Approved Bio (स्वीकृत परिचय):</span>
+                    <span className="font-bold text-slate-800 text-[11px] block">
+                      {isHindi ? 'Approved Bio (स्वीकृत परिचय):' : 'Approved Bio:'}
+                    </span>
                     <p className="text-slate-700 leading-relaxed text-xs font-medium">
-                      {doc.bioHi}
+                      {isHindi ? doc.bioHi : (doc.bioEn || doc.bioHi)}
                     </p>
                   </div>
 
@@ -309,7 +351,9 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
               {/* Card Footer Actions */}
               <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
                 <span className="text-[11px] text-slate-400 font-semibold italic">
-                  *सभी उपाधियाँ/पुरस्कार आधिकारिक दस्तावेज़ के अनुसार अंतिम किए जाएँ।
+                  {isHindi
+                    ? '*सभी उपाधियाँ/पुरस्कार आधिकारिक दस्तावेज़ के अनुसार अंतिम किए जाएँ।'
+                    : '*All credentials subject to official document verification.'}
                 </span>
 
                 <button
@@ -317,11 +361,45 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
                   className="px-4 py-2.5 rounded-xl bg-primary text-white font-bold text-xs hover:bg-primary/90 shadow-md cursor-pointer transition-transform hover:scale-105 flex items-center gap-1.5"
                 >
                   <Phone className="w-3.5 h-3.5" />
-                  <span>Request Consultation / ओपिनियन लें</span>
+                  <span>{isHindi ? 'Request Consultation / ओपिनियन लें' : 'Request Consultation / Opinion'}</span>
                 </button>
               </div>
             </div>
           ))}
+
+          {/* Join Doctor Panel Callout Card */}
+          <div className="lg:col-span-4 bg-gradient-to-br from-slate-900 to-primary text-white rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-md flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 text-secondary flex items-center justify-center font-bold border border-white/15">
+                <Stethoscope className="w-6 h-6" />
+              </div>
+              <h3 className="font-headline-lg text-xl font-bold text-white">
+                {isHindi ? 'चिकित्सक पैनल से जुड़ें' : 'Join Our Doctors Panel'}
+              </h3>
+              <p className="text-xs text-slate-200 leading-relaxed font-medium">
+                {isHindi
+                  ? 'यदि आप एक ऑन्कोलॉजिस्ट या चिकित्सा विशेषज्ञ हैं और कैंसर जागरूकता मिशन में अपना योगदान देना चाहते हैं, तो कृपया हमारे वालंटियर/चिकित्सक नेटवर्क से जुड़ें।'
+                  : 'Are you an oncologist or medical specialist interested in contributing to early detection and awareness camps? Join our empaneled medical network today.'}
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-4 border-t border-white/15">
+              <button
+                onClick={onOpenVolunteer}
+                className="w-full py-3 px-4 rounded-xl bg-secondary text-slate-950 font-bold text-xs hover:opacity-95 shadow-md flex items-center justify-center gap-2 cursor-pointer transition-transform hover:scale-[1.02]"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>{isHindi ? 'रजिस्टर करें (Register as Doctor)' : 'Register as Medical Specialist'}</span>
+              </button>
+              <button
+                onClick={() => onOpenEnquiry('Doctor Panel Inquiry')}
+                className="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs border border-white/15 flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                <span>{isHindi ? 'संपर्क करें (Contact Coordinator)' : 'Contact Panel Coordinator'}</span>
+              </button>
+            </div>
+          </div>
+
         </div>
       </section>
         </div>
@@ -329,3 +407,4 @@ export default function DoctorsTab({ onOpenEnquiry }: DoctorsTabProps) {
     </>
   );
 }
+

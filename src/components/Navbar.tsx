@@ -126,14 +126,12 @@ export default function Navbar({
             : 'bg-white/90 backdrop-blur-md'
           }`}
       >
-        <div className={`transition-all duration-300 ease-out w-full px-3 sm:px-8 lg:px-10 xl:px-14 max-w-[1480px] mx-auto flex justify-between items-center gap-1.5 relative ${scrolled ? 'h-[72px]' : 'h-[84px]'}`}>
+        <div className={`transition-all duration-300 ease-out w-full px-3 sm:px-6 lg:px-8 xl:px-12 max-w-[1480px] mx-auto flex justify-between items-center gap-2 relative ${scrolled ? 'h-[72px]' : 'h-[84px]'}`}>
 
-          {/* LEFT: Brand Logo -- allowed to shrink/truncate on narrow phones
-              so it never forces the row wider than the viewport; the mobile
-              action buttons (shrink-0 below) always stay fully visible. */}
+          {/* LEFT: Brand Logo */}
           <button
             onClick={() => handleNavClick('/')}
-            className="flex items-center space-x-1.5 sm:space-x-3 text-left hover:opacity-90 transition-opacity duration-200 focus:outline-none min-w-0 shrink group z-10"
+            className="flex items-center space-x-1.5 sm:space-x-3 text-left hover:opacity-90 transition-opacity duration-200 focus:outline-none min-w-0 shrink-0 group z-10"
           >
             <img
               src="/brand-logo.jpeg"
@@ -151,122 +149,94 @@ export default function Navbar({
           </button>
 
           {/* CENTER: Floating Navigation Pill (Desktop) */}
-          <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 z-10">
-            <div className={`flex items-center bg-white rounded-full shadow-[0_6px_28px_rgba(22,58,95,0.08),0_1px_4px_rgba(22,58,95,0.04)] border border-slate-100/70 px-3 transition-all duration-300 ease-out hover:shadow-[0_8px_36px_rgba(22,58,95,0.11)] ${scrolled ? 'h-[58px] gap-0.5' : 'h-[64px] gap-0.5'}`}>
-              {mainNavLinks.map(link => {
-                const isActive = location.pathname === link.path;
+          <div className="hidden lg:flex items-center justify-center flex-1 min-w-0 px-1 xl:px-3 z-10">
+            <div className={`flex items-center bg-white rounded-full shadow-[0_6px_28px_rgba(22,58,95,0.08),0_1px_4px_rgba(22,58,95,0.04)] border border-slate-100/70 px-2 xl:px-3.5 transition-all duration-300 ease-out hover:shadow-[0_8px_36px_rgba(22,58,95,0.11)] ${scrolled ? 'h-[50px] xl:h-[58px] gap-0.5 xl:gap-1' : 'h-[54px] xl:h-[64px] gap-0.5 xl:gap-1'}`}>
+              <button
+                onClick={() => handleNavClick('/')}
+                className={`relative flex items-center px-2.5 xl:px-4 py-1.5 xl:py-2 text-xs xl:text-[15px] font-semibold transition-all duration-200 rounded-full cursor-pointer focus:outline-none whitespace-nowrap ${
+                  location.pathname === '/'
+                    ? 'text-secondary'
+                    : 'text-primary/80 hover:text-primary hover:bg-primary/[0.04]'
+                }`}
+              >
+                <span>Home</span>
+                {location.pathname === '/' && (
+                  <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 xl:w-5 h-[2px] bg-secondary rounded-full" />
+                )}
+              </button>
 
-                if (link.label === 'Events') {
-                  const isEventsActive = location.pathname === '/events' || location.pathname === '/gallery';
-                  return (
-                    <div
-                      className="relative flex items-center h-full"
-                      key="events-dropdown"
-                      onMouseEnter={() => setActiveDropdown('events')}
-                      onMouseLeave={() => setActiveDropdown(null)}
-                    >
+              <button
+                onClick={() => handleNavClick('/about')}
+                className={`relative flex items-center px-2.5 xl:px-4 py-1.5 xl:py-2 text-xs xl:text-[15px] font-semibold transition-all duration-200 rounded-full cursor-pointer focus:outline-none whitespace-nowrap ${
+                  location.pathname === '/about'
+                    ? 'text-secondary'
+                    : 'text-primary/80 hover:text-primary hover:bg-primary/[0.04]'
+                }`}
+              >
+                <span>About</span>
+                {location.pathname === '/about' && (
+                  <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 xl:w-5 h-[2px] bg-secondary rounded-full" />
+                )}
+              </button>
+
+              {/* Events Dropdown */}
+              <div
+                className="relative flex items-center h-full"
+                key="events-dropdown"
+                onMouseEnter={() => setActiveDropdown('events')}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
+                <button
+                  onClick={() => setActiveDropdown(activeDropdown === 'events' ? null : 'events')}
+                  className={`relative flex items-center gap-1 px-2.5 xl:px-4 py-1.5 xl:py-2 text-xs xl:text-[15px] font-semibold transition-all duration-200 rounded-full cursor-pointer focus:outline-none whitespace-nowrap ${
+                    location.pathname === '/events' || location.pathname === '/gallery'
+                      ? 'text-secondary'
+                      : 'text-primary/80 hover:text-primary hover:bg-primary/[0.04]'
+                  }`}
+                >
+                  <span>Events</span>
+                  <ChevronDown className={`w-3 h-3 xl:w-3.5 xl:h-3.5 transition-transform duration-200 ${activeDropdown === 'events' ? 'rotate-180' : ''}`} />
+                  {(location.pathname === '/events' || location.pathname === '/gallery') && (
+                    <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 xl:w-5 h-[2px] bg-secondary rounded-full" />
+                  )}
+                </button>
+
+                {activeDropdown === 'events' && (
+                  <div className="absolute top-[100%] left-1/2 -translate-x-1/2 pt-3 z-50 w-[200px] xl:w-[220px]">
+                    <div className="bg-white rounded-2xl shadow-[0_20px_48px_rgba(22,58,95,0.12),0_4px_12px_rgba(22,58,95,0.04)] border border-slate-100/60 p-2 animate-fade-in-slide">
                       <button
-                        onClick={() => setActiveDropdown(activeDropdown === 'events' ? null : 'events')}
-                        className={`relative flex items-center gap-1 px-4 py-2 text-[15px] font-semibold transition-all duration-200 rounded-full cursor-pointer focus:outline-none ${
-                          isEventsActive
-                            ? 'text-secondary'
-                            : 'text-primary/80 hover:text-primary hover:bg-primary/[0.04]'
-                        }`}
+                        onClick={() => handleNavClick('/events')}
+                        className="w-full px-3.5 py-2.5 xl:px-4 xl:py-3 text-xs xl:text-[15px] font-semibold text-primary/80 hover:bg-primary/[0.04] hover:text-secondary rounded-xl transition-colors text-left"
                       >
-                        <span>Events</span>
-                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'events' ? 'rotate-180' : ''}`} />
-                        {isEventsActive && (
-                          <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-5 h-[2px] bg-secondary rounded-full" />
-                        )}
+                        Event Details
                       </button>
-
-                      {activeDropdown === 'events' && (
-                        <div className="absolute top-[100%] left-1/2 -translate-x-1/2 pt-3 z-50 w-[220px]">
-                          <div className="bg-white rounded-2xl shadow-[0_20px_48px_rgba(22,58,95,0.12),0_4px_12px_rgba(22,58,95,0.04)] border border-slate-100/60 p-2 animate-fade-in-slide">
-                            <button
-                              onClick={() => handleNavClick('/events')}
-                              className="w-full px-4 py-3 text-[15px] font-semibold text-primary/80 hover:bg-primary/[0.04] hover:text-secondary rounded-xl transition-colors text-left"
-                            >
-                              Event Details
-                            </button>
-                            <button
-                              onClick={() => handleNavClick('/gallery')}
-                              className="w-full px-4 py-3 text-[15px] font-semibold text-primary/80 hover:bg-primary/[0.04] hover:text-secondary rounded-xl transition-colors text-left"
-                            >
-                              Event Gallery
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
-                if (link.label === 'Blogs') {
-                  const isBlogsActive = location.pathname === '/blogs' || location.pathname === '/news';
-                  return (
-                    <div
-                      className="relative flex items-center h-full"
-                      key="blogs-dropdown"
-                      onMouseEnter={() => setActiveDropdown('blogs')}
-                      onMouseLeave={() => setActiveDropdown(null)}
-                    >
                       <button
-                        onClick={() => setActiveDropdown(activeDropdown === 'blogs' ? null : 'blogs')}
-                        className={`relative flex items-center gap-1 px-4 py-2 text-[15px] font-semibold transition-all duration-200 rounded-full cursor-pointer focus:outline-none ${
-                          isBlogsActive
-                            ? 'text-secondary'
-                            : 'text-primary/80 hover:text-primary hover:bg-primary/[0.04]'
-                        }`}
+                        onClick={() => handleNavClick('/gallery')}
+                        className="w-full px-3.5 py-2.5 xl:px-4 xl:py-3 text-xs xl:text-[15px] font-semibold text-primary/80 hover:bg-primary/[0.04] hover:text-secondary rounded-xl transition-colors text-left"
                       >
-                        <span>Blogs</span>
-                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'blogs' ? 'rotate-180' : ''}`} />
-                        {isBlogsActive && (
-                          <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-5 h-[2px] bg-secondary rounded-full" />
-                        )}
+                        Event Gallery
                       </button>
-
-                      {activeDropdown === 'blogs' && (
-                        <div className="absolute top-[100%] left-1/2 -translate-x-1/2 pt-3 z-50 w-[220px]">
-                          <div className="bg-white rounded-2xl shadow-[0_20px_48px_rgba(22,58,95,0.12),0_4px_12px_rgba(22,58,95,0.04)] border border-slate-100/60 p-2 animate-fade-in-slide">
-                            <button
-                              onClick={() => handleNavClick('/blogs')}
-                              className="w-full px-4 py-3 text-[15px] font-semibold text-primary/80 hover:bg-primary/[0.04] hover:text-secondary rounded-xl transition-colors text-left"
-                            >
-                              Articles
-                            </button>
-                            <button
-                              onClick={() => handleNavClick('/news')}
-                              className="w-full px-4 py-3 text-[15px] font-semibold text-primary/80 hover:bg-primary/[0.04] hover:text-secondary rounded-xl transition-colors text-left"
-                            >
-                              News
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </div>
-                  );
-                }
+                  </div>
+                )}
+              </div>
 
-                return (
-                  <button
-                    key={link.path}
-                    onClick={() => handleNavClick(link.path)}
-                    className={`relative flex items-center px-4 py-2 text-[15px] font-semibold transition-all duration-200 rounded-full cursor-pointer focus:outline-none ${
-                      isActive
-                        ? 'text-secondary'
-                        : 'text-primary/80 hover:text-primary hover:bg-primary/[0.04]'
-                    }`}
-                  >
-                    <span>{link.label}</span>
-                    {isActive && (
-                      <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-5 h-[2px] bg-secondary rounded-full" />
-                    )}
-                  </button>
-                );
-              })}
+              {/* Health Centres -- Visible on xl+ screens (1280px+); on lg screens it is neatly available in More */}
+              <button
+                onClick={() => handleNavClick('/hospitals')}
+                className={`hidden xl:flex relative items-center px-2.5 xl:px-4 py-1.5 xl:py-2 text-xs xl:text-[15px] font-semibold transition-all duration-200 rounded-full cursor-pointer focus:outline-none whitespace-nowrap ${
+                  location.pathname === '/hospitals'
+                    ? 'text-secondary'
+                    : 'text-primary/80 hover:text-primary hover:bg-primary/[0.04]'
+                }`}
+              >
+                <span>Health Centres</span>
+                {location.pathname === '/hospitals' && (
+                  <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 xl:w-5 h-[2px] bg-secondary rounded-full" />
+                )}
+              </button>
 
-              {/* More Dropdown */}
+              {/* More Dropdown -- Holds all additional links cleanly */}
               <div
                 className="relative flex items-center h-full"
                 key="more-dropdown"
@@ -275,44 +245,94 @@ export default function Navbar({
               >
                 <button
                   onClick={() => setActiveDropdown(activeDropdown === 'more' ? null : 'more')}
-                  className={`relative flex items-center gap-1 px-4 py-2 text-[15px] font-semibold transition-all duration-200 rounded-full cursor-pointer focus:outline-none ${
+                  className={`relative flex items-center gap-1 px-2.5 xl:px-4 py-1.5 xl:py-2 text-xs xl:text-[15px] font-semibold transition-all duration-200 rounded-full cursor-pointer focus:outline-none whitespace-nowrap ${
                     activeDropdown === 'more' ? 'text-secondary bg-primary/[0.04]' : 'text-primary/80 hover:text-primary hover:bg-primary/[0.04]'
                   }`}
                 >
                   <span>More</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${activeDropdown === 'more' ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-3 h-3 xl:w-3.5 xl:h-3.5 transition-transform duration-200 ${activeDropdown === 'more' ? 'rotate-180' : ''}`} />
                 </button>
 
                 {activeDropdown === 'more' && (
-                  <div className="absolute top-[100%] right-0 pt-3 z-50 w-[320px]">
-                    <div className="bg-white rounded-2xl shadow-[0_20px_48px_rgba(22,58,95,0.12),0_4px_12px_rgba(22,58,95,0.04)] border border-slate-100/60 p-2.5 animate-fade-in-slide">
+                  <div className="absolute top-[100%] right-0 xl:right-auto xl:left-1/2 xl:-translate-x-1/2 pt-3 z-50 w-[300px] xl:w-[320px]">
+                    <div className="bg-white rounded-2xl shadow-[0_20px_48px_rgba(22,58,95,0.12),0_4px_12px_rgba(22,58,95,0.04)] border border-slate-100/60 p-2.5 animate-fade-in-slide max-h-[80vh] overflow-y-auto">
+                      <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                        Care & Centres
+                      </p>
+                      <button
+                        onClick={() => handleNavClick('/hospitals')}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-primary/80 hover:bg-primary/[0.04] hover:text-secondary transition-all duration-200 text-left group"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-primary/[0.06] text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/[0.1] transition-colors duration-200">
+                          <Building2 className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-[13px] xl:text-[14px] leading-tight">Health Centres</p>
+                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">Partner hospitals & screening centres</p>
+                        </div>
+                      </button>
+
+                      <div className="my-1 mx-3 border-t border-slate-100/80" />
+                      <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                        Media & Resources
+                      </p>
+                      <button
+                        onClick={() => handleNavClick('/blogs')}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-primary/80 hover:bg-primary/[0.04] hover:text-secondary transition-all duration-200 text-left group"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-primary/[0.06] text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/[0.1] transition-colors duration-200">
+                          <BookOpen className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-[13px] xl:text-[14px] leading-tight">Blogs & Articles</p>
+                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">Cancer care insights & news</p>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => handleNavClick('/gallery')}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-primary/80 hover:bg-primary/[0.04] hover:text-secondary transition-all duration-200 text-left group"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-primary/[0.06] text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/[0.1] transition-colors duration-200">
+                          <Images className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-[13px] xl:text-[14px] leading-tight">Gallery</p>
+                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">Camp photos & highlights</p>
+                        </div>
+                      </button>
+
+                      <div className="my-1 mx-3 border-t border-slate-100/80" />
+                      <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                        Specialist Info
+                      </p>
+
                       {moreLinks.map(item => (
                         <button
                           key={item.path + item.label}
                           onClick={() => handleNavClick(item.path)}
-                          className="w-full flex items-center gap-3.5 px-3 py-3 rounded-xl text-primary/80 hover:bg-primary/[0.04] hover:text-secondary transition-all duration-200 text-left group"
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-primary/80 hover:bg-primary/[0.04] hover:text-secondary transition-all duration-200 text-left group"
                         >
-                          <div className={`w-9 h-9 rounded-xl bg-primary/[0.06] ${item.color} flex items-center justify-center shrink-0 group-hover:bg-primary/[0.1] transition-colors duration-200`}>
-                            <item.icon className="w-[18px] h-[18px]" />
+                          <div className={`w-8 h-8 rounded-xl bg-primary/[0.06] ${item.color} flex items-center justify-center shrink-0 group-hover:bg-primary/[0.1] transition-colors duration-200`}>
+                            <item.icon className="w-4 h-4" />
                           </div>
                           <div>
-                            <p className="font-semibold text-[14px] leading-tight">{item.label}</p>
+                            <p className="font-semibold text-[13px] xl:text-[14px] leading-tight">{item.label}</p>
                             <p className="text-[11px] text-slate-400 font-medium mt-0.5">{item.sublabel}</p>
                           </div>
                         </button>
                       ))}
 
-                      <div className="my-1.5 mx-3 border-t border-slate-100/80" />
+                      <div className="my-1 mx-3 border-t border-slate-100/80" />
 
                       <button
                         onClick={() => handleNavClick('/join-us')}
-                        className="w-full flex items-center gap-3.5 px-3 py-3 rounded-xl text-primary/80 hover:bg-primary/[0.04] hover:text-secondary transition-all duration-200 text-left group"
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-primary/80 hover:bg-primary/[0.04] hover:text-secondary transition-all duration-200 text-left group"
                       >
-                        <div className="w-9 h-9 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0 group-hover:bg-secondary/15 transition-colors duration-200">
-                          <UserPlus className="w-[18px] h-[18px]" />
+                        <div className="w-8 h-8 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0 group-hover:bg-secondary/15 transition-colors duration-200">
+                          <UserPlus className="w-4 h-4" />
                         </div>
                         <div>
-                          <p className="font-semibold text-[14px] leading-tight">Join Us / मिशन से जुड़ें</p>
+                          <p className="font-semibold text-[13px] xl:text-[14px] leading-tight">Join Us / मिशन से जुड़ें</p>
                           <p className="text-[11px] text-slate-400 font-medium mt-0.5">Become a community advocate</p>
                         </div>
                       </button>
@@ -322,13 +342,13 @@ export default function Navbar({
                           setActiveDropdown(null);
                           onOpenEnquiry();
                         }}
-                        className="w-full flex items-center gap-3.5 px-3 py-3 rounded-xl text-primary/80 hover:bg-primary/[0.04] hover:text-secondary transition-all duration-200 text-left group"
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-primary/80 hover:bg-primary/[0.04] hover:text-secondary transition-all duration-200 text-left group"
                       >
-                        <div className="w-9 h-9 rounded-xl bg-primary/[0.06] text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/[0.1] transition-colors duration-200">
-                          <PhoneCall className="w-[18px] h-[18px]" />
+                        <div className="w-8 h-8 rounded-xl bg-primary/[0.06] text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/[0.1] transition-colors duration-200">
+                          <PhoneCall className="w-4 h-4" />
                         </div>
                         <div>
-                          <p className="font-semibold text-[14px] leading-tight">Contact Us</p>
+                          <p className="font-semibold text-[13px] xl:text-[14px] leading-tight">Contact Us</p>
                           <p className="text-[11px] text-slate-400 font-medium mt-0.5">Patient helpline & enquiry</p>
                         </div>
                       </button>
@@ -340,58 +360,58 @@ export default function Navbar({
           </div>
 
           {/* RIGHT: Actions (Desktop) */}
-          <div className="hidden lg:flex items-center space-x-3 shrink-0 z-10">
+          <div className="hidden lg:flex items-center space-x-1.5 xl:space-x-3 shrink-0 z-10">
             {loggedInStaff ? (
               <>
                 <button
                   onClick={() => navigate(loggedInStaff.role === 'superadmin' ? '/superadmin/dashboard' : '/admin/dashboard')}
-                  className="px-5 py-2.5 rounded-full bg-primary/[0.06] text-primary border border-primary/10 text-[14px] font-semibold hover:bg-primary/[0.1] transition-all duration-200 cursor-pointer inline-flex items-center space-x-2 focus:outline-none"
+                  className="px-2.5 xl:px-4 py-1.5 xl:py-2 rounded-full bg-primary/[0.06] text-primary border border-primary/10 text-xs xl:text-[14px] font-semibold hover:bg-primary/[0.1] transition-all duration-200 cursor-pointer inline-flex items-center space-x-1.5 focus:outline-none whitespace-nowrap"
                 >
-                  <Shield className="w-4 h-4 text-primary" />
-                  <span>{loggedInStaff.role === 'superadmin' ? 'Super Admin Console' : 'Admin Console'}</span>
+                  <Shield className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-primary" />
+                  <span>{loggedInStaff.role === 'superadmin' ? 'Super Admin' : 'Admin Console'}</span>
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-10 h-10 rounded-full bg-red-50 text-red-500 border border-red-100/80 flex items-center justify-center hover:bg-red-100 transition-all duration-200 cursor-pointer focus:outline-none"
+                  className="w-8 h-8 xl:w-9 xl:h-9 rounded-full bg-red-50 text-red-500 border border-red-100/80 flex items-center justify-center hover:bg-red-100 transition-all duration-200 cursor-pointer focus:outline-none shrink-0"
                   title="Logout"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
                 </button>
               </>
             ) : loggedInVolunteer ? (
               <>
                 <button
                   onClick={() => navigate('/volunteer/dashboard')}
-                  className="px-5 py-2.5 rounded-full bg-primary/[0.06] text-primary text-[14px] font-semibold hover:bg-primary/[0.1] transition-all duration-200 cursor-pointer inline-flex items-center space-x-2.5 border border-primary/10 focus:outline-none"
+                  className="px-2.5 xl:px-4 py-1.5 xl:py-2 rounded-full bg-primary/[0.06] text-primary text-xs xl:text-[14px] font-semibold hover:bg-primary/[0.1] transition-all duration-200 cursor-pointer inline-flex items-center space-x-2 border border-primary/10 focus:outline-none whitespace-nowrap"
                 >
-                  <div className="w-6 h-6 rounded-full bg-primary text-white text-[11px] font-bold flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">
                     {volunteerInitials}
                   </div>
                   <span>Dashboard</span>
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-10 h-10 rounded-full bg-red-50 text-red-500 border border-red-100/80 flex items-center justify-center hover:bg-red-100 transition-all duration-200 cursor-pointer focus:outline-none"
+                  className="w-8 h-8 xl:w-9 xl:h-9 rounded-full bg-red-50 text-red-500 border border-red-100/80 flex items-center justify-center hover:bg-red-100 transition-all duration-200 cursor-pointer focus:outline-none shrink-0"
                   title="Logout"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
                 </button>
               </>
             ) : loggedInHospital ? (
               <>
                 <button
                   onClick={() => navigate('/hospital/dashboard')}
-                  className="px-5 py-2.5 rounded-full bg-primary/[0.06] text-primary border border-primary/10 text-[14px] font-semibold hover:bg-primary/[0.1] transition-all duration-200 cursor-pointer inline-flex items-center space-x-2 focus:outline-none"
+                  className="px-2.5 xl:px-4 py-1.5 xl:py-2 rounded-full bg-primary/[0.06] text-primary border border-primary/10 text-xs xl:text-[14px] font-semibold hover:bg-primary/[0.1] transition-all duration-200 cursor-pointer inline-flex items-center space-x-1.5 focus:outline-none whitespace-nowrap"
                 >
-                  <Building2 className="w-4 h-4 text-primary" />
+                  <Building2 className="w-3.5 h-3.5 xl:w-4 xl:h-4 text-primary" />
                   <span>Hospital Portal</span>
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-10 h-10 rounded-full bg-red-50 text-red-500 border border-red-100/80 flex items-center justify-center hover:bg-red-100 transition-all duration-200 cursor-pointer focus:outline-none"
+                  className="w-8 h-8 xl:w-9 xl:h-9 rounded-full bg-red-50 text-red-500 border border-red-100/80 flex items-center justify-center hover:bg-red-100 transition-all duration-200 cursor-pointer focus:outline-none shrink-0"
                   title="Logout"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
                 </button>
               </>
             ) : (
@@ -403,9 +423,9 @@ export default function Navbar({
               >
                 <button
                   onClick={() => setActiveDropdown(activeDropdown === 'login' ? null : 'login')}
-                  className="w-10 h-10 xl:w-11 xl:h-11 rounded-full bg-white border border-slate-200/80 flex items-center justify-center text-primary/70 hover:text-primary hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200 shadow-[0_1px_4px_rgba(22,58,95,0.04)] focus:outline-none cursor-pointer"
+                  className="w-8 h-8 xl:w-10 xl:h-10 rounded-full bg-white border border-slate-200/80 flex items-center justify-center text-primary/70 hover:text-primary hover:bg-primary/[0.04] hover:border-primary/20 transition-all duration-200 shadow-[0_1px_4px_rgba(22,58,95,0.04)] focus:outline-none cursor-pointer"
                 >
-                  <User className="w-[18px] h-[18px]" />
+                  <User className="w-4 h-4" />
                 </button>
 
                 {/* Profile Login Dropdown */}
@@ -429,7 +449,6 @@ export default function Navbar({
                         <Building2 className="w-4 h-4 text-slate-400 group-hover:text-secondary transition-colors duration-200" />
                         <span>Hospital Login</span>
                       </button>
-                      {/* Patient Login is deliberately disabled for now (product decision) */}
                     </div>
                   </div>
                 )}
@@ -437,17 +456,17 @@ export default function Navbar({
             )}
             <button
               onClick={onOpenDonate}
-              className="flex items-center gap-2 px-5 py-2.5 border-2 border-primary text-primary rounded-full font-semibold text-[14px] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/5 focus:outline-none"
+              className="flex items-center gap-1 xl:gap-2 px-2.5 xl:px-4 py-1.5 xl:py-2 border-2 border-primary text-primary rounded-full font-semibold text-xs xl:text-[14px] transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/5 focus:outline-none whitespace-nowrap"
             >
-              <Gift className="w-4 h-4" />
-              Donate
+              <Gift className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
+              <span>Donate</span>
             </button>
             <button
               onClick={onOpenVolunteer}
-              className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-full font-semibold text-[14px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(22,58,95,0.25)] hover:bg-[#112d4a] focus:outline-none"
+              className="flex items-center gap-1 xl:gap-2 px-3 xl:px-5 py-1.5 xl:py-2 bg-primary text-white rounded-full font-semibold text-xs xl:text-[14px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(22,58,95,0.25)] hover:bg-[#112d4a] focus:outline-none whitespace-nowrap"
             >
-              <Heart className="w-4 h-4" />
-              Become a Volunteer
+              <Heart className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
+              <span>Become a Volunteer</span>
             </button>
           </div>
 
