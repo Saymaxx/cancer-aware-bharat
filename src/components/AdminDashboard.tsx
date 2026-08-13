@@ -656,10 +656,10 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     }
   };
 
-  const handleResolveIssue = async (id: string) => {
+  const handleResolveIssue = async (id: string, resolutionNotes?: string) => {
     if (!apiToken) return;
     try {
-      await resolveVolunteerIssue(id, apiToken);
+      await resolveVolunteerIssue(id, apiToken, resolutionNotes);
       toast.success('Issue Resolved', 'Marked as resolved.');
       refetchIssues();
     } catch (err) {

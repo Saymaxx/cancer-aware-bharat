@@ -37,8 +37,13 @@ scheme to `postgresql+psycopg://`.
 
 ## 2. Deploy the backend
 
-Builds from [`backend/Dockerfile`](backend/Dockerfile). Set these environment
-variables on the host:
+Builds from [`backend/Dockerfile`](backend/Dockerfile).
+
+> [!IMPORTANT]
+> **Railway Setup Note:**
+> Set the **Root Directory** in your Railway service **Settings → Build** to `backend` (or `/backend`). This ensures Docker builds using `backend/` as the build root, allowing `requirements.txt` and `app/` to be located.
+
+Set these environment variables on the host:
 
 | Variable | Value |
 |---|---|

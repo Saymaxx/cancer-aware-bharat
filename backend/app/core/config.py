@@ -101,6 +101,16 @@ class Settings(BaseSettings):
         return bool(self.razorpay_key_id and self.razorpay_key_secret)
 
     @model_validator(mode="after")
+    def _normalize_database_url(self) -> "Settings":
+        if self.database_url.startswith("postgres://"):
+            self.database_url = self.database_url.replace("postgres://", "postgresql+psycopg://", 1)
+        elif self.database_url.startswith("postgresql+psycopg2://"):
+            self.database_url = self.database_url.replace("postgresql+psycopg2://", "postgresql+psycopg://", 1)
+        elif self.database_url.startswith("postgresql://"):
+            self.database_url = self.database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+        return self
+
+    @model_validator(mode="after")
     def _reject_insecure_secret_in_production(self) -> "Settings":
         if not self.is_production:
             return self
