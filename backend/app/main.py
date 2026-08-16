@@ -110,6 +110,16 @@ for _router in _ROUTERS:
     app.include_router(_router, prefix="/v1")
 
 
+@app.get("/")
+def root():
+    return {
+        "name": "Cancer Aware Bharat API",
+        "version": "0.1.0",
+        "status": "online",
+        "health": "/health",
+    }
+
+
 @app.get("/health")
 def health_check(db: DbSession):
     """Reports unhealthy (503) if the database isn't reachable, instead of
