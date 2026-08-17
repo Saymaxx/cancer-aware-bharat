@@ -750,6 +750,15 @@ body {
 }
 
 /* Float animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: float 3.5s ease-in-out infinite;
+}
+
 @keyframes float-slow {
   0%, 100% { transform: translateY(0) rotate(0); }
   50% { transform: translateY(-20px) rotate(2deg); }

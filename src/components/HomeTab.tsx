@@ -6,7 +6,7 @@ import {
   Phone, Stethoscope, Star, Quote, ChevronDown, Mail,
   Sun, Apple, Cigarette, Dumbbell, Syringe, Search as SearchIcon, Target,
   ClipboardCheck, UserCheck, Compass, HeartPulse, Droplet, Play,
-  Plus, Building, Clock
+  Plus, Building, Clock, Sparkles
 } from 'lucide-react';
 import { useEvents } from '../api/hooks';
 import TeamShowcase from './TeamShowcase';
@@ -15,47 +15,55 @@ import PremiumSection from './common/PremiumSection';
 const CAROUSEL_SLIDES = [
   {
     image: '/hero/hero-new-1.png',
-    tag: 'Doctor Network',
-    titleLine1: 'Expert Care',
-    titleLine2: 'Near You',
-    desc: 'Connecting patients with top oncology specialists and trusted healthcare partners across India.',
-    primaryBtn: 'Find a Specialist',
-    secondaryBtn: 'Patient Enquiry',
+    tag: 'डॉक्टर नेटवर्क',
+    titleLine1: 'विशेषज्ञ कैंसर देखभाल',
+    titleLine2: 'आपके निकट',
+    desc: 'भारत भर के मरीजों को प्रमुख ऑन्कोलॉजी विशेषज्ञों और विश्वसनीय स्वास्थ्य केंद्रों से जोड़ना।',
+    primaryBtn: 'विशेषज्ञ खोजें',
+    secondaryBtn: 'मरीज पूछताछ',
+    primaryAction: 'events',
+    secondaryAction: 'enquiry',
     objectPosition: 'center 20%',
-    alt: 'Expert Care Near You'
+    alt: 'विशेषज्ञ कैंसर देखभाल'
   },
   {
     image: '/hero/hero-new-2.png',
-    tag: 'Community Awareness',
-    titleLine1: 'Empowering Communities',
-    titleLine2: 'Through Knowledge',
-    desc: 'We conduct large-scale awareness drives to ensure everyone knows the signs of early cancer.',
-    primaryBtn: 'View Campaigns',
-    secondaryBtn: 'Volunteer With Us',
+    tag: 'सामुदायिक जागरूकता',
+    titleLine1: 'जागरूकता से सशक्त',
+    titleLine2: 'बनता भारत',
+    desc: 'कैंसर के शुरुआती लक्षणों की पहचान के लिए व्यापक जागरूकता और शिक्षा अभियान।',
+    primaryBtn: 'अभियान देखें',
+    secondaryBtn: 'हमारे साथ जुड़ें',
+    primaryAction: 'events',
+    secondaryAction: 'volunteer',
     objectPosition: 'center 30%',
-    alt: 'Empowering Communities Through Knowledge'
+    alt: 'जागरूकता से सशक्त बनता भारत'
   },
   {
     image: '/hero/hero-new-3.png',
-    tag: 'Screening Camps',
-    titleLine1: 'Accessible Screening',
-    titleLine2: 'For Every Village',
-    desc: 'Bringing free cancer screening camps directly to rural and underserved communities.',
-    primaryBtn: 'Find Nearby Camps',
-    secondaryBtn: 'Support Our Work',
+    tag: 'निःशुल्क जांच शिविर',
+    titleLine1: 'सुलभ कैंसर जांच',
+    titleLine2: 'हर गांव और शहर में',
+    desc: 'ग्रामीण और वंचित क्षेत्रों तक सीधे निःशुल्क कैंसर जांच शिविर पहुंचाना।',
+    primaryBtn: 'नजदीकी कैंप खोजें',
+    secondaryBtn: 'सहयोग करें',
+    primaryAction: 'events',
+    secondaryAction: 'volunteer',
     objectPosition: 'center 25%',
-    alt: 'Accessible Screening For Every Village'
+    alt: 'सुलभ कैंसर जांच'
   },
   {
     image: '/hero/hero-new-4.jpg',
-    tag: 'Patient Support',
-    titleLine1: 'Guiding Your',
-    titleLine2: 'Journey to Health',
-    desc: 'Our dedicated volunteers stand with patients every step of the way, from diagnosis to treatment.',
-    primaryBtn: 'Get Help Now',
-    secondaryBtn: 'Join Our Mission',
+    tag: 'मरीज सहायता केंद्र',
+    titleLine1: 'स्वास्थ्य और जीवन की',
+    titleLine2: 'नई किरण',
+    desc: 'निदान से लेकर संपूर्ण इलाज तक, हमारे समर्पित स्वयंसेवक हर कदम पर मरीजों के साथ हैं।',
+    primaryBtn: 'अभी मदद पाएं',
+    secondaryBtn: 'मिशन से जुड़ें',
+    primaryAction: 'enquiry',
+    secondaryAction: 'volunteer',
     objectPosition: 'center 20%',
-    alt: 'Guiding Your Journey to Health'
+    alt: 'मरीज सहायता केंद्र'
   }
 ];
 
@@ -984,19 +992,22 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
 
+  const handlePrevSlide = () => {
+    setPrevSlide(activeSlide);
+    setActiveSlide((prev) => (prev <= 0 ? CAROUSEL_SLIDES.length - 1 : prev - 1));
+  };
+
+  const handleNextSlide = () => {
+    setPrevSlide(activeSlide);
+    setActiveSlide((prev) => (prev + 1) % CAROUSEL_SLIDES.length);
+  };
+
   useEffect(() => {
     const slideInterval = setInterval(() => {
-      setPrevSlide(activeSlide);
-      setActiveSlide((prev) => (prev + 1) % CAROUSEL_SLIDES.length);
+      handleNextSlide();
     }, 5000); // 5s visible duration
     return () => clearInterval(slideInterval);
   }, [activeSlide]); // Restart interval if activeSlide changes manually
-
-
-
-
-
-
 
   const faqs = [
     { q: 'Are the screening camps really free?', a: 'Yes, all our screening camps are completely free of cost. We partner with hospitals and receive grants to cover all diagnostic expenses including mammography, oral examination, and basic blood work.' },
@@ -1014,7 +1025,7 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
           SECTION 1: HERO BANNER
           ═══════════════════════════════════════════ */}
       <section 
-        className="relative h-[75vh] min-h-[500px] md:min-h-[600px] lg:min-h-[700px] flex flex-col justify-center overflow-hidden bg-primary"
+        className="relative h-[75vh] min-h-[500px] md:min-h-[600px] lg:min-h-[700px] flex flex-col justify-center overflow-hidden bg-primary group/hero"
       >
         {/* Background Slides with Ken Burns */}
         <div className="absolute inset-0 z-0 bg-primary">
@@ -1111,14 +1122,24 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row flex-wrap gap-4 animate-fade-in-up opacity-0 [animation-fill-mode:forwards]" style={{ animationDelay: '400ms', animationDuration: '400ms' }}>
               <button
-                onClick={CAROUSEL_SLIDES[activeSlide].primaryBtn === 'Join Our Mission' || CAROUSEL_SLIDES[activeSlide].primaryBtn === 'Become a Volunteer' ? onOpenVolunteer : () => navigate('/events')}
-                className="px-10 py-4 rounded-full bg-primary text-white font-semibold text-[16px] hover:bg-[#112d4a] hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(22,58,95,0.4)] flex items-center justify-center gap-2 transition-all duration-300 ease-out"
+                onClick={() => {
+                  const act = CAROUSEL_SLIDES[activeSlide].primaryAction;
+                  if (act === 'volunteer') onOpenVolunteer();
+                  else if (act === 'enquiry') onOpenEnquiry();
+                  else navigate('/events');
+                }}
+                className="px-10 py-4 rounded-full bg-primary text-white font-semibold text-[16px] hover:bg-[#112d4a] hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(22,58,95,0.4)] flex items-center justify-center gap-2 transition-all duration-300 ease-out cursor-pointer"
               >
-                {CAROUSEL_SLIDES[activeSlide].primaryBtn} {CAROUSEL_SLIDES[activeSlide].primaryBtn !== 'Join Our Mission' && <ArrowRight className="w-4.5 h-4.5" />}
+                {CAROUSEL_SLIDES[activeSlide].primaryBtn} <ArrowRight className="w-4.5 h-4.5" />
               </button>
               <button
-                onClick={CAROUSEL_SLIDES[activeSlide].secondaryBtn === 'Patient Enquiry' || CAROUSEL_SLIDES[activeSlide].secondaryBtn === 'Support Patients' ? onOpenEnquiry : CAROUSEL_SLIDES[activeSlide].secondaryBtn === 'Become a Volunteer' ? onOpenVolunteer : () => navigate('/mission')}
-                className="px-10 py-4 rounded-full bg-transparent border-2 border-white text-white font-semibold text-[16px] hover:bg-white hover:text-primary hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(255,255,255,0.25)] flex items-center justify-center transition-all duration-300 ease-out"
+                onClick={() => {
+                  const act = CAROUSEL_SLIDES[activeSlide].secondaryAction;
+                  if (act === 'enquiry') onOpenEnquiry();
+                  else if (act === 'volunteer') onOpenVolunteer();
+                  else navigate('/mission');
+                }}
+                className="px-10 py-4 rounded-full bg-transparent border-2 border-white text-white font-semibold text-[16px] hover:bg-white hover:text-primary hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(255,255,255,0.25)] flex items-center justify-center transition-all duration-300 ease-out cursor-pointer"
               >
                 {CAROUSEL_SLIDES[activeSlide].secondaryBtn}
               </button>
@@ -1126,13 +1147,33 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
           </div>
         </div>
 
+        {/* Previous & Next Navigation Buttons for Hero Carousel */}
+        <button
+          onClick={handlePrevSlide}
+          aria-label="Previous Slide"
+          className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-40 w-11 h-11 md:w-14 md:h-14 rounded-full bg-black/30 hover:bg-secondary text-white hover:text-primary backdrop-blur-md border border-white/20 flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 group cursor-pointer"
+        >
+          <ChevronLeft className="w-6 h-6 md:w-7 md:h-7 group-hover:-translate-x-0.5 transition-transform" />
+        </button>
+
+        <button
+          onClick={handleNextSlide}
+          aria-label="Next Slide"
+          className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-40 w-11 h-11 md:w-14 md:h-14 rounded-full bg-black/30 hover:bg-secondary text-white hover:text-primary backdrop-blur-md border border-white/20 flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 group cursor-pointer"
+        >
+          <ChevronRight className="w-6 h-6 md:w-7 md:h-7 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+
         {/* Cinematic Slide Indicators */}
         <div className="absolute bottom-10 right-6 md:right-[6vw] lg:right-[8vw] z-40 flex items-center gap-3.5">
           {CAROUSEL_SLIDES.map((_, idx) => (
             <button
               key={idx}
-              onClick={() => setActiveSlide(idx)}
-              className={`transition-all duration-500 ease-out rounded-full ${
+              onClick={() => {
+                setPrevSlide(activeSlide);
+                setActiveSlide(idx);
+              }}
+              className={`transition-all duration-500 ease-out rounded-full cursor-pointer ${
                 idx === activeSlide
                   ? 'w-3 h-3 bg-secondary shadow-[0_0_12px_rgba(212,175,55,0.8)] scale-110'
                   : 'w-2.5 h-2.5 bg-white/40 hover:bg-white/80'
@@ -1142,6 +1183,104 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
           ))}
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════
+          SECTION 1.1: FLOATING ACTION BAR (APPOINTMENT & SOCIAL MEDIA)
+          ═══════════════════════════════════════════ */}
+      <div className="relative z-30 -mt-10 md:-mt-14 mb-10 px-4 max-w-6xl mx-auto animate-float">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 items-stretch">
+          
+          {/* Card 1: Book Appointment (7 Cols on LG) */}
+          <div className="lg:col-span-7 bg-gradient-to-r from-[#0B1E36] via-[#163A5F] to-[#112E4C] rounded-3xl p-6 md:p-8 shadow-[0_20px_50px_rgba(11,30,54,0.4)] border-2 border-secondary/40 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden group">
+            
+            {/* Background Glow */}
+            <div className="absolute top-0 right-0 w-48 h-48 bg-secondary/15 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-secondary to-transparent opacity-70" />
+
+            <div className="flex flex-col text-center sm:text-left z-10">
+              <div className="inline-flex items-center justify-center sm:justify-start gap-2 text-secondary text-xs font-black uppercase tracking-widest mb-2">
+                <Sparkles className="w-4 h-4 text-secondary" />
+                <span>EXPERT CARE & ASSISTANCE</span>
+              </div>
+              <h3 className="font-outfit text-xl md:text-2xl lg:text-3xl font-extrabold text-white leading-tight mb-1">
+                Feel free to <span className="text-secondary italic">book an appointment</span>
+              </h3>
+              <p className="text-slate-300 text-xs md:text-sm font-light">
+                Connect directly with top oncology specialists across India.
+              </p>
+            </div>
+
+            <button
+              onClick={onOpenEnquiry}
+              className="w-full sm:w-auto h-14 md:h-15 px-7 md:px-8 rounded-2xl bg-gradient-to-r from-[#D4AF37] via-[#f3d677] to-[#D4AF37] text-[#163A5F] font-extrabold text-sm md:text-base flex items-center justify-center gap-3 shadow-[0_8px_25px_rgba(212,175,55,0.4)] hover:shadow-[0_12px_35px_rgba(212,175,55,0.7)] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer shrink-0 z-10 relative overflow-hidden group/btn"
+            >
+              <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
+              <Calendar className="w-5 h-5 text-[#163A5F] shrink-0" />
+              <span>Book an Appointment</span>
+              <ArrowRight className="w-4 h-4 text-[#163A5F] shrink-0 group-hover/btn:translate-x-1 transition-transform" />
+            </button>
+          </div>
+
+          {/* Card 2: Social FABs (5 Cols on LG) */}
+          <div className="lg:col-span-5 bg-gradient-to-r from-[#112E4C] via-[#163A5F] to-[#0B1E36] rounded-3xl p-6 md:p-8 shadow-[0_20px_50px_rgba(11,30,54,0.4)] border-2 border-secondary/40 backdrop-blur-xl flex flex-col justify-center items-center text-center relative overflow-hidden">
+            
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-secondary to-transparent opacity-70" />
+
+            <span className="text-xs font-extrabold uppercase tracking-widest text-secondary mb-4">
+              Follow Us On Social Media
+            </span>
+
+            <div className="grid grid-cols-3 gap-2.5 sm:gap-3 w-full">
+              {/* Instagram FAB */}
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                title="Follow on Instagram"
+                className="h-13 md:h-14 px-3 md:px-4 rounded-2xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white font-bold text-xs md:text-sm flex items-center justify-center gap-2 shadow-[0_6px_20px_rgba(225,48,108,0.35)] hover:shadow-[0_10px_25px_rgba(225,48,108,0.6)] hover:scale-105 hover:-translate-y-0.5 transition-all duration-300 border border-white/20 group cursor-pointer"
+              >
+                <svg className="w-5 h-5 md:w-6 md:h-6 fill-current group-hover:scale-110 transition-transform shrink-0" viewBox="0 0 24 24">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+                <span className="hidden sm:inline">Instagram</span>
+              </a>
+
+              {/* Facebook FAB */}
+              <a
+                href="https://facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                title="Follow on Facebook"
+                className="h-13 md:h-14 px-3 md:px-4 rounded-2xl bg-[#1877F2] text-white font-bold text-xs md:text-sm flex items-center justify-center gap-2 shadow-[0_6px_20px_rgba(24,119,242,0.35)] hover:shadow-[0_10px_25px_rgba(24,119,242,0.6)] hover:scale-105 hover:-translate-y-0.5 transition-all duration-300 border border-white/20 group cursor-pointer"
+              >
+                <svg className="w-5 h-5 md:w-6 md:h-6 fill-current group-hover:scale-110 transition-transform shrink-0" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                <span className="hidden sm:inline">Facebook</span>
+              </a>
+
+              {/* YouTube FAB */}
+              <a
+                href="https://youtube.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="YouTube"
+                title="Subscribe on YouTube"
+                className="h-13 md:h-14 px-3 md:px-4 rounded-2xl bg-[#FF0000] text-white font-bold text-xs md:text-sm flex items-center justify-center gap-2 shadow-[0_6px_20px_rgba(255,0,0,0.35)] hover:shadow-[0_10px_25px_rgba(255,0,0,0.6)] hover:scale-105 hover:-translate-y-0.5 transition-all duration-300 border border-white/20 group cursor-pointer"
+              >
+                <svg className="w-5 h-5 md:w-6 md:h-6 fill-current group-hover:scale-110 transition-transform shrink-0" viewBox="0 0 24 24">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+                <span className="hidden sm:inline">YouTube</span>
+              </a>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
 
       {/* ═══════════════════════════════════════════
           SECTION 1.5: TRUSTED BY LOGO CAROUSEL
