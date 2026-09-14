@@ -379,10 +379,10 @@ export default function RiskAssessmentModal({ isOpen, onClose, onOpenEnquiry }: 
                     Speak confidentially with our certified caseworkers for free guidance on local hospital nodes.
                   </p>
                   <a
-                    href="tel:18002004567"
+                    href="tel:+919120110286"
                     className="inline-block font-mono font-bold text-sm text-[#0E3B36] hover:underline"
                   >
-                    1800 200 4567 (Toll-Free)
+                    +91-9120110286 (Helpline)
                   </a>
                 </div>
 

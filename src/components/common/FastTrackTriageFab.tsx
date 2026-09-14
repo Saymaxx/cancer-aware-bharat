@@ -44,9 +44,9 @@ export default function FastTrackTriageFab({ onOpenAssessment, onOpenEnquiry }: 
           {/* Quick Actions List */}
           <div className="p-4 space-y-2.5 text-left">
             
-            {/* 1. National Toll-Free Call */}
+            {/* 1. National Helpline Call */}
             <a
-              href="tel:18002004567"
+              href="tel:+919120110286"
               className="p-3.5 rounded-2xl bg-[#EEF3EF] hover:bg-[#E2EAE3] border border-[#0E3B36]/10 flex items-center justify-between transition-all group"
             >
               <div className="flex items-center gap-3">
@@ -54,8 +54,8 @@ export default function FastTrackTriageFab({ onOpenAssessment, onOpenEnquiry }: 
                   <Phone className="w-4.5 h-4.5 text-[#E8A23A]" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-xs text-[#0E3B36]">Call 24/7 Companion Helpline</h4>
-                  <p className="font-mono text-[11px] font-bold text-[#C8443C]">1800 200 4567 (Free)</p>
+                  <h4 className="font-bold text-xs text-[#0E3B36]">Call Helpline Assistance</h4>
+                  <p className="font-mono text-[11px] font-bold text-[#C8443C]">+91-9120110286</p>
                 </div>
               </div>
               <span className="text-xs font-bold text-[#0E3B36] group-hover:translate-x-1 transition-transform">→</span>
@@ -63,7 +63,7 @@ export default function FastTrackTriageFab({ onOpenAssessment, onOpenEnquiry }: 
 
             {/* 2. WhatsApp Support */}
             <a
-              href="https://wa.me/919876543210?text=Hello%20Cancer%20Aware%20Bharat,%20I%20need%20urgent%20guidance%20for%20cancer%20screening."
+              href="https://wa.me/919120110286?text=Hello%20Cancer%20Aware%20Bharat,%20I%20need%20urgent%20guidance%20for%20cancer%20screening."
               target="_blank"
               rel="noopener noreferrer"
               className="p-3.5 rounded-2xl bg-white hover:bg-[#F3F6F1] border border-[#0E3B36]/12 flex items-center justify-between transition-all group shadow-xs"

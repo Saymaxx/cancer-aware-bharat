@@ -176,13 +176,31 @@ export default function Navbar({
             </button>
             <span className="text-white/30">•</span>
             <div className="flex items-center gap-2.5">
-              <a href="#" aria-label="Facebook" className="hover:text-[#E8A23A] text-white/70 transition-colors">
+              <a 
+                href="https://facebook.com/cancerawarebharat" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                aria-label="Facebook" 
+                className="hover:text-[#E8A23A] text-white/70 transition-colors"
+              >
                 <Facebook className="w-3.5 h-3.5" />
               </a>
-              <a href="#" aria-label="Instagram" className="hover:text-[#E8A23A] text-white/70 transition-colors">
+              <a 
+                href="https://instagram.com/cancerawarebharat" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                aria-label="Instagram" 
+                className="hover:text-[#E8A23A] text-white/70 transition-colors"
+              >
                 <Instagram className="w-3.5 h-3.5" />
               </a>
-              <a href="#" aria-label="YouTube" className="hover:text-[#E8A23A] text-white/70 transition-colors">
+              <a 
+                href="https://youtube.com/@cancerawarebharat" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                aria-label="YouTube" 
+                className="hover:text-[#E8A23A] text-white/70 transition-colors"
+              >
                 <Youtube className="w-3.5 h-3.5" />
               </a>
             </div>

@@ -152,6 +152,54 @@ export default function SitemapModal({
               </ul>
             </div>
 
+            {/* Doctors / Specialists Node */}
+            <div className="border border-outline-variant/50 rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors bg-surface-container-low/20">
+              <button 
+                onClick={() => handleLinkClick('/doctors')}
+                className="flex items-center gap-2 text-left text-sm font-bold text-primary hover:underline"
+              >
+                <Network className="w-4 h-4 text-primary" /> Medical Panel & Doctors
+              </button>
+              <ul className="text-xs text-on-surface-variant space-y-1.5 list-disc pl-4">
+                <li>Surgical Oncology Advisors</li>
+                <li>Clinical Biographies & Credentials</li>
+                <li>Bilingual Hindi/English Details</li>
+                <li>Direct Consultation Booking</li>
+              </ul>
+            </div>
+
+            {/* Cancer Awareness Guide Node */}
+            <div className="border border-outline-variant/50 rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors bg-surface-container-low/20">
+              <button 
+                onClick={() => handleLinkClick('/cancer-awareness')}
+                className="flex items-center gap-2 text-left text-sm font-bold text-primary hover:underline"
+              >
+                <Book className="w-4 h-4 text-primary" /> Cancer Awareness Hub
+              </button>
+              <ul className="text-xs text-on-surface-variant space-y-1.5 list-disc pl-4">
+                <li>Early Warning Signs & Red Flags</li>
+                <li>Breast, Cervical & Oral Guides</li>
+                <li>Nutrition & Preventive Lifestyle</li>
+                <li>Survivor Rehabilitation Modules</li>
+              </ul>
+            </div>
+
+            {/* Our Team Node */}
+            <div className="border border-outline-variant/50 rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors bg-surface-container-low/20">
+              <button 
+                onClick={() => handleLinkClick('/our-team')}
+                className="flex items-center gap-2 text-left text-sm font-bold text-primary hover:underline"
+              >
+                <Network className="w-4 h-4 text-primary" /> Leadership & Team
+              </button>
+              <ul className="text-xs text-on-surface-variant space-y-1.5 list-disc pl-4">
+                <li>Founders & Executive Board</li>
+                <li>Clinical Advisory Committee</li>
+                <li>Grassroots Field Coordinators</li>
+                <li>Social Channel Links</li>
+              </ul>
+            </div>
+
             {/* Actions Node */}
             <div className="border border-outline-variant/50 rounded-xl p-4 space-y-3 hover:border-primary/40 transition-colors bg-surface-container-low/20">
               <span className="flex items-center gap-2 text-sm font-bold text-secondary">
