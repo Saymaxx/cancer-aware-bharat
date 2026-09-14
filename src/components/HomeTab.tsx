@@ -683,7 +683,7 @@ function SunriseRepriseCtaSection({ onOpenVolunteer, onOpenEnquiry }: { onOpenVo
           {/* Social Icons CTA */}
           <div className="flex items-center justify-center gap-3 pt-5 border-t border-white/10">
             <a 
-              href="https://instagram.com" 
+              href="https://instagram.com/cancerawarebharat" 
               target="_blank" 
               rel="noopener noreferrer"
               aria-label="Follow us on Instagram"
@@ -692,7 +692,7 @@ function SunriseRepriseCtaSection({ onOpenVolunteer, onOpenEnquiry }: { onOpenVo
               <Instagram className="w-4 h-4" />
             </a>
             <a 
-              href="https://facebook.com" 
+              href="https://facebook.com/cancerawarebharat" 
               target="_blank" 
               rel="noopener noreferrer"
               aria-label="Follow us on Facebook"
@@ -701,7 +701,7 @@ function SunriseRepriseCtaSection({ onOpenVolunteer, onOpenEnquiry }: { onOpenVo
               <Facebook className="w-4 h-4" />
             </a>
             <a 
-              href="https://youtube.com" 
+              href="https://youtube.com/@cancerawarebharat" 
               target="_blank" 
               rel="noopener noreferrer"
               aria-label="Subscribe on YouTube"
@@ -999,7 +999,7 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
               {/* Big Original Color Social Icons */}
               <div className="flex items-center gap-2.5">
                 <a 
-                  href="https://instagram.com" 
+                  href="https://instagram.com/cancerawarebharat" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   aria-label="Instagram"
@@ -1009,7 +1009,7 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
                   <Instagram className="w-5 h-5 sm:w-6 sm:h-6" />
                 </a>
                 <a 
-                  href="https://facebook.com" 
+                  href="https://facebook.com/cancerawarebharat" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   aria-label="Facebook"
@@ -1019,7 +1019,7 @@ export default function HomeTab({ onOpenVolunteer, onOpenEnquiry }: HomeTabProps
                   <Facebook className="w-5 h-5 sm:w-6 sm:h-6" />
                 </a>
                 <a 
-                  href="https://youtube.com" 
+                  href="https://youtube.com/@cancerawarebharat" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   aria-label="YouTube"

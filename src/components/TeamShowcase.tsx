@@ -99,11 +99,23 @@ export const TeamCard = ({ member, delay }: { member: any; delay: number }) => (
         {/* Subtle Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0E3B36]/80 via-transparent to-transparent opacity-40 group-hover:opacity-60 transition-opacity" />
 
-        {/* Social Icons (Slide in from right) */}
+        {/* Active Social / Professional Links (Slide in from right on hover) */}
         <div className="absolute top-4 right-4 flex flex-col gap-2 translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-400 ease-out z-10">
-          {[Facebook, Twitter, Instagram, Linkedin].map((Icon, idx) => (
-            <a key={idx} href="#" className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center text-[#0E3B36] hover:bg-[#E8A23A] hover:text-[#1B2620] transition-colors shadow-sm" style={{ transitionDelay: `${80 + idx * 40}ms` }}>
-              <Icon className="w-3.5 h-3.5" />
+          {[
+            { Icon: Instagram, url: 'https://instagram.com/cancerawarebharat', label: 'Instagram' },
+            { Icon: Facebook, url: 'https://facebook.com/cancerawarebharat', label: 'Facebook' },
+            { Icon: Linkedin, url: 'https://linkedin.com/company/cancer-aware-bharat', label: 'LinkedIn' },
+          ].map((item, idx) => (
+            <a
+              key={idx}
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={item.label}
+              className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center text-[#0E3B36] hover:bg-[#E8A23A] hover:text-[#1B2620] transition-colors shadow-sm cursor-pointer"
+              style={{ transitionDelay: `${80 + idx * 40}ms` }}
+            >
+              <item.Icon className="w-3.5 h-3.5" />
             </a>
           ))}
         </div>

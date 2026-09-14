@@ -84,15 +84,17 @@ export default function Footer({
               {/* Social Links */}
               <div className="flex items-center gap-2.5 pt-2">
                 {[
-                  { icon: Facebook, label: 'Facebook' },
-                  { icon: Twitter, label: 'Twitter' },
-                  { icon: Instagram, label: 'Instagram' },
-                  { icon: Linkedin, label: 'LinkedIn' },
-                  { icon: Youtube, label: 'YouTube' },
+                  { icon: Facebook, label: 'Facebook', url: 'https://facebook.com/cancerawarebharat' },
+                  { icon: Twitter, label: 'Twitter', url: 'https://x.com/awarebharat' },
+                  { icon: Instagram, label: 'Instagram', url: 'https://instagram.com/cancerawarebharat' },
+                  { icon: Linkedin, label: 'LinkedIn', url: 'https://linkedin.com/company/cancer-aware-bharat' },
+                  { icon: Youtube, label: 'YouTube', url: 'https://youtube.com/@cancerawarebharat' },
                 ].map(social => (
                   <a
                     key={social.label}
-                    href="#"
+                    href={social.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     aria-label={social.label}
                     className="w-9 h-9 rounded-xl bg-white/10 hover:bg-[#E8A23A] hover:text-[#1B2620] flex items-center justify-center text-white/75 transition-all duration-200"
                   >
