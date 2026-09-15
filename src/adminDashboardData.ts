@@ -55,6 +55,7 @@ export interface PartnerHospital {
   documentVerified: boolean;
   contactEmail: string;
   contactPhone: string;
+  motivation?: string | null;
   declineReason?: string;
 }
 

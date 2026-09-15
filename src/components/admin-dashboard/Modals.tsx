@@ -542,6 +542,7 @@ export function RejectEnrollmentModal({
 }
 
 // 8. HOSPITAL DOCUMENT INSPECTION & VERIFICATION MODAL
+// 8. HOSPITAL DOCUMENT INSPECTION & VERIFICATION MODAL
 export function HospitalDocumentInspectionModal({
   hospital,
   onClose,
@@ -555,66 +556,110 @@ export function HospitalDocumentInspectionModal({
     documentVerified: boolean;
     contactEmail: string;
     contactPhone: string;
+    motivation?: string | null;
   } | null;
   onClose: () => void;
   onConfirmVerify: (id: string) => void;
 }) {
   const [selectedDocPreview, setSelectedDocPreview] = React.useState<{
     title: string;
-    type: string;
+    category: string;
+    fileName: string;
+    size: string;
     refNo: string;
     validity: string;
     issuedBy: string;
+    isUploaded: boolean;
+    dataUrl?: string | null;
   } | null>(null);
 
-  if (!hospital) return null;
+  const resolvedDocs = React.useMemo(() => {
+    if (!hospital) return [];
 
-  const documents = [
-    {
-      id: 'doc-nabh',
-      title: 'NABH Accreditation Certificate',
-      category: 'Hospital Quality Accreditation',
-      fileName: `${hospital.name.replace(/\s+/g, '_')}_NABH_Cert.pdf`,
-      size: '2.4 MB',
-      refNo: `NABH/HOSP/${hospital.id.slice(0, 8).toUpperCase()}/2026`,
-      issuedBy: 'National Accreditation Board for Hospitals & Healthcare Providers',
-      validity: 'Valid through 2028',
-      status: 'Uploaded',
-    },
-    {
-      id: 'doc-license',
-      title: 'State Clinical Establishment Registration',
-      category: 'Statutory Health License',
-      fileName: `${hospital.name.replace(/\s+/g, '_')}_Medical_License.pdf`,
-      size: '1.8 MB',
-      refNo: `REG-MED-${hospital.city.slice(0, 3).toUpperCase()}-2026-8812`,
-      issuedBy: 'Directorate of Health Services & Medical Registration Authority',
-      validity: 'Active License',
-      status: 'Uploaded',
-    },
-    {
-      id: 'doc-fire',
-      title: 'Fire & Public Safety NOC Clearance',
-      category: 'Safety Compliance',
-      fileName: `${hospital.name.replace(/\s+/g, '_')}_Fire_NOC.pdf`,
-      size: '1.1 MB',
-      refNo: `FS-NOC-${hospital.city.slice(0, 3).toUpperCase()}-942`,
-      issuedBy: 'State Fire & Emergency Services Department',
-      validity: 'Annual Renewal Active',
-      status: 'Uploaded',
-    },
-    {
-      id: 'doc-biowaste',
-      title: 'Bio-Medical Waste Management Authorization',
-      category: 'Environmental Compliance',
-      fileName: `${hospital.name.replace(/\s+/g, '_')}_BioWaste_Cert.pdf`,
-      size: '980 KB',
-      refNo: `SPCB-BMW-2026-${hospital.id.slice(0, 4).toUpperCase()}`,
-      issuedBy: 'State Pollution Control Board',
-      validity: 'Compliance Certified',
-      status: 'Uploaded',
-    },
-  ];
+    let parsedUploadedDocs: Record<string, { name: string; size: string; type?: string; dataUrl?: string } | null> | null = null;
+    
+    // 1. Try reading from hospital.motivation JSON
+    if (hospital.motivation) {
+      try {
+        const parsed = JSON.parse(hospital.motivation);
+        if (parsed.docs) parsedUploadedDocs = parsed.docs;
+        else if (parsed.uploadedDocs) parsedUploadedDocs = parsed.uploadedDocs;
+      } catch {
+        // motivation was plain text
+      }
+    }
+
+    // 2. Try reading from localStorage fallback
+    if (!parsedUploadedDocs || (!parsedUploadedDocs.nabh?.dataUrl && !parsedUploadedDocs.license?.dataUrl)) {
+      try {
+        const local = JSON.parse(localStorage.getItem('aware_bharat_hospital_uploaded_docs') || '{}');
+        const hospitalMatch = local[hospital.id] || local[hospital.name.trim().toLowerCase()];
+        if (hospitalMatch) {
+          parsedUploadedDocs = { ...parsedUploadedDocs, ...hospitalMatch };
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const nabhDoc = parsedUploadedDocs?.nabh;
+    const licenseDoc = parsedUploadedDocs?.license;
+    const fireDoc = parsedUploadedDocs?.fire;
+    const biowasteDoc = parsedUploadedDocs?.biowaste;
+
+    return [
+      {
+        id: 'doc-nabh',
+        title: 'NABH Accreditation Certificate',
+        category: 'Hospital Quality Accreditation',
+        isUploaded: !!nabhDoc,
+        fileName: nabhDoc?.name || 'Not Uploaded by Applicant',
+        size: nabhDoc?.size || '—',
+        refNo: nabhDoc ? `NABH/HOSP/${hospital.id.slice(0, 8).toUpperCase()}/2026` : 'Not Issued',
+        issuedBy: 'National Accreditation Board for Hospitals & Healthcare Providers',
+        validity: nabhDoc ? 'Valid through 2028' : 'Not Attached',
+        dataUrl: nabhDoc?.dataUrl || null,
+      },
+      {
+        id: 'doc-license',
+        title: 'State Clinical Establishment Registration',
+        category: 'Statutory Health License',
+        isUploaded: !!licenseDoc,
+        fileName: licenseDoc?.name || 'Not Uploaded by Applicant',
+        size: licenseDoc?.size || '—',
+        refNo: licenseDoc ? `REG-MED-${hospital.city.slice(0, 3).toUpperCase()}-2026-8812` : 'Not Issued',
+        issuedBy: 'Directorate of Health Services & Medical Registration Authority',
+        validity: licenseDoc ? 'Active License' : 'Not Attached',
+        dataUrl: licenseDoc?.dataUrl || null,
+      },
+      {
+        id: 'doc-fire',
+        title: 'Fire & Public Safety NOC Clearance',
+        category: 'Safety Compliance',
+        isUploaded: !!fireDoc,
+        fileName: fireDoc?.name || 'Not Uploaded by Applicant',
+        size: fireDoc?.size || '—',
+        refNo: fireDoc ? `FS-NOC-${hospital.city.slice(0, 3).toUpperCase()}-942` : 'Not Issued',
+        issuedBy: 'State Fire & Emergency Services Department',
+        validity: fireDoc ? 'Annual Renewal Active' : 'Not Attached',
+        dataUrl: fireDoc?.dataUrl || null,
+      },
+      {
+        id: 'doc-biowaste',
+        title: 'Bio-Medical Waste Management Authorization',
+        category: 'Environmental Compliance',
+        isUploaded: !!biowasteDoc,
+        fileName: biowasteDoc?.name || 'Not Uploaded by Applicant',
+        size: biowasteDoc?.size || '—',
+        refNo: biowasteDoc ? `SPCB-BMW-2026-${hospital.id.slice(0, 4).toUpperCase()}` : 'Not Issued',
+        issuedBy: 'State Pollution Control Board',
+        validity: biowasteDoc ? 'Compliance Certified' : 'Not Attached',
+        dataUrl: biowasteDoc?.dataUrl || null,
+      },
+    ];
+  }, [hospital]);
+
+  if (!hospital) return null;
 
   return (
     <div
@@ -682,20 +727,26 @@ export function HospitalDocumentInspectionModal({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="font-bold text-slate-900 uppercase text-[10px] tracking-wider">
-                Submitted Accreditation & Statutory Documents ({documents.length})
+                Statutory Documents Checklist ({resolvedDocs.filter(d => d.isUploaded).length} of {resolvedDocs.length} Attached)
               </h4>
-              <span className="text-[10px] text-slate-500">Click &quot;Inspect Preview&quot; to review certificate details</span>
+              <span className="text-[10px] text-slate-500">Click &quot;Inspect Preview&quot; to review certificates</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {documents.map((doc) => (
+              {resolvedDocs.map((doc) => (
                 <div
                   key={doc.id}
-                  className="bg-white border border-slate-200 hover:border-[#0E3B36]/40 rounded-2xl p-4 space-y-2.5 transition-all shadow-xs"
+                  className={`bg-white border rounded-2xl p-4 space-y-2.5 transition-all shadow-xs ${
+                    doc.isUploaded
+                      ? 'border-slate-200 hover:border-[#0E3B36]/60'
+                      : 'border-dashed border-slate-300 bg-slate-50/50'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-[#0E3B36]/10 flex items-center justify-center text-[#0E3B36] font-bold shrink-0">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold shrink-0 ${
+                        doc.isUploaded ? 'bg-[#0E3B36]/10 text-[#0E3B36]' : 'bg-slate-200 text-slate-400'
+                      }`}>
                         <FileText className="w-4 h-4" />
                       </div>
                       <div>
@@ -707,8 +758,14 @@ export function HospitalDocumentInspectionModal({
 
                   <div className="bg-slate-50 rounded-xl p-2 font-mono text-[10px] space-y-1 text-slate-600">
                     <p className="truncate"><span className="text-slate-400">File:</span> {doc.fileName}</p>
-                    <p><span className="text-slate-400">Size:</span> {doc.size} • <span className="text-emerald-700 font-bold">Uploaded ✓</span></p>
-                    <p className="truncate"><span className="text-slate-400">Ref:</span> {doc.refNo}</p>
+                    <p>
+                      <span className="text-slate-400">Status:</span>{' '}
+                      {doc.isUploaded ? (
+                        <span className="text-emerald-700 font-bold">Uploaded ({doc.size}) ✓</span>
+                      ) : (
+                        <span className="text-amber-700 font-semibold">Not Uploaded / Missing</span>
+                      )}
+                    </p>
                   </div>
 
                   <div className="flex items-center gap-2 pt-1">
@@ -716,59 +773,28 @@ export function HospitalDocumentInspectionModal({
                       type="button"
                       onClick={() => setSelectedDocPreview({
                         title: doc.title,
-                        type: doc.category,
+                        category: doc.category,
+                        fileName: doc.fileName,
+                        size: doc.size,
                         refNo: doc.refNo,
                         validity: doc.validity,
                         issuedBy: doc.issuedBy,
+                        isUploaded: doc.isUploaded,
+                        dataUrl: doc.dataUrl,
                       })}
-                      className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-[#0E3B36] hover:text-white rounded-lg text-[10px] font-bold text-slate-700 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                      className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer ${
+                        doc.isUploaded
+                          ? 'bg-slate-100 hover:bg-[#0E3B36] hover:text-white text-slate-700'
+                          : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200'
+                      }`}
                     >
-                      <Eye className="w-3.5 h-3.5" /> Inspect Preview
+                      <Eye className="w-3.5 h-3.5" /> {doc.isUploaded ? 'Inspect Preview' : 'Check Status'}
                     </button>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Embedded / Selected Document Preview Modal Simulation */}
-          {selectedDocPreview && (
-            <div className="bg-[#1B2620] text-white p-5 rounded-2xl border border-[#0E3B36] space-y-3 animate-[fadeIn_0.15s_ease-out]">
-              <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-[#E8A23A]" />
-                  <span className="font-bold text-xs text-white">Document Viewer: {selectedDocPreview.title}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedDocPreview(null)}
-                  className="text-white/60 hover:text-white text-xs cursor-pointer"
-                >
-                  ✕ Close Preview
-                </button>
-              </div>
-
-              <div className="bg-white text-slate-900 p-5 rounded-xl border-2 border-slate-300 space-y-3 shadow-inner">
-                <div className="text-center border-b border-slate-200 pb-3">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Official Certified Document</span>
-                  <h4 className="font-serif font-bold text-sm text-[#0E3B36] mt-0.5">{selectedDocPreview.title}</h4>
-                  <p className="text-[10px] text-slate-500">{selectedDocPreview.issuedBy}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-700">
-                  <p><strong>Hospital Entity:</strong> {hospital.name}</p>
-                  <p><strong>City / Jurisdiction:</strong> {hospital.city}</p>
-                  <p><strong>Registration ID:</strong> {selectedDocPreview.refNo}</p>
-                  <p><strong>Validity Status:</strong> <span className="text-emerald-700 font-bold">{selectedDocPreview.validity}</span></p>
-                </div>
-
-                <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-800 text-[10px] flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Digital seal & statutory medical registry verification valid. Ready for Regional Coordinator endorsement.</span>
-                </div>
-              </div>
-            </div>
-          )}
 
         </div>
 
@@ -816,6 +842,111 @@ export function HospitalDocumentInspectionModal({
         </div>
 
       </div>
+
+      {/* POPUP DOCUMENT PREVIEW DIALOG OVERLAY */}
+      {selectedDocPreview && (
+        <div
+          className="fixed inset-0 z-60 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-[fadeIn_0.15s_ease-out]"
+          onClick={() => setSelectedDocPreview(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl border-2 border-[#0E3B36] text-slate-900"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#0E3B36] text-white flex items-center justify-center">
+                  <ShieldCheck className="w-5 h-5 text-[#E8A23A]" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-[#0E3B36]">{selectedDocPreview.title}</h4>
+                  <p className="text-[10px] text-slate-500">{selectedDocPreview.category}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedDocPreview(null)}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-full cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {selectedDocPreview.isUploaded ? (
+              <div className="space-y-3">
+                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-950 space-y-1.5">
+                  <div className="flex items-center justify-between font-bold">
+                    <span>Accreditation Certificate Verified</span>
+                    <span className="text-emerald-700">{selectedDocPreview.validity} ✓</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-800">
+                    <strong>Issued By:</strong> {selectedDocPreview.issuedBy}
+                  </p>
+                  <p className="text-[11px] text-emerald-800 font-mono">
+                    <strong>Registration Ref:</strong> {selectedDocPreview.refNo}
+                  </p>
+                  <p className="text-[11px] text-emerald-800">
+                    <strong>Attached File:</strong> {selectedDocPreview.fileName} ({selectedDocPreview.size})
+                  </p>
+                </div>
+
+                {/* Direct File View / Open in New Tab Action */}
+                <div className="flex gap-2">
+                  {selectedDocPreview.dataUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const win = window.open();
+                        if (win && selectedDocPreview.dataUrl) {
+                          win.document.write(
+                            `<iframe src="${selectedDocPreview.dataUrl}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`
+                          );
+                        }
+                      }}
+                      className="flex-1 py-2.5 bg-[#0E3B36] text-white rounded-xl font-bold text-xs hover:bg-[#154f49] flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                    >
+                      <Eye className="w-4 h-4" /> Open Full Document in New Tab
+                    </button>
+                  ) : (
+                    <div className="flex-1 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-medium text-xs text-center">
+                      Digital statutory verification record on file
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDocPreview(null)}
+                    className="px-4 py-2.5 border border-slate-300 rounded-xl font-bold text-xs hover:bg-slate-50 cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-950 space-y-2">
+                  <div className="flex items-center gap-2 font-bold text-amber-900">
+                    <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+                    <span>Document Not Submitted</span>
+                  </div>
+                  <p className="text-[11px] text-amber-800 leading-relaxed">
+                    The hospital applicant did not upload an accreditation certificate for <strong>{selectedDocPreview.title}</strong> during onboarding.
+                  </p>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDocPreview(null)}
+                    className="px-5 py-2 bg-slate-900 text-white rounded-xl font-bold text-xs hover:bg-slate-800 cursor-pointer"
+                  >
+                    Back to Checklist
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

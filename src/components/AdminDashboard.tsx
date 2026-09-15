@@ -138,6 +138,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     documentVerified: locallyVerifiedHospitalIds.has(pr.id),
     contactEmail: pr.email,
     contactPhone: pr.phone,
+    motivation: pr.motivation,
     declineReason: pr.status === 'Rejected' ? (pr.decisionNotes || undefined) : undefined,
   })), [partnerRequests, locallyVerifiedHospitalIds]);
   const pendingAdminCount = useMemo(() => enquiries.filter(e => e.status === 'Pending Admin Review').length, [enquiries]);

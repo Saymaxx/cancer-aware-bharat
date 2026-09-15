@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, AlertTriangle, CheckCircle2, Building2, ShieldCheck, FileText, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { X, AlertTriangle, CheckCircle2, Building2, ShieldCheck, FileText, ChevronDown, ChevronUp, Check, Eye } from 'lucide-react';
 import type { SuperAdminAccount, CustomRole } from '../../superAdminDashboardData';
 import type { PatientEnquiry, Hospital } from '../../types';
 
@@ -198,9 +198,13 @@ export function ApproveHospitalModal({
   const [selectedDocPreview, setSelectedDocPreview] = React.useState<{
     title: string;
     type: string;
+    fileName: string;
+    size: string;
     refNo: string;
     validity: string;
     issuedBy: string;
+    isUploaded: boolean;
+    dataUrl?: string | null;
   } | null>(null);
 
   const specialtiesList = React.useMemo(() => {
@@ -208,48 +212,89 @@ export function ApproveHospitalModal({
     return hospitalData.specialties.split(',').map(s => s.trim()).filter(Boolean);
   }, [hospitalData?.specialties]);
 
-  const documents = [
-    {
-      id: 'doc-nabh',
-      title: 'NABH Accreditation Certificate',
-      category: 'Hospital Quality Accreditation',
-      fileName: `${hospitalName.replace(/\s+/g, '_')}_NABH_Cert.pdf`,
-      size: '2.4 MB',
-      refNo: `NABH/HOSP/${(hospitalData?.id || '2026').slice(0, 8).toUpperCase()}/2026`,
-      issuedBy: 'National Accreditation Board for Hospitals & Healthcare Providers',
-      validity: 'Valid through 2028',
-    },
-    {
-      id: 'doc-license',
-      title: 'State Clinical Establishment Registration',
-      category: 'Statutory Health License',
-      fileName: `${hospitalName.replace(/\s+/g, '_')}_Medical_License.pdf`,
-      size: '1.8 MB',
-      refNo: `REG-MED-${(hospitalData?.city || 'DEL').slice(0, 3).toUpperCase()}-2026-8812`,
-      issuedBy: 'Directorate of Health Services & Medical Registration Authority',
-      validity: 'Active License',
-    },
-    {
-      id: 'doc-fire',
-      title: 'Fire & Public Safety NOC Clearance',
-      category: 'Safety Compliance',
-      fileName: `${hospitalName.replace(/\s+/g, '_')}_Fire_NOC.pdf`,
-      size: '1.1 MB',
-      refNo: `FS-NOC-${(hospitalData?.city || 'DEL').slice(0, 3).toUpperCase()}-942`,
-      issuedBy: 'State Fire & Emergency Services Department',
-      validity: 'Annual Renewal Active',
-    },
-    {
-      id: 'doc-biowaste',
-      title: 'Bio-Medical Waste Management Authorization',
-      category: 'Environmental Compliance',
-      fileName: `${hospitalName.replace(/\s+/g, '_')}_BioWaste_Cert.pdf`,
-      size: '980 KB',
-      refNo: `SPCB-BMW-2026-${(hospitalData?.id || '2026').slice(0, 4).toUpperCase()}`,
-      issuedBy: 'State Pollution Control Board',
-      validity: 'Compliance Certified',
-    },
-  ];
+  const resolvedDocs = React.useMemo(() => {
+    let parsedUploadedDocs: Record<string, { name: string; size: string; type?: string; dataUrl?: string } | null> | null = null;
+    
+    // 1. Try reading from hospitalData.motivation JSON
+    if (hospitalData?.motivation) {
+      try {
+        const parsed = JSON.parse(hospitalData.motivation);
+        if (parsed.docs) parsedUploadedDocs = parsed.docs;
+        else if (parsed.uploadedDocs) parsedUploadedDocs = parsed.uploadedDocs;
+      } catch {
+        // motivation was plain text
+      }
+    }
+
+    // 2. Try reading from localStorage fallback
+    if (!parsedUploadedDocs || (!parsedUploadedDocs.nabh?.dataUrl && !parsedUploadedDocs.license?.dataUrl)) {
+      try {
+        const local = JSON.parse(localStorage.getItem('aware_bharat_hospital_uploaded_docs') || '{}');
+        const hospitalMatch = local[hospitalData?.id || ''] || local[(hospitalName || '').trim().toLowerCase()];
+        if (hospitalMatch) {
+          parsedUploadedDocs = { ...parsedUploadedDocs, ...hospitalMatch };
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const nabhDoc = parsedUploadedDocs?.nabh;
+    const licenseDoc = parsedUploadedDocs?.license;
+    const fireDoc = parsedUploadedDocs?.fire;
+    const biowasteDoc = parsedUploadedDocs?.biowaste;
+
+    return [
+      {
+        id: 'doc-nabh',
+        title: 'NABH Accreditation Certificate',
+        category: 'Hospital Quality Accreditation',
+        isUploaded: !!nabhDoc,
+        fileName: nabhDoc?.name || 'Not Uploaded by Applicant',
+        size: nabhDoc?.size || '—',
+        refNo: nabhDoc ? `NABH/HOSP/${(hospitalData?.id || '2026').slice(0, 8).toUpperCase()}/2026` : 'Not Issued',
+        issuedBy: 'National Accreditation Board for Hospitals & Healthcare Providers',
+        validity: nabhDoc ? 'Valid through 2028' : 'Not Attached',
+        dataUrl: nabhDoc?.dataUrl || null,
+      },
+      {
+        id: 'doc-license',
+        title: 'State Clinical Establishment Registration',
+        category: 'Statutory Health License',
+        isUploaded: !!licenseDoc,
+        fileName: licenseDoc?.name || 'Not Uploaded by Applicant',
+        size: licenseDoc?.size || '—',
+        refNo: licenseDoc ? `REG-MED-${(hospitalData?.city || 'DEL').slice(0, 3).toUpperCase()}-2026-8812` : 'Not Issued',
+        issuedBy: 'Directorate of Health Services & Medical Registration Authority',
+        validity: licenseDoc ? 'Active License' : 'Not Attached',
+        dataUrl: licenseDoc?.dataUrl || null,
+      },
+      {
+        id: 'doc-fire',
+        title: 'Fire & Public Safety NOC Clearance',
+        category: 'Safety Compliance',
+        isUploaded: !!fireDoc,
+        fileName: fireDoc?.name || 'Not Uploaded by Applicant',
+        size: fireDoc?.size || '—',
+        refNo: fireDoc ? `FS-NOC-${(hospitalData?.city || 'DEL').slice(0, 3).toUpperCase()}-942` : 'Not Issued',
+        issuedBy: 'State Fire & Emergency Services Department',
+        validity: fireDoc ? 'Annual Renewal Active' : 'Not Attached',
+        dataUrl: fireDoc?.dataUrl || null,
+      },
+      {
+        id: 'doc-biowaste',
+        title: 'Bio-Medical Waste Management Authorization',
+        category: 'Environmental Compliance',
+        isUploaded: !!biowasteDoc,
+        fileName: biowasteDoc?.name || 'Not Uploaded by Applicant',
+        size: biowasteDoc?.size || '—',
+        refNo: biowasteDoc ? `SPCB-BMW-2026-${(hospitalData?.id || '2026').slice(0, 4).toUpperCase()}` : 'Not Issued',
+        issuedBy: 'State Pollution Control Board',
+        validity: biowasteDoc ? 'Compliance Certified' : 'Not Attached',
+        dataUrl: biowasteDoc?.dataUrl || null,
+      },
+    ];
+  }, [hospitalData, hospitalName]);
 
   return (
     <div
@@ -343,21 +388,36 @@ export function ApproveHospitalModal({
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="font-bold text-slate-900 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#0E3B36]" /> Submitted Statutory Documents ({documents.length})
+                <ShieldCheck className="w-3.5 h-3.5 text-[#0E3B36]" /> Submitted Statutory Documents ({resolvedDocs.filter(d => d.isUploaded).length} of {resolvedDocs.length} Attached)
               </span>
               <span className="text-[10px] text-slate-500">Click &quot;Inspect&quot; to review certificates</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {documents.map((doc) => (
-                <div key={doc.id} className="bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-2 shadow-xs hover:border-[#0E3B36]/40 transition-colors">
+              {resolvedDocs.map((doc) => (
+                <div
+                  key={doc.id}
+                  className={`bg-white border rounded-xl p-3 flex items-center justify-between gap-2 shadow-xs transition-colors ${
+                    doc.isUploaded
+                      ? 'border-slate-200 hover:border-[#0E3B36]/40'
+                      : 'border-dashed border-slate-300 bg-slate-50/50'
+                  }`}
+                >
                   <div className="flex items-center gap-2 overflow-hidden">
-                    <div className="w-7 h-7 rounded-lg bg-[#0E3B36]/10 flex items-center justify-center text-[#0E3B36] shrink-0 font-bold">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold shrink-0 ${
+                      doc.isUploaded ? 'bg-[#0E3B36]/10 text-[#0E3B36]' : 'bg-slate-200 text-slate-400'
+                    }`}>
                       <FileText className="w-3.5 h-3.5" />
                     </div>
                     <div className="truncate">
                       <p className="font-bold text-slate-900 text-[11px] truncate">{doc.title}</p>
-                      <p className="text-[9px] text-slate-400">{doc.size} • <span className="text-emerald-700 font-bold">Verified ✓</span></p>
+                      <p className="text-[9px] text-slate-400">
+                        {doc.isUploaded ? (
+                          <span>{doc.size} • <span className="text-emerald-700 font-bold">Uploaded ✓</span></span>
+                        ) : (
+                          <span className="text-amber-700 font-semibold">Not Uploaded / Missing</span>
+                        )}
+                      </p>
                     </div>
                   </div>
                   <button
@@ -365,11 +425,19 @@ export function ApproveHospitalModal({
                     onClick={() => setSelectedDocPreview({
                       title: doc.title,
                       type: doc.category,
+                      fileName: doc.fileName,
+                      size: doc.size,
                       refNo: doc.refNo,
                       validity: doc.validity,
                       issuedBy: doc.issuedBy,
+                      isUploaded: doc.isUploaded,
+                      dataUrl: doc.dataUrl,
                     })}
-                    className="px-2 py-1 bg-slate-100 hover:bg-[#0E3B36] hover:text-white text-slate-700 font-bold text-[10px] rounded-lg transition-colors cursor-pointer shrink-0"
+                    className={`px-2 py-1 font-bold text-[10px] rounded-lg transition-colors cursor-pointer shrink-0 ${
+                      doc.isUploaded
+                        ? 'bg-slate-100 hover:bg-[#0E3B36] hover:text-white text-slate-700'
+                        : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200'
+                    }`}
                   >
                     Inspect
                   </button>
@@ -378,7 +446,7 @@ export function ApproveHospitalModal({
             </div>
           </div>
 
-          {/* Document Preview Popup Simulation */}
+          {/* Document Preview Popup */}
           {selectedDocPreview && (
             <div className="bg-[#1B2620] text-white p-4 rounded-2xl border border-[#0E3B36] space-y-2.5 animate-[fadeIn_0.15s_ease-out]">
               <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
@@ -394,100 +462,64 @@ export function ApproveHospitalModal({
                   ✕ Close
                 </button>
               </div>
-              <div className="bg-white text-slate-900 p-3.5 rounded-xl border border-slate-200 text-[11px] space-y-1.5">
-                <p><strong>Accreditation Body:</strong> {selectedDocPreview.issuedBy}</p>
-                <p><strong>Registration Ref No:</strong> {selectedDocPreview.refNo}</p>
-                <p><strong>Compliance Status:</strong> <span className="text-emerald-700 font-bold">{selectedDocPreview.validity} ✓</span></p>
-              </div>
-            </div>
-          )}
-
-          {/* 3. Executive Approval Settings (Streamlined & Auto-filled) */}
-          <form id="superadmin-hospital-approve-form" onSubmit={onSubmit} className="space-y-3 pt-1 border-t border-slate-200">
-            <span className="font-bold text-slate-900 uppercase text-[10px] tracking-wider block">
-              Network Activation Tier & Zone (Auto-Filled)
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="font-bold text-slate-600 block mb-1">Partner Tier *</label>
-                <select
-                  required
-                  value={hospitalType}
-                  onChange={e => setHospitalType(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl bg-slate-50 outline-none focus:border-[#0E3B36] font-semibold text-xs cursor-pointer"
-                >
-                  <option value="Community Partner">Community Partner</option>
-                  <option value="Center of Excellence">Center of Excellence</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="font-bold text-slate-600 block mb-1">Geographic Region / Zone *</label>
-                <select
-                  required
-                  value={region}
-                  onChange={e => setRegion(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-xl bg-slate-50 outline-none focus:border-[#0E3B36] font-semibold text-xs cursor-pointer"
-                >
-                  <option value="north">North India</option>
-                  <option value="south">South India</option>
-                  <option value="east">East India</option>
-                  <option value="west">West India</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="font-bold text-slate-600 block mb-1">Executive Board Approval Remarks (Optional)</label>
-              <textarea
-                rows={2}
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:border-[#0E3B36] text-xs resize-none"
-                placeholder="e.g. Tie-up approved by Executive Board for community screening and referral pathways..."
-              />
-            </div>
-
-            {/* Optional Collapsed Geospatial Coordinates (Auto-calculated, doesn't get in the way) */}
-            <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
-              <button
-                type="button"
-                onClick={() => setShowAdvancedGeo(!showAdvancedGeo)}
-                className="w-full px-3 py-2 flex items-center justify-between text-[10px] font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
-              >
-                <span>🗺️ Geospatial Map Coordinates (Auto-Calculated from City: {lat || '25.3176'}, {lng || '82.9739'})</span>
-                <span>{showAdvancedGeo ? '▲ Hide' : '▼ View / Edit'}</span>
-              </button>
-              {showAdvancedGeo && (
-                <div className="p-3 bg-white border-t border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <div>
-                    <label className="text-[9px] font-bold text-slate-400 uppercase">State</label>
-                    <input value={stateValue} onChange={e => setStateValue(e.target.value)} className="w-full px-2 py-1 text-[10px] border border-slate-200 rounded bg-slate-50" />
+              {selectedDocPreview.isUploaded ? (
+                <div className="bg-white text-slate-900 p-3.5 rounded-xl border border-slate-200 text-[11px] space-y-2">
+                  <div className="flex items-center justify-between font-bold">
+                    <span>Accreditation Certificate Status</span>
+                    <span className="text-emerald-700">{selectedDocPreview.validity} ✓</span>
                   </div>
-                  <div>
-                    <label className="text-[9px] font-bold text-slate-400 uppercase">Address</label>
-                    <input value={address} onChange={e => setAddress(e.target.value)} className="w-full px-2 py-1 text-[10px] border border-slate-200 rounded bg-slate-50" />
-                  </div>
-                  <div>
-                    <label className="text-[9px] font-bold text-slate-400 uppercase">Latitude</label>
-                    <input type="number" step="any" value={lat} onChange={e => setLat(e.target.value)} className="w-full px-2 py-1 text-[10px] border border-slate-200 rounded bg-slate-50" />
-                  </div>
-                  <div>
-                    <label className="text-[9px] font-bold text-slate-400 uppercase">Longitude</label>
-                    <input type="number" step="any" value={lng} onChange={e => setLng(e.target.value)} className="w-full px-2 py-1 text-[10px] border border-slate-200 rounded bg-slate-50" />
-                  </div>
+                  <p><strong>Accreditation Body:</strong> {selectedDocPreview.issuedBy}</p>
+                  <p><strong>Registration Ref No:</strong> {selectedDocPreview.refNo}</p>
+                  <p><strong>Attached File:</strong> {selectedDocPreview.fileName} ({selectedDocPreview.size})</p>
+                  {selectedDocPreview.dataUrl ? (
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const win = window.open();
+                          if (win && selectedDocPreview.dataUrl) {
+                            win.document.write(
+                              `<iframe src="${selectedDocPreview.dataUrl}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`
+                            );
+                          }
+                        }}
+                        className="w-full py-2 bg-[#0E3B36] text-white rounded-lg font-bold text-xs hover:bg-[#154f49] flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> Open Full Document in New Tab
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="bg-amber-50 text-amber-950 p-3.5 rounded-xl border border-amber-200 text-[11px] space-y-1">
+                  <p className="font-bold text-amber-900">Document Not Submitted</p>
+                  <p className="text-amber-800">
+                    The hospital did not upload an accreditation certificate for {selectedDocPreview.title} during application submission.
+                  </p>
                 </div>
               )}
             </div>
-          </form>
+          )}
+
+          {/* Approval Confirmation Info Banner */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-start gap-3">
+            <div className="w-8 h-8 rounded-xl bg-[#0E3B36]/10 flex items-center justify-center text-[#0E3B36] shrink-0">
+              <ShieldCheck className="w-5 h-5 text-[#0E3B36]" />
+            </div>
+            <div className="text-xs space-y-1">
+              <p className="font-bold text-slate-900">Ready for Board Clearance & Portal Activation</p>
+              <p className="text-slate-600 text-[11px] leading-relaxed">
+                Clicking <strong>&ldquo;Approve &amp; Issue Credentials&rdquo;</strong> will immediately register the hospital partner into the live network, auto-generate official login credentials, and email access details to <strong>{hospitalData?.email || 'the hospital administrator'}</strong>.
+              </p>
+            </div>
+          </div>
 
         </div>
 
         {/* Modal Footer (1-Click Approval) */}
         <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
           <p className="text-[10px] text-slate-500">
-            Approving generates permanent login credentials and adds the hospital to the live nationwide network.
+            Executive approval generates login credentials and adds {hospitalName} to the live network.
           </p>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -496,11 +528,11 @@ export function ApproveHospitalModal({
               onClick={onClose}
               className="flex-1 sm:flex-initial px-4 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-bold text-xs hover:bg-white cursor-pointer"
             >
-              Cancel
+              Close
             </button>
             <button
-              type="submit"
-              form="superadmin-hospital-approve-form"
+              type="button"
+              onClick={(e) => onSubmit(e as any)}
               disabled={submitting}
               className="flex-1 sm:flex-initial px-6 py-2.5 bg-[#0E3B36] hover:bg-[#154f49] text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             >

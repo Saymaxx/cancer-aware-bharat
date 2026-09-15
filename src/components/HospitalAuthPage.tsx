@@ -67,15 +67,15 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
   ]);
 
   // Step 4: Documents Upload State (starts unassigned until file selected from OS)
-  const [docNabhFile, setDocNabhFile] = useState<{ name: string; size: string; type: string } | null>(null);
-  const [docLicenseFile, setDocLicenseFile] = useState<{ name: string; size: string; type: string } | null>(null);
-  const [docFireFile, setDocFireFile] = useState<{ name: string; size: string; type: string } | null>(null);
-  const [docReportFile, setDocReportFile] = useState<{ name: string; size: string; type: string } | null>(null);
+  const [docNabhFile, setDocNabhFile] = useState<{ name: string; size: string; type: string; dataUrl?: string } | null>(null);
+  const [docLicenseFile, setDocLicenseFile] = useState<{ name: string; size: string; type: string; dataUrl?: string } | null>(null);
+  const [docFireFile, setDocFireFile] = useState<{ name: string; size: string; type: string; dataUrl?: string } | null>(null);
+  const [docReportFile, setDocReportFile] = useState<{ name: string; size: string; type: string; dataUrl?: string } | null>(null);
 
   // File Upload Handler (Native OS File Explorer Picker & Validation)
   const handleFileUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
-    setter: (val: { name: string; size: string; type: string } | null) => void
+    setter: (val: { name: string; size: string; type: string; dataUrl?: string } | null) => void
   ) => {
     setErrorMessage('');
     const file = e.target.files?.[0];
@@ -102,11 +102,16 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
       ? `${Math.round(file.size / 1024)} KB`
       : `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
 
-    setter({
-      name: file.name,
-      size: formattedSize,
-      type: (ext || 'pdf').toUpperCase()
-    });
+    const reader = new FileReader();
+    reader.onload = () => {
+      setter({
+        name: file.name,
+        size: formattedSize,
+        type: (ext || 'pdf').toUpperCase(),
+        dataUrl: reader.result as string,
+      });
+    };
+    reader.readAsDataURL(file);
 
     e.target.value = '';
   };
@@ -272,6 +277,25 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
 
     setIsSubmitting(true);
     try {
+      const docsMeta = {
+        nabh: docNabhFile ? { name: docNabhFile.name, size: docNabhFile.size, type: docNabhFile.type } : null,
+        license: docLicenseFile ? { name: docLicenseFile.name, size: docLicenseFile.size, type: docLicenseFile.type } : null,
+        fire: docFireFile ? { name: docFireFile.name, size: docFireFile.size, type: docFireFile.type } : null,
+        biowaste: docReportFile ? { name: docReportFile.name, size: docReportFile.size, type: docReportFile.type } : null,
+      };
+
+      const docsFull = {
+        nabh: docNabhFile ? { name: docNabhFile.name, size: docNabhFile.size, type: docNabhFile.type, dataUrl: docNabhFile.dataUrl } : null,
+        license: docLicenseFile ? { name: docLicenseFile.name, size: docLicenseFile.size, type: docLicenseFile.type, dataUrl: docLicenseFile.dataUrl } : null,
+        fire: docFireFile ? { name: docFireFile.name, size: docFireFile.size, type: docFireFile.type, dataUrl: docFireFile.dataUrl } : null,
+        biowaste: docReportFile ? { name: docReportFile.name, size: docReportFile.size, type: docReportFile.type, dataUrl: docReportFile.dataUrl } : null,
+      };
+
+      const motivationPayload = JSON.stringify({
+        note: 'Hospital partner application with accredited oncology infrastructure.',
+        docs: docsMeta,
+      });
+
       const created = await submitPartnerRequest({
         hospitalName: hospName,
         contactName: repName,
@@ -280,9 +304,20 @@ export default function HospitalAuthPage({ onPageChange }: HospitalAuthPageProps
         phone,
         city,
         specialties: specialties.join(', ') || undefined,
+        motivation: motivationPayload,
       });
       const appId = 'CAB-HOSP-APP-' + created.id.slice(0, 8).toUpperCase();
       setGeneratedAppId(appId);
+
+      // Save uploaded document references to localStorage for instant rich preview
+      try {
+        const existingDocs = JSON.parse(localStorage.getItem('aware_bharat_hospital_uploaded_docs') || '{}');
+        existingDocs[created.id] = docsFull;
+        existingDocs[hospName.trim().toLowerCase()] = docsFull;
+        localStorage.setItem('aware_bharat_hospital_uploaded_docs', JSON.stringify(existingDocs));
+      } catch {
+        // storage quota fallback
+      }
 
       // Clear draft
       localStorage.removeItem('aware_bharat_hospital_draft');
