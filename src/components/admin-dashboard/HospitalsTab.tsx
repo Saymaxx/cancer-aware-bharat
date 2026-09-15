@@ -3,12 +3,12 @@ import type { PartnerHospital } from '../../adminDashboardData';
 
 export default function HospitalsTab({
   hospitalRequests,
-  handleVerifyDocument,
+  handleInspectDocuments,
   handleRecommendHospital,
   setShowAdminDeclineModal,
 }: {
   hospitalRequests: PartnerHospital[];
-  handleVerifyDocument: (id: string) => void;
+  handleInspectDocuments: (hosp: PartnerHospital) => void;
   handleRecommendHospital: (id: string) => void;
   setShowAdminDeclineModal: (id: string | null) => void;
 }) {
@@ -46,11 +46,17 @@ export default function HospitalsTab({
                   <td className="px-6 py-4 text-slate-500">{hosp.appliedDate}</td>
                   <td className="px-6 py-4">
                     {hosp.documentVerified ? (
-                      <span className="text-primary-container font-bold flex items-center gap-1">✓ Verified</span>
+                      <button
+                        onClick={() => handleInspectDocuments(hosp)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[10px] font-bold hover:bg-emerald-100 cursor-pointer"
+                        title="Click to view verified documents"
+                      >
+                        ✓ Verified (Inspect)
+                      </button>
                     ) : (
                       <button
-                        onClick={() => handleVerifyDocument(hosp.id)}
-                        className="px-2.5 py-1 bg-slate-50 text-slate-700 border border-slate-200 rounded text-[10px] font-bold hover:bg-slate-100"
+                        onClick={() => handleInspectDocuments(hosp)}
+                        className="px-2.5 py-1.5 bg-[#0E3B36] text-white rounded-lg text-[10px] font-bold hover:bg-[#154f49] shadow-xs cursor-pointer flex items-center gap-1"
                       >
                         Check Document Uploads
                       </button>

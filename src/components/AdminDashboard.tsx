@@ -32,7 +32,7 @@ import FeedbackTab from './admin-dashboard/FeedbackTab';
 import NotificationsTab from './admin-dashboard/NotificationsTab';
 import SettingsTab from './admin-dashboard/SettingsTab';
 import {
-  PatientModal, ApproveEnquiryModal, RejectEnquiryModal, DeclineApplicationModal, RejectVolunteerModal, RejectEnrollmentModal, RejectSurvivorStoryModal,
+  PatientModal, ApproveEnquiryModal, RejectEnquiryModal, DeclineApplicationModal, RejectVolunteerModal, RejectEnrollmentModal, RejectSurvivorStoryModal, HospitalDocumentInspectionModal,
 } from './admin-dashboard/Modals';
 
 // HospitalPartnerRequest.status (backend) -> PartnerHospital.status (this
@@ -128,6 +128,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
   // no longer persisted to localStorage since the underlying list is now
   // real and refetched from the server.
   const [locallyVerifiedHospitalIds, setLocallyVerifiedHospitalIds] = useState<Set<string>>(new Set());
+  const [inspectingHospitalDocs, setInspectingHospitalDocs] = useState<PartnerHospital | null>(null);
   const hospitalRequests: PartnerHospital[] = useMemo(() => partnerRequests.map(pr => ({
     id: pr.id,
     name: pr.hospitalName,
@@ -302,6 +303,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
     setShowRejectEnquiryModal(null);
     setShowAdminDeclineModal(null);
     setTimelineEnquiry(null);
+    setInspectingHospitalDocs(null);
   });
 
   const handleExportEnquiriesCSV = () => {
@@ -1021,7 +1023,7 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
           {activeTab === 'hospitals' && (
             <HospitalsTab
               hospitalRequests={hospitalRequests}
-              handleVerifyDocument={handleVerifyDocument}
+              handleInspectDocuments={(hosp) => setInspectingHospitalDocs(hosp)}
               handleRecommendHospital={handleRecommendHospital}
               setShowAdminDeclineModal={setShowAdminDeclineModal}
             />
@@ -1245,6 +1247,13 @@ export default function AdminDashboard({ onPageChange, onLogout }: { onPageChang
         isOpen={!!timelineEnquiry}
         onClose={() => setTimelineEnquiry(null)}
         apiToken={apiToken}
+      />
+
+      {/* Hospital Document Inspection & Accreditation Verification Modal */}
+      <HospitalDocumentInspectionModal
+        hospital={inspectingHospitalDocs}
+        onClose={() => setInspectingHospitalDocs(null)}
+        onConfirmVerify={(id) => handleVerifyDocument(id)}
       />
 
     </div>

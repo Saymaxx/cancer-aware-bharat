@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, X, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Heart, X, CheckCircle2, AlertCircle, ShieldCheck, FileText, Eye } from 'lucide-react';
 import type { Patient } from '../../adminDashboardData';
 import type { Hospital, PatientEnquiry } from '../../types';
 
@@ -540,3 +540,283 @@ export function RejectEnrollmentModal({
     </div>
   );
 }
+
+// 8. HOSPITAL DOCUMENT INSPECTION & VERIFICATION MODAL
+export function HospitalDocumentInspectionModal({
+  hospital,
+  onClose,
+  onConfirmVerify,
+}: {
+  hospital: {
+    id: string;
+    name: string;
+    city: string;
+    appliedDate: string;
+    documentVerified: boolean;
+    contactEmail: string;
+    contactPhone: string;
+  } | null;
+  onClose: () => void;
+  onConfirmVerify: (id: string) => void;
+}) {
+  const [selectedDocPreview, setSelectedDocPreview] = React.useState<{
+    title: string;
+    type: string;
+    refNo: string;
+    validity: string;
+    issuedBy: string;
+  } | null>(null);
+
+  if (!hospital) return null;
+
+  const documents = [
+    {
+      id: 'doc-nabh',
+      title: 'NABH Accreditation Certificate',
+      category: 'Hospital Quality Accreditation',
+      fileName: `${hospital.name.replace(/\s+/g, '_')}_NABH_Cert.pdf`,
+      size: '2.4 MB',
+      refNo: `NABH/HOSP/${hospital.id.slice(0, 8).toUpperCase()}/2026`,
+      issuedBy: 'National Accreditation Board for Hospitals & Healthcare Providers',
+      validity: 'Valid through 2028',
+      status: 'Uploaded',
+    },
+    {
+      id: 'doc-license',
+      title: 'State Clinical Establishment Registration',
+      category: 'Statutory Health License',
+      fileName: `${hospital.name.replace(/\s+/g, '_')}_Medical_License.pdf`,
+      size: '1.8 MB',
+      refNo: `REG-MED-${hospital.city.slice(0, 3).toUpperCase()}-2026-8812`,
+      issuedBy: 'Directorate of Health Services & Medical Registration Authority',
+      validity: 'Active License',
+      status: 'Uploaded',
+    },
+    {
+      id: 'doc-fire',
+      title: 'Fire & Public Safety NOC Clearance',
+      category: 'Safety Compliance',
+      fileName: `${hospital.name.replace(/\s+/g, '_')}_Fire_NOC.pdf`,
+      size: '1.1 MB',
+      refNo: `FS-NOC-${hospital.city.slice(0, 3).toUpperCase()}-942`,
+      issuedBy: 'State Fire & Emergency Services Department',
+      validity: 'Annual Renewal Active',
+      status: 'Uploaded',
+    },
+    {
+      id: 'doc-biowaste',
+      title: 'Bio-Medical Waste Management Authorization',
+      category: 'Environmental Compliance',
+      fileName: `${hospital.name.replace(/\s+/g, '_')}_BioWaste_Cert.pdf`,
+      size: '980 KB',
+      refNo: `SPCB-BMW-2026-${hospital.id.slice(0, 4).toUpperCase()}`,
+      issuedBy: 'State Pollution Control Board',
+      validity: 'Compliance Certified',
+      status: 'Uploaded',
+    },
+  ];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-[fadeIn_0.2s_ease-out]"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="hospital-doc-modal-title"
+    >
+      <div className="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden text-xs flex flex-col max-h-[92vh]">
+        
+        {/* Header */}
+        <div className="bg-[#0E3B36] text-white px-6 py-4 flex justify-between items-center shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-[#E8A23A]">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 id="hospital-doc-modal-title" className="font-serif text-base font-bold text-white">
+                Hospital Accreditation Document Verification
+              </h3>
+              <p className="text-[10px] text-white/70">
+                {hospital.name} • {hospital.city} • Applied: {hospital.appliedDate}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content Body */}
+        <div className="p-6 overflow-y-auto space-y-5">
+          
+          {/* Hospital Overview Bar */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Hospital Node</p>
+              <p className="font-bold text-slate-900 mt-0.5">{hospital.name}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Contact Email</p>
+              <p className="font-semibold text-slate-700 mt-0.5 truncate">{hospital.contactEmail}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Verification Status</p>
+              <p className="mt-0.5">
+                {hospital.documentVerified ? (
+                  <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 text-[10px]">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Documents Verified
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 text-[10px]">
+                    <AlertCircle className="w-3 h-3 text-amber-600" /> Pending Admin Review
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Document Cards List */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="font-bold text-slate-900 uppercase text-[10px] tracking-wider">
+                Submitted Accreditation & Statutory Documents ({documents.length})
+              </h4>
+              <span className="text-[10px] text-slate-500">Click &quot;Inspect Preview&quot; to review certificate details</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {documents.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="bg-white border border-slate-200 hover:border-[#0E3B36]/40 rounded-2xl p-4 space-y-2.5 transition-all shadow-xs"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-[#0E3B36]/10 flex items-center justify-center text-[#0E3B36] font-bold shrink-0">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-xs line-clamp-1">{doc.title}</p>
+                        <p className="text-[10px] text-slate-400">{doc.category}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 rounded-xl p-2 font-mono text-[10px] space-y-1 text-slate-600">
+                    <p className="truncate"><span className="text-slate-400">File:</span> {doc.fileName}</p>
+                    <p><span className="text-slate-400">Size:</span> {doc.size} • <span className="text-emerald-700 font-bold">Uploaded ✓</span></p>
+                    <p className="truncate"><span className="text-slate-400">Ref:</span> {doc.refNo}</p>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDocPreview({
+                        title: doc.title,
+                        type: doc.category,
+                        refNo: doc.refNo,
+                        validity: doc.validity,
+                        issuedBy: doc.issuedBy,
+                      })}
+                      className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-[#0E3B36] hover:text-white rounded-lg text-[10px] font-bold text-slate-700 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> Inspect Preview
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Embedded / Selected Document Preview Modal Simulation */}
+          {selectedDocPreview && (
+            <div className="bg-[#1B2620] text-white p-5 rounded-2xl border border-[#0E3B36] space-y-3 animate-[fadeIn_0.15s_ease-out]">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-[#E8A23A]" />
+                  <span className="font-bold text-xs text-white">Document Viewer: {selectedDocPreview.title}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDocPreview(null)}
+                  className="text-white/60 hover:text-white text-xs cursor-pointer"
+                >
+                  ✕ Close Preview
+                </button>
+              </div>
+
+              <div className="bg-white text-slate-900 p-5 rounded-xl border-2 border-slate-300 space-y-3 shadow-inner">
+                <div className="text-center border-b border-slate-200 pb-3">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Official Certified Document</span>
+                  <h4 className="font-serif font-bold text-sm text-[#0E3B36] mt-0.5">{selectedDocPreview.title}</h4>
+                  <p className="text-[10px] text-slate-500">{selectedDocPreview.issuedBy}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-700">
+                  <p><strong>Hospital Entity:</strong> {hospital.name}</p>
+                  <p><strong>City / Jurisdiction:</strong> {hospital.city}</p>
+                  <p><strong>Registration ID:</strong> {selectedDocPreview.refNo}</p>
+                  <p><strong>Validity Status:</strong> <span className="text-emerald-700 font-bold">{selectedDocPreview.validity}</span></p>
+                </div>
+
+                <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-800 text-[10px] flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Digital seal & statutory medical registry verification valid. Ready for Regional Coordinator endorsement.</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* Modal Actions Footer */}
+        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+          <p className="text-[10px] text-slate-500">
+            {hospital.documentVerified
+              ? '✓ Accreditation verified. You can now recommend this hospital to Super Admin.'
+              : 'Verifying unlocks the "Recommend to Super Admin" action for this hospital.'
+            }
+          </p>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 sm:flex-initial px-4 py-2 border border-slate-300 text-slate-700 rounded-xl font-bold text-xs hover:bg-white cursor-pointer"
+            >
+              Close
+            </button>
+            
+            {!hospital.documentVerified ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onConfirmVerify(hospital.id);
+                  onClose();
+                }}
+                className="flex-1 sm:flex-initial px-5 py-2 bg-[#0E3B36] hover:bg-[#154f49] text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4 text-[#E8A23A]" />
+                <span>Verify & Confirm Documents</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="flex-1 sm:flex-initial px-5 py-2 bg-emerald-700 text-white rounded-xl font-bold text-xs opacity-90 cursor-default flex items-center justify-center gap-1.5"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Documents Verified ✓</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
