@@ -1,4 +1,4 @@
-import { Crown, Search, MapPin, Mail, Building2, Calendar, Check, Clock, X, MessageSquare } from 'lucide-react';
+import { Crown, Search, MapPin, Mail, Building2, Calendar, Check, Clock, X, MessageSquare, CheckCircle2, ExternalLink } from 'lucide-react';
 import type { HospitalApplication } from '../../superAdminDashboardData';
 
 export default function HospitalsTab({
@@ -23,59 +23,69 @@ export default function HospitalsTab({
   requestMoreInfo: (id: string) => void;
 }) {
   return (
-    <div className="space-y-4 animate-[fadeInUp_0.4s_ease-out]">
-      <div className="bg-purple-50 border border-purple-200 text-purple-900 p-4 rounded-2xl text-xs flex items-start gap-3">
-        <Crown className="w-5 h-5 shrink-0 text-purple-600 mt-0.5" />
+    <div className="space-y-6">
+      <div className="bg-primary-container/10 border border-primary-container/30 rounded-2xl p-4 flex items-start gap-3">
+        <Crown className="w-5 h-5 text-primary-container shrink-0 mt-0.5" />
         <div>
-          <p className="font-bold">Super Admin Executive Authority — Hospital Partnership Approvals & Tie-ups</p>
-          <p className="text-purple-800/85 mt-0.5">As Super Admin, you hold executive authority to <strong>Approve & Activate</strong> or <strong>Reject</strong> hospital tie-ups nationwide as soon as they arrive — no Admin recommendation is required first, though Admin's document review notes will show here if one was submitted.</p>
+          <h3 className="font-bold text-slate-800 text-sm">Super Admin Executive Authority — Hospital Partnership Approvals &amp; Tie-ups</h3>
+          <p className="text-xs text-slate-600 mt-0.5">
+            As Super Admin, you hold executive authority to <strong>Approve &amp; Activate</strong> or <strong>Reject</strong> hospital tie-ups nationwide as soon as they arrive — no Admin recommendation is required first, though Admin&apos;s document review notes will show here if one was submitted.
+          </p>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center bg-white p-4 rounded-2xl border border-slate-200/60">
-        <div className="flex items-center space-x-2 border border-slate-200 rounded-xl px-3 py-2 w-full sm:max-w-xs bg-slate-50">
-          <Search className="w-4 h-4 text-slate-400" />
-          <input type="text" placeholder="Search hospital applications..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none text-xs w-full" />
+      {/* Filter and Search */}
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div className="relative flex-1 w-full">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Search hospital applications..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl bg-white text-xs outline-none focus:border-indigo-500"
+          />
         </div>
         <div className="flex gap-1.5 flex-wrap">
-          {['All', 'Pending Review', 'Recommended by Admin', 'Info Requested', 'Approved', 'Rejected'].map(f => (
-            <button key={f} onClick={() => setHospitalFilter(f)} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${hospitalFilter === f ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{f}</button>
+          {['All', 'Pending Review', 'Recommended by Admin', 'Info Requested', 'Approved', 'Rejected'].map(filter => (
+            <button
+              key={filter}
+              onClick={() => setHospitalFilter(filter)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
+                hospitalFilter === filter ? 'bg-primary-container text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {filter}
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Hospital Cards */}
+      {/* Applications List */}
       <div className="space-y-4">
         {filteredHospitals.map(hosp => (
-          <div key={hosp.id} className="bg-white rounded-2xl border border-slate-200/60 p-5 shadow-xs">
+          <div key={hosp.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:border-slate-300 transition-colors">
             <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${hospitalStatusBadge(hosp.status)}`}>{hosp.status}</span>
-                  {hosp.nabhAccredited && <span className="px-2 py-0.5 rounded-full bg-slate-50 text-slate-700 text-[10px] font-bold border border-slate-200">✓ NABH Accredited</span>}
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${hospitalStatusBadge(hosp.status)}`}>
+                    {hosp.status}
+                  </span>
                 </div>
-                <h3 className="text-base font-bold text-slate-900">{hosp.name}</h3>
-                <p className="text-xs text-slate-500 mt-0.5">{hosp.address}</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3 text-[11px] text-slate-600">
-                  <p className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-indigo-500" /> {hosp.city}, {hosp.state}</p>
-                  <p className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-indigo-500" /> {hosp.contactEmail}</p>
-                  <p className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-indigo-500" /> {hosp.bedCount} beds</p>
-                  <p className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-indigo-500" /> Applied: {hosp.appliedDate}</p>
-                </div>
-                <div className="flex flex-wrap gap-1.5 mt-3">
-                  {hosp.specialties.map((s, i) => (
-                    <span key={i} className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-semibold border border-indigo-100">{s}</span>
-                  ))}
+                <h4 className="font-bold text-slate-900 text-base">{hosp.name}</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-slate-500 mt-3">
+                  <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-slate-400" /> {hosp.city}, {hosp.state}</span>
+                  <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-slate-400" /> {hosp.contactEmail}</span>
+                  <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-slate-400" /> {hosp.bedCount} beds</span>
+                  <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-slate-400" /> Applied: {hosp.appliedDate}</span>
                 </div>
 
-                {/* Documents */}
-                <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200/60">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Submitted Documents</p>
-                  <div className="flex flex-wrap gap-2">
-                    {hosp.documents.map((doc, di) => (
-                      <span key={di} className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold flex items-center gap-1 ${doc.verified ? 'bg-slate-50 text-slate-700 border border-slate-200' : 'bg-slate-50 text-slate-700 border border-slate-200'}`}>
-                        {doc.verified ? <Check className="w-3 h-3" /> : <Clock className="w-3 h-3" />} {doc.name}
+                {/* Specialties */}
+                <div className="mt-3">
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {hosp.specialties.map((spec, i) => (
+                      <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md text-[10px] font-medium">
+                        {spec}
                       </span>
                     ))}
                   </div>
@@ -86,16 +96,36 @@ export default function HospitalsTab({
                   <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <p className="text-[10px] font-bold text-primary-container uppercase tracking-wider mb-1">Regional Admin Recommendation</p>
                     <p className="text-xs text-slate-800 font-semibold">Submitted by: {hosp.recommendedBy}</p>
-                    <p className="text-xs text-slate-700 mt-1 leading-relaxed">{hosp.recommendationNotes}</p>
+                    {hosp.recommendationNotes && <p className="text-xs text-slate-700 mt-1 leading-relaxed">{hosp.recommendationNotes}</p>}
                   </div>
                 )}
 
-                {/* Generated credentials display */}
-                {hosp.generatedCredentials && (
-                  <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                    <p className="text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">Hospital Tie-up Active — Login Credentials Generated</p>
-                    <p className="text-xs text-slate-800 font-mono">Email: {hosp.generatedCredentials.email}</p>
-                    <p className="text-xs text-slate-800 font-mono">Temp Password: {hosp.generatedCredentials.tempPassword}</p>
+                {/* Approved hospital portal access & credentials banner */}
+                {hosp.status === 'Approved' && (
+                  <div className="mt-3 p-3.5 bg-emerald-50/80 rounded-xl border border-emerald-200/90 text-xs">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Hospital Partner Active — Portal Access Ready
+                      </span>
+                      <a
+                        href="/hospital/auth"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 underline flex items-center gap-1"
+                      >
+                        Hospital Login Portal <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                    <div className="bg-white/90 p-2.5 rounded-lg border border-emerald-100 font-mono text-[11px] text-slate-800 space-y-1">
+                      <p><strong className="font-sans text-slate-500 font-semibold">Official Login Email:</strong> <span className="text-emerald-950 font-bold">{hosp.generatedCredentials?.email || `${hosp.name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20) || 'hospital'}@awarebharat.org`}</span></p>
+                      {hosp.generatedCredentials?.tempPassword ? (
+                        <p><strong className="font-sans text-slate-500 font-semibold">Temporary Password:</strong> <span className="text-emerald-950 font-bold">{hosp.generatedCredentials.tempPassword}</span></p>
+                      ) : (
+                        <p className="text-[10px] text-slate-500 font-sans mt-0.5">
+                          Temporary password generated at approval and dispatched via email to <strong className="text-slate-700">{hosp.contactEmail}</strong>.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
 

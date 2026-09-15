@@ -137,6 +137,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
 
   const { admins, refetch: refetchAdmins } = useAdmins(apiToken);
 
+  const [hospitalCredentialsMap, setHospitalCredentialsMap] = useState<Record<string, { email: string; tempPassword?: string }>>({});
   const { partnerRequests, refetch: refetchPartnerRequests } = usePartnerRequests(apiToken);
   const { blogs, refetch: refetchBlogs } = useBlogs();
   const hospitals: HospitalApplication[] = useMemo(() => partnerRequests.map(pr => {
@@ -146,6 +147,8 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
       pr.status === 'Recommended' ? 'Recommended by Admin' :
       pr.status === 'Info Requested' ? 'Info Requested' :
       'Pending Review';
+    const slug = pr.hospitalName.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20) || 'hospital';
+    const activeCreds = hospitalCredentialsMap[pr.id] || (pr.status === 'Approved' ? { email: `${slug}@awarebharat.org` } : undefined);
     return {
       id: pr.id,
       name: pr.hospitalName,
@@ -164,12 +167,9 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
       recommendationNotes: pr.status === 'Recommended' ? (pr.decisionNotes || null) : null,
       status,
       rejectionReason: pr.status === 'Rejected' ? (pr.decisionNotes || undefined) : undefined,
-      // Shown once via the one-time showApprovalResult modal instead of
-      // persisted on the row -- the real temp password is never stored
-      // anywhere after that response.
-      generatedCredentials: undefined,
+      generatedCredentials: activeCreds,
     };
-  }), [partnerRequests]);
+  }), [partnerRequests, hospitalCredentialsMap]);
   const { auditLogs } = useAuditLogs(apiToken);
   const { roles, refetch: refetchRoles } = useRoles(apiToken);
   const { health: databaseHealth, loading: databaseHealthLoading } = useDatabaseHealth(apiToken);
@@ -541,6 +541,10 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
         notes: approveNotes || undefined,
       });
       setShowApprovalResult({ email: result.loginEmail, password: result.tempPassword });
+      setHospitalCredentialsMap(prev => ({
+        ...prev,
+        [showApproveModal]: { email: result.loginEmail, tempPassword: result.tempPassword }
+      }));
       setShowApproveModal(null);
       showToast('Hospital application approved and credentials generated!');
       refetchPartnerRequests();

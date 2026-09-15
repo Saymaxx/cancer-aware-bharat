@@ -36,7 +36,7 @@ export interface HospitalApplication {
   recommendationNotes: string | null;
   status: 'Pending Review' | 'Recommended by Admin' | 'Approved' | 'Rejected' | 'Info Requested';
   rejectionReason?: string;
-  generatedCredentials?: { email: string; tempPassword: string };
+  generatedCredentials?: { email: string; tempPassword?: string };
 }
 
 export interface AuditLogEntry {
