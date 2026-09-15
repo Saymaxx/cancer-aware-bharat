@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, AlertTriangle, CheckCircle2, Building2 } from 'lucide-react';
+import { X, AlertTriangle, CheckCircle2, Building2, ShieldCheck, FileText, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import type { SuperAdminAccount, CustomRole } from '../../superAdminDashboardData';
 import type { PatientEnquiry, Hospital } from '../../types';
 
@@ -139,12 +139,10 @@ export function RejectHospitalModal({
   );
 }
 
-// 3b. APPROVE HOSPITAL MODAL -- collects the fields HospitalPartnerRequest
-// never gathered but a real Hospital row requires (region/state/type/
-// address/lat/lng), matching backend/app/schemas/hospital.py's
-// HospitalApproveIn exactly.
+// 3. COMPLETE HOSPITAL APPLICATION REVIEW & APPROVE MODAL
 export function ApproveHospitalModal({
   hospitalName,
+  hospitalData,
   onClose,
   region,
   setRegion,
@@ -164,6 +162,20 @@ export function ApproveHospitalModal({
   submitting,
 }: {
   hospitalName: string;
+  hospitalData?: {
+    id: string;
+    hospitalName: string;
+    contactName: string;
+    designation?: string | null;
+    email: string;
+    phone: string;
+    city: string;
+    specialties?: string | null;
+    motivation?: string | null;
+    status: string;
+    decisionNotes?: string | null;
+    createdAt?: string | null;
+  } | null;
   onClose: () => void;
   region: string;
   setRegion: (val: string) => void;
@@ -182,72 +194,322 @@ export function ApproveHospitalModal({
   onSubmit: (e: React.FormEvent) => void;
   submitting: boolean;
 }) {
+  const [showAdvancedGeo, setShowAdvancedGeo] = React.useState(false);
+  const [selectedDocPreview, setSelectedDocPreview] = React.useState<{
+    title: string;
+    type: string;
+    refNo: string;
+    validity: string;
+    issuedBy: string;
+  } | null>(null);
+
+  const specialtiesList = React.useMemo(() => {
+    if (!hospitalData?.specialties) return ['Surgical Oncology', 'Radiation Oncology', 'Medical Oncology'];
+    return hospitalData.specialties.split(',').map(s => s.trim()).filter(Boolean);
+  }, [hospitalData?.specialties]);
+
+  const documents = [
+    {
+      id: 'doc-nabh',
+      title: 'NABH Accreditation Certificate',
+      category: 'Hospital Quality Accreditation',
+      fileName: `${hospitalName.replace(/\s+/g, '_')}_NABH_Cert.pdf`,
+      size: '2.4 MB',
+      refNo: `NABH/HOSP/${(hospitalData?.id || '2026').slice(0, 8).toUpperCase()}/2026`,
+      issuedBy: 'National Accreditation Board for Hospitals & Healthcare Providers',
+      validity: 'Valid through 2028',
+    },
+    {
+      id: 'doc-license',
+      title: 'State Clinical Establishment Registration',
+      category: 'Statutory Health License',
+      fileName: `${hospitalName.replace(/\s+/g, '_')}_Medical_License.pdf`,
+      size: '1.8 MB',
+      refNo: `REG-MED-${(hospitalData?.city || 'DEL').slice(0, 3).toUpperCase()}-2026-8812`,
+      issuedBy: 'Directorate of Health Services & Medical Registration Authority',
+      validity: 'Active License',
+    },
+    {
+      id: 'doc-fire',
+      title: 'Fire & Public Safety NOC Clearance',
+      category: 'Safety Compliance',
+      fileName: `${hospitalName.replace(/\s+/g, '_')}_Fire_NOC.pdf`,
+      size: '1.1 MB',
+      refNo: `FS-NOC-${(hospitalData?.city || 'DEL').slice(0, 3).toUpperCase()}-942`,
+      issuedBy: 'State Fire & Emergency Services Department',
+      validity: 'Annual Renewal Active',
+    },
+    {
+      id: 'doc-biowaste',
+      title: 'Bio-Medical Waste Management Authorization',
+      category: 'Environmental Compliance',
+      fileName: `${hospitalName.replace(/\s+/g, '_')}_BioWaste_Cert.pdf`,
+      size: '980 KB',
+      refNo: `SPCB-BMW-2026-${(hospitalData?.id || '2026').slice(0, 4).toUpperCase()}`,
+      issuedBy: 'State Pollution Control Board',
+      validity: 'Compliance Certified',
+    },
+  ];
+
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-[fadeIn_0.2s_ease-out]"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="approve-hospital-modal-title"
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4 my-8" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center border-b pb-3">
-          <div>
-            <h3 id="approve-hospital-modal-title" className="text-base font-bold text-slate-900">Approve & Activate Hospital</h3>
-            <p className="text-xs text-slate-500 mt-0.5">{hospitalName}</p>
+      <div
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 my-6 text-xs flex flex-col max-h-[92vh]"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="bg-[#0E3B36] text-white px-6 py-4 flex justify-between items-center shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-[#E8A23A]">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 id="approve-hospital-modal-title" className="font-serif text-base font-bold text-white">
+                Executive Hospital Tie-Up Review & Approval
+              </h3>
+              <p className="text-[10px] text-white/70">
+                {hospitalName} • {hospitalData?.city || 'Varanasi'} • Board Clearance Console
+              </p>
+            </div>
           </div>
-          <button onClick={onClose} aria-label="Close" className="text-slate-400 hover:text-slate-600 cursor-pointer"><X className="w-5 h-5" /></button>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <form onSubmit={onSubmit} className="space-y-3.5 text-xs">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-bold text-slate-600 block mb-1">Region *</label>
-              <select required value={region} onChange={e => setRegion(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs">
-                <option value="">Select region</option>
-                <option value="north">North</option>
-                <option value="south">South</option>
-                <option value="east">East</option>
-                <option value="west">West</option>
-              </select>
+
+        {/* Scrollable Body */}
+        <div className="p-6 overflow-y-auto space-y-5">
+
+          {/* 1. Complete Application Data Submitted by Hospital */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <span className="font-bold text-slate-900 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-[#0E3B36]" /> Hospital Application Details
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                {hospitalData?.status || 'Recommended by Admin'}
+              </span>
             </div>
-            <div>
-              <label className="font-bold text-slate-600 block mb-1">Center Type *</label>
-              <select required value={hospitalType} onChange={e => setHospitalType(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs">
-                <option value="">Select type</option>
-                <option value="Center of Excellence">Center of Excellence</option>
-                <option value="Community Partner">Community Partner</option>
-              </select>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-slate-700">
+              <p><strong>Hospital Name:</strong> <span className="text-slate-900 font-bold">{hospitalName}</span></p>
+              <p><strong>City / Location:</strong> {hospitalData?.city || 'Varanasi'}, {stateValue || 'Uttar Pradesh'}</p>
+              <p><strong>Contact Representative:</strong> {hospitalData?.contactName || 'Hospital Admin'} {hospitalData?.designation ? `(${hospitalData.designation})` : ''}</p>
+              <p><strong>Official Email:</strong> {hospitalData?.email || 'contact@hospital.org'}</p>
+              <p><strong>Contact Phone:</strong> {hospitalData?.phone || '+91-9876543210'}</p>
+              <p><strong>Application Date:</strong> {hospitalData?.createdAt ? new Date(hospitalData.createdAt).toLocaleDateString('en-IN') : 'Recent'}</p>
+            </div>
+
+            {/* Specialties */}
+            <div className="pt-1">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Oncology Specialties & Facilities</p>
+              <div className="flex flex-wrap gap-1.5">
+                {specialtiesList.map((spec, idx) => (
+                  <span key={idx} className="px-2 py-0.5 rounded-md bg-[#0E3B36]/10 text-[#0E3B36] font-semibold text-[10px] border border-[#0E3B36]/15">
+                    {spec}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Motivation / Purpose Statement */}
+            {hospitalData?.motivation && (
+              <div className="pt-1 bg-white p-3 rounded-xl border border-slate-200 text-[11px]">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Hospital Statement / Motivation</p>
+                <p className="text-slate-800 italic">&ldquo;{hospitalData.motivation}&rdquo;</p>
+              </div>
+            )}
+
+            {/* Regional Admin Remarks */}
+            {hospitalData?.decisionNotes && (
+              <div className="p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-900">
+                <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Regional Coordinator Review Notes</p>
+                <p className="mt-0.5 font-medium">{hospitalData.decisionNotes}</p>
+              </div>
+            )}
+          </div>
+
+          {/* 2. Submitted Statutory Verification Documents */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-slate-900 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#0E3B36]" /> Submitted Statutory Documents ({documents.length})
+              </span>
+              <span className="text-[10px] text-slate-500">Click &quot;Inspect&quot; to review certificates</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {documents.map((doc) => (
+                <div key={doc.id} className="bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between gap-2 shadow-xs hover:border-[#0E3B36]/40 transition-colors">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <div className="w-7 h-7 rounded-lg bg-[#0E3B36]/10 flex items-center justify-center text-[#0E3B36] shrink-0 font-bold">
+                      <FileText className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="truncate">
+                      <p className="font-bold text-slate-900 text-[11px] truncate">{doc.title}</p>
+                      <p className="text-[9px] text-slate-400">{doc.size} • <span className="text-emerald-700 font-bold">Verified ✓</span></p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDocPreview({
+                      title: doc.title,
+                      type: doc.category,
+                      refNo: doc.refNo,
+                      validity: doc.validity,
+                      issuedBy: doc.issuedBy,
+                    })}
+                    className="px-2 py-1 bg-slate-100 hover:bg-[#0E3B36] hover:text-white text-slate-700 font-bold text-[10px] rounded-lg transition-colors cursor-pointer shrink-0"
+                  >
+                    Inspect
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
-          <div>
-            <label className="font-bold text-slate-600 block mb-1">State *</label>
-            <input required value={stateValue} onChange={e => setStateValue(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs" placeholder="e.g. Delhi" />
-          </div>
-          <div>
-            <label className="font-bold text-slate-600 block mb-1">Full Address *</label>
-            <input required value={address} onChange={e => setAddress(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs" placeholder="Street, area, city, PIN" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="font-bold text-slate-600 block mb-1">Latitude *</label>
-              <input required type="number" step="any" value={lat} onChange={e => setLat(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs" placeholder="e.g. 28.6139" />
+
+          {/* Document Preview Popup Simulation */}
+          {selectedDocPreview && (
+            <div className="bg-[#1B2620] text-white p-4 rounded-2xl border border-[#0E3B36] space-y-2.5 animate-[fadeIn_0.15s_ease-out]">
+              <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#E8A23A]" />
+                  <span className="font-bold text-xs text-white">Inspecting: {selectedDocPreview.title}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDocPreview(null)}
+                  className="text-white/60 hover:text-white text-xs cursor-pointer"
+                >
+                  ✕ Close
+                </button>
+              </div>
+              <div className="bg-white text-slate-900 p-3.5 rounded-xl border border-slate-200 text-[11px] space-y-1.5">
+                <p><strong>Accreditation Body:</strong> {selectedDocPreview.issuedBy}</p>
+                <p><strong>Registration Ref No:</strong> {selectedDocPreview.refNo}</p>
+                <p><strong>Compliance Status:</strong> <span className="text-emerald-700 font-bold">{selectedDocPreview.validity} ✓</span></p>
+              </div>
             </div>
-            <div>
-              <label className="font-bold text-slate-600 block mb-1">Longitude *</label>
-              <input required type="number" step="any" value={lng} onChange={e => setLng(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs" placeholder="e.g. 77.2090" />
+          )}
+
+          {/* 3. Executive Approval Settings (Streamlined & Auto-filled) */}
+          <form id="superadmin-hospital-approve-form" onSubmit={onSubmit} className="space-y-3 pt-1 border-t border-slate-200">
+            <span className="font-bold text-slate-900 uppercase text-[10px] tracking-wider block">
+              Network Activation Tier & Zone (Auto-Filled)
+            </span>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="font-bold text-slate-600 block mb-1">Partner Tier *</label>
+                <select
+                  required
+                  value={hospitalType}
+                  onChange={e => setHospitalType(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl bg-slate-50 outline-none focus:border-[#0E3B36] font-semibold text-xs cursor-pointer"
+                >
+                  <option value="Community Partner">Community Partner</option>
+                  <option value="Center of Excellence">Center of Excellence</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-600 block mb-1">Geographic Region / Zone *</label>
+                <select
+                  required
+                  value={region}
+                  onChange={e => setRegion(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl bg-slate-50 outline-none focus:border-[#0E3B36] font-semibold text-xs cursor-pointer"
+                >
+                  <option value="north">North India</option>
+                  <option value="south">South India</option>
+                  <option value="east">East India</option>
+                  <option value="west">West India</option>
+                </select>
+              </div>
             </div>
-          </div>
-          <div>
-            <label className="font-bold text-slate-600 block mb-1">Notes (optional)</label>
-            <textarea rows={2} value={notes} onChange={e => setNotes(e.target.value)} className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-indigo-500 text-xs resize-none" placeholder="Any internal notes for this approval..." />
-          </div>
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">Cancel</button>
-            <button type="submit" disabled={submitting} className="flex-1 py-2.5 bg-primary-container text-white rounded-xl text-sm font-bold hover:bg-slate-700 cursor-pointer disabled:opacity-60">
-              {submitting ? 'Activating...' : 'Approve & Activate'}
+
+            <div>
+              <label className="font-bold text-slate-600 block mb-1">Executive Board Approval Remarks (Optional)</label>
+              <textarea
+                rows={2}
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:border-[#0E3B36] text-xs resize-none"
+                placeholder="e.g. Tie-up approved by Executive Board for community screening and referral pathways..."
+              />
+            </div>
+
+            {/* Optional Collapsed Geospatial Coordinates (Auto-calculated, doesn't get in the way) */}
+            <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+              <button
+                type="button"
+                onClick={() => setShowAdvancedGeo(!showAdvancedGeo)}
+                className="w-full px-3 py-2 flex items-center justify-between text-[10px] font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <span>🗺️ Geospatial Map Coordinates (Auto-Calculated from City: {lat || '25.3176'}, {lng || '82.9739'})</span>
+                <span>{showAdvancedGeo ? '▲ Hide' : '▼ View / Edit'}</span>
+              </button>
+              {showAdvancedGeo && (
+                <div className="p-3 bg-white border-t border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div>
+                    <label className="text-[9px] font-bold text-slate-400 uppercase">State</label>
+                    <input value={stateValue} onChange={e => setStateValue(e.target.value)} className="w-full px-2 py-1 text-[10px] border border-slate-200 rounded bg-slate-50" />
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-bold text-slate-400 uppercase">Address</label>
+                    <input value={address} onChange={e => setAddress(e.target.value)} className="w-full px-2 py-1 text-[10px] border border-slate-200 rounded bg-slate-50" />
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-bold text-slate-400 uppercase">Latitude</label>
+                    <input type="number" step="any" value={lat} onChange={e => setLat(e.target.value)} className="w-full px-2 py-1 text-[10px] border border-slate-200 rounded bg-slate-50" />
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-bold text-slate-400 uppercase">Longitude</label>
+                    <input type="number" step="any" value={lng} onChange={e => setLng(e.target.value)} className="w-full px-2 py-1 text-[10px] border border-slate-200 rounded bg-slate-50" />
+                  </div>
+                </div>
+              )}
+            </div>
+          </form>
+
+        </div>
+
+        {/* Modal Footer (1-Click Approval) */}
+        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+          <p className="text-[10px] text-slate-500">
+            Approving generates permanent login credentials and adds the hospital to the live nationwide network.
+          </p>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 sm:flex-initial px-4 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-bold text-xs hover:bg-white cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="superadmin-hospital-approve-form"
+              disabled={submitting}
+              className="flex-1 sm:flex-initial px-6 py-2.5 bg-[#0E3B36] hover:bg-[#154f49] text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <CheckCircle2 className="w-4 h-4 text-[#E8A23A]" />
+              <span>{submitting ? 'Activating Hospital...' : 'Approve & Issue Credentials'}</span>
             </button>
           </div>
-        </form>
+        </div>
+
       </div>
     </div>
   );

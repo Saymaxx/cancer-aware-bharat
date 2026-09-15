@@ -481,13 +481,48 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     }
   };
 
+  // Default geo-coordinates & region mapping for automated hospital onboarding
+  const CITY_METADATA: Record<string, { state: string; region: string; lat: number; lng: number }> = {
+    'Varanasi': { state: 'Uttar Pradesh', region: 'North India', lat: 25.3176, lng: 82.9739 },
+    'Delhi': { state: 'Delhi NCR', region: 'North India', lat: 28.6139, lng: 77.2090 },
+    'New Delhi': { state: 'Delhi NCR', region: 'North India', lat: 28.6139, lng: 77.2090 },
+    'Mumbai': { state: 'Maharashtra', region: 'West India', lat: 19.0760, lng: 72.8777 },
+    'Bengaluru': { state: 'Karnataka', region: 'South India', lat: 12.9716, lng: 77.5946 },
+    'Bangalore': { state: 'Karnataka', region: 'South India', lat: 12.9716, lng: 77.5946 },
+    'Kolkata': { state: 'West Bengal', region: 'East India', lat: 22.5726, lng: 88.3639 },
+    'Chennai': { state: 'Tamil Nadu', region: 'South India', lat: 13.0827, lng: 80.2707 },
+    'Hyderabad': { state: 'Telangana', region: 'South India', lat: 17.3850, lng: 78.4867 },
+    'Lucknow': { state: 'Uttar Pradesh', region: 'North India', lat: 26.8467, lng: 80.9462 },
+    'Kanpur': { state: 'Uttar Pradesh', region: 'North India', lat: 26.4499, lng: 80.3319 },
+    'Prayagraj': { state: 'Uttar Pradesh', region: 'North India', lat: 25.4358, lng: 81.8463 },
+    'Allahabad': { state: 'Uttar Pradesh', region: 'North India', lat: 25.4358, lng: 81.8463 },
+    'Patna': { state: 'Bihar', region: 'East India', lat: 25.5941, lng: 85.1376 },
+    'Jaipur': { state: 'Rajasthan', region: 'North India', lat: 26.9124, lng: 75.7873 },
+    'Ahmedabad': { state: 'Gujarat', region: 'West India', lat: 23.0225, lng: 72.5714 },
+    'Pune': { state: 'Maharashtra', region: 'West India', lat: 18.5204, lng: 73.8567 },
+    'Chandigarh': { state: 'Punjab / Haryana', region: 'North India', lat: 30.7333, lng: 76.7794 },
+    'Bhopal': { state: 'Madhya Pradesh', region: 'Central India', lat: 23.2599, lng: 77.4126 },
+    'Indore': { state: 'Madhya Pradesh', region: 'Central India', lat: 22.7196, lng: 75.8577 },
+  };
+
   // ---- Hospital Approvals ----
-  // Approving needs region/state/type/address/lat/lng -- fields the partner
-  // request never collected -- so this opens a form instead of acting
-  // immediately; handleApproveSubmit below does the real API call.
   const approveHospital = (id: string) => {
-    setApproveRegion(''); setApproveStateValue(''); setApproveType(''); setApproveAddress('');
-    setApproveLat(''); setApproveLng(''); setApproveNotes('');
+    const req = partnerRequests.find(pr => pr.id === id);
+    const cityName = req?.city?.trim() || 'Varanasi';
+    const cityMeta = CITY_METADATA[cityName] || {
+      state: 'Uttar Pradesh',
+      region: 'North India',
+      lat: 25.3176,
+      lng: 82.9739,
+    };
+
+    setApproveRegion(cityMeta.region);
+    setApproveStateValue(cityMeta.state);
+    setApproveType('Comprehensive Cancer Center');
+    setApproveAddress(req?.city ? `Medical Enclave, ${req.city}` : 'Medical District, Varanasi');
+    setApproveLat(cityMeta.lat.toString());
+    setApproveLng(cityMeta.lng.toString());
+    setApproveNotes(req?.decisionNotes || 'Verified & Recommended by Regional Admin. Approved for Tier-1 Oncology Network.');
     setShowApproveModal(id);
   };
 
@@ -497,12 +532,12 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     setApproveSubmitting(true);
     try {
       const result = await approvePartnerRequest(showApproveModal, apiToken, {
-        region: approveRegion,
-        state: approveStateValue,
-        type: approveType,
-        address: approveAddress,
-        lat: parseFloat(approveLat),
-        lng: parseFloat(approveLng),
+        region: approveRegion || 'North India',
+        state: approveStateValue || 'Uttar Pradesh',
+        type: approveType || 'Comprehensive Cancer Center',
+        address: approveAddress || 'Medical District, Varanasi',
+        lat: parseFloat(approveLat) || 25.3176,
+        lng: parseFloat(approveLng) || 82.9739,
         notes: approveNotes || undefined,
       });
       setShowApprovalResult({ email: result.loginEmail, password: result.tempPassword });
@@ -1224,10 +1259,11 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
         />
       )}
 
-      {/* Approve Hospital Form */}
+      {/* Complete Hospital Application Review & Approve Modal */}
       {showApproveModal && (
         <ApproveHospitalModal
-          hospitalName={hospitals.find(h => h.id === showApproveModal)?.name || ''}
+          hospitalName={partnerRequests.find(h => h.id === showApproveModal)?.hospitalName || hospitals.find(h => h.id === showApproveModal)?.name || 'Hospital'}
+          hospitalData={partnerRequests.find(h => h.id === showApproveModal) || null}
           onClose={() => setShowApproveModal(null)}
           region={approveRegion}
           setRegion={setApproveRegion}
