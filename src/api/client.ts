@@ -700,6 +700,13 @@ export function approvePartnerRequest(id: string, token: string, payload: Approv
   }, token);
 }
 
+export function reissuePartnerRequestCredentials(id: string, token: string): Promise<ApiHospitalApprovalResult> {
+  return request<ApiHospitalApprovalResult>(`/hospitals/partner-requests/${id}/reissue-credentials`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  }, token);
+}
+
 export function rejectPartnerRequest(id: string, token: string, reason: string): Promise<ApiHospitalPartnerRequest> {
   return request<ApiHospitalPartnerRequest>(`/hospitals/partner-requests/${id}/reject`, {
     method: 'POST',

@@ -1,4 +1,4 @@
-import { Crown, Search, MapPin, Mail, Building2, Calendar, Check, Clock, X, MessageSquare, CheckCircle2, ExternalLink } from 'lucide-react';
+import { Crown, Search, MapPin, Mail, Building2, Calendar, Check, Clock, X, MessageSquare, CheckCircle2, ExternalLink, KeyRound } from 'lucide-react';
 import type { HospitalApplication } from '../../superAdminDashboardData';
 
 export default function HospitalsTab({
@@ -11,6 +11,7 @@ export default function HospitalsTab({
   approveHospital,
   setShowRejectDialog,
   requestMoreInfo,
+  reissueCredentials,
 }: {
   searchTerm: string;
   setSearchTerm: (val: string) => void;
@@ -21,6 +22,7 @@ export default function HospitalsTab({
   approveHospital: (id: string) => void;
   setShowRejectDialog: (id: string | null) => void;
   requestMoreInfo: (id: string) => void;
+  reissueCredentials?: (id: string) => void;
 }) {
   return (
     <div className="space-y-6">
@@ -149,6 +151,18 @@ export default function HospitalsTab({
                   </button>
                   <button onClick={() => requestMoreInfo(hosp.id)} className="w-full py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold hover:bg-purple-100 cursor-pointer flex items-center justify-center gap-1.5">
                     <MessageSquare className="w-3.5 h-3.5" /> Request Info
+                  </button>
+                </div>
+              )}
+
+              {/* Approved Hospital Actions: Re-issue credentials */}
+              {hosp.status === 'Approved' && reissueCredentials && (
+                <div className="flex flex-col gap-2 shrink-0 lg:w-48">
+                  <button
+                    onClick={() => reissueCredentials(hosp.id)}
+                    className="w-full py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    <KeyRound className="w-3.5 h-3.5 text-amber-400" /> Re-issue Password
                   </button>
                 </div>
               )}

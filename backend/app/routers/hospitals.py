@@ -317,3 +317,86 @@ def reject_partner_request(
     db.commit()
     db.refresh(partner_request)
     return partner_request
+
+
+@router.post("/partner-requests/{request_id}/reissue-credentials", response_model=HospitalApprovalResult)
+@limiter.limit("15/minute")
+def reissue_hospital_credentials(
+    request: Request,
+    request_id: UUID,
+    db: DbSession,
+    claims: Annotated[dict, Depends(require_roles("superadmin"))],
+):
+    """Super Admin generates a fresh temporary password for an already-approved
+    hospital partner and returns the credentials once."""
+    partner_request = _get_partner_request_or_404(db, request_id)
+    if partner_request.status != "Approved":
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"Cannot reissue credentials for a hospital application with status '{partner_request.status}'.",
+        )
+
+    hospital = (
+        db.query(Hospital)
+        .filter(Hospital.name == partner_request.hospital_name)
+        .first()
+    )
+    if not hospital:
+        # Fallback by email
+        hospital = (
+            db.query(Hospital)
+            .filter(Hospital.email == partner_request.email)
+            .first()
+        )
+
+    if not hospital:
+        # If no Hospital row exists yet, create one
+        login_email = _generate_unique_login_email(db, partner_request.hospital_name)
+        temp_password = generate_temp_password()
+        specialties = [s.strip() for s in (partner_request.specialties or "").split(",") if s.strip()]
+        hospital = Hospital(
+            name=partner_request.hospital_name,
+            type="Comprehensive Cancer Center",
+            region="North India",
+            city=partner_request.city,
+            state="Uttar Pradesh",
+            specialties=specialties,
+            phone=partner_request.phone,
+            email=partner_request.email,
+            address=f"Medical District, {partner_request.city}",
+            lat=25.3176,
+            lng=82.9739,
+            login_email=login_email,
+            hashed_password=hash_password(temp_password),
+            is_active=True,
+        )
+        db.add(hospital)
+        db.commit()
+        db.refresh(hospital)
+    else:
+        temp_password = generate_temp_password()
+        hospital.hashed_password = hash_password(temp_password)
+        hospital.is_active = True
+        db.commit()
+        db.refresh(hospital)
+
+    record_event(
+        db,
+        "hospital_credentials_reissued",
+        role=claims["role"],
+        actor_id=UUID(claims["sub"]),
+        detail=hospital.name,
+    )
+
+    get_email_sender().send(
+        partner_request.email,
+        "Your Cancer Aware Bharat hospital partner account credentials",
+        f"{partner_request.hospital_name} credentials have been re-issued.\n\nLogin email: {hospital.login_email}\nTemporary password: {temp_password}\n\nPlease log in and change this password as soon as possible.",
+    )
+
+    return HospitalApprovalResult(
+        hospital=HospitalOut.model_validate(hospital),
+        login_email=hospital.login_email,
+        temp_password=temp_password,
+    )
+

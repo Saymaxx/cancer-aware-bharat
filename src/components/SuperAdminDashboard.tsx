@@ -6,7 +6,7 @@ import {
   Database, ShieldCheck, FileText,
 } from 'lucide-react';
 import { useAdmins, useApiEnquiries, useApiNotifications, useApiHospitals, useAuditLogs, useBackups, useBlogs, useDatabaseHealth, useDonations, useEvents, useIntegrationStatus, useOrgSettings, usePartnerRequests, usePatientRecords, useRoles, useStaffMe, useVolunteers } from '../api/hooks';
-import { activateAdmin, assignAdminRole, assignHospital, ApiError, approvePartnerRequest, approveVolunteer, broadcastNotification, changeStaffPassword, createAdmin, createBackup, createBlog, createEvent, createRole, deleteAdmin as deleteAdminAccount, deleteBlog, deleteEvent, getStaffSession, rejectPartnerRequest, rejectVolunteer, requestPartnerRequestInfo, suspendAdmin, updateAdmin, updateEvent, updateOrgSettings, updateStaffMe, type ApiOrgSettings, type NotificationAudience } from '../api/client';
+import { activateAdmin, assignAdminRole, assignHospital, ApiError, approvePartnerRequest, approveVolunteer, broadcastNotification, changeStaffPassword, createAdmin, createBackup, createBlog, createEvent, createRole, deleteAdmin as deleteAdminAccount, deleteBlog, deleteEvent, getStaffSession, reissuePartnerRequestCredentials, rejectPartnerRequest, rejectVolunteer, requestPartnerRequestInfo, suspendAdmin, updateAdmin, updateEvent, updateOrgSettings, updateStaffMe, type ApiOrgSettings, type NotificationAudience } from '../api/client';
 import EnquiryTimelineModal from './EnquiryTimelineModal';
 import { PatientEnquiry, Hospital } from '../types';
 import { useToast } from './common/Toast';
@@ -579,6 +579,22 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
     }
   };
 
+  const reissueHospitalCredentialsHandler = async (id: string) => {
+    if (!apiToken) return;
+    try {
+      const result = await reissuePartnerRequestCredentials(id, apiToken);
+      setShowApprovalResult({ email: result.loginEmail, password: result.tempPassword });
+      setHospitalCredentialsMap(prev => ({
+        ...prev,
+        [id]: { email: result.loginEmail, tempPassword: result.tempPassword }
+      }));
+      showToast('New credentials generated for hospital!');
+      refetchPartnerRequests();
+    } catch (err) {
+      toast.error('Re-issue Failed', err instanceof ApiError ? err.message : 'Unable to reach the server.');
+    }
+  };
+
   // ---- Notifications ----
   const sendNotification = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1064,6 +1080,7 @@ export default function SuperAdminDashboard({ onPageChange, onLogout }: { onPage
               approveHospital={approveHospital}
               setShowRejectDialog={setShowRejectDialog}
               requestMoreInfo={requestMoreInfo}
+              reissueCredentials={reissueHospitalCredentialsHandler}
             />
           )}
 

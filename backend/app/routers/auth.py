@@ -3,6 +3,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import func, or_
 
 from app.core.limiter import get_client_ip, limiter
 from app.core.security import create_access_token, generate_numeric_id, hash_password, verify_password
@@ -23,7 +24,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/staff/login", response_model=TokenOut)
 @limiter.limit("10/minute")
 def staff_login(request: Request, payload: LoginIn, db: DbSession):
-    user = db.query(User).filter(User.email == payload.email).first()
+    clean_email = payload.email.strip().lower()
+    user = db.query(User).filter(func.lower(User.email) == clean_email).first()
     if not user or not verify_password(payload.password, user.hashed_password):
         record_event(db, "login_failure", role="staff", detail=payload.email, ip_address=get_client_ip(request))
         db.commit()
@@ -98,7 +100,13 @@ def change_staff_password(
 @router.post("/hospital/login", response_model=TokenOut)
 @limiter.limit("10/minute")
 def hospital_login(request: Request, payload: LoginIn, db: DbSession):
-    hospital = db.query(Hospital).filter(Hospital.login_email == payload.email).first()
+    clean_email = payload.email.strip().lower()
+    hospital = db.query(Hospital).filter(
+        or_(
+            func.lower(Hospital.login_email) == clean_email,
+            func.lower(Hospital.email) == clean_email,
+        )
+    ).first()
     if not hospital or not hospital.hashed_password or not verify_password(payload.password, hospital.hashed_password):
         record_event(db, "login_failure", role="hospital", detail=payload.email, ip_address=get_client_ip(request))
         db.commit()
@@ -136,7 +144,8 @@ def change_hospital_password(
 @router.post("/volunteer/login", response_model=TokenOut)
 @limiter.limit("10/minute")
 def volunteer_login(request: Request, payload: LoginIn, db: DbSession):
-    volunteer = db.query(Volunteer).filter(Volunteer.email == payload.email).first()
+    clean_email = payload.email.strip().lower()
+    volunteer = db.query(Volunteer).filter(func.lower(Volunteer.email) == clean_email).first()
     if not volunteer or not verify_password(payload.password, volunteer.hashed_password):
         record_event(db, "login_failure", role="volunteer", detail=payload.email, ip_address=get_client_ip(request))
         db.commit()
@@ -159,7 +168,8 @@ def volunteer_login(request: Request, payload: LoginIn, db: DbSession):
 @router.post("/patient/login", response_model=TokenOut)
 @limiter.limit("10/minute")
 def patient_login(request: Request, payload: LoginIn, db: DbSession):
-    patient = db.query(Patient).filter(Patient.email == payload.email).first()
+    clean_email = payload.email.strip().lower()
+    patient = db.query(Patient).filter(func.lower(Patient.email) == clean_email).first()
     if not patient or not verify_password(payload.password, patient.hashed_password):
         record_event(db, "login_failure", role="patient", detail=payload.email, ip_address=get_client_ip(request))
         db.commit()
