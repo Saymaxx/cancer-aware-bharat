@@ -22,6 +22,18 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error caught by ErrorBoundary:', error, errorInfo);
+    
+    // Automatically reload once on stale dynamic module chunk error
+    const msg = error?.message || '';
+    if (msg.includes('dynamically imported module') || msg.includes('Loading chunk')) {
+      const key = 'cab_eb_chunk_reload';
+      const last = sessionStorage.getItem(key);
+      const now = Date.now();
+      if (!last || now - parseInt(last, 10) > 10000) {
+        sessionStorage.setItem(key, String(now));
+        window.location.reload();
+      }
+    }
   }
 
   private handleReload = () => {
@@ -34,6 +46,10 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
+      const isChunkError =
+        this.state.error?.message?.includes('dynamically imported module') ||
+        this.state.error?.message?.includes('Loading chunk');
+
       return (
         <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center p-6">
           <div className="max-w-md w-full bg-slate-800 border border-slate-700 rounded-3xl p-8 shadow-2xl text-center space-y-6 animate-[fadeIn_0.3s_ease-out]">
@@ -42,9 +58,13 @@ export default class ErrorBoundary extends Component<Props, State> {
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-2xl font-black text-white">Something went wrong</h2>
+              <h2 className="text-2xl font-black text-white">
+                {isChunkError ? 'New Portal Update Available' : 'Something went wrong'}
+              </h2>
               <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                An unexpected system error occurred in the Cancer Aware Bharat application. Our diagnostic system has logged this incident.
+                {isChunkError
+                  ? 'A new version of Cancer Aware Bharat was deployed. Click "Reload Page" to load the latest update.'
+                  : 'An unexpected system error occurred in the Cancer Aware Bharat application. Our diagnostic system has logged this incident.'}
               </p>
             </div>
 

@@ -22,30 +22,54 @@ import DonateModal from './components/DonateModal';
 import RiskAssessmentModal from './components/common/RiskAssessmentModal';
 import FastTrackTriageFab from './components/common/FastTrackTriageFab';
 
-// Lazy Loaded Route-Level Pages (Code Splitting & Performance).
-// Previously only the 4 dashboards were split out this way -- every public
-// tab and auth page was eagerly bundled into the one entry chunk even
-// though a visitor only ever loads one of them per page view.
-const HomeTab = lazy(() => import('./components/HomeTab'));
-const AboutTab = lazy(() => import('./components/AboutTab'));
-const HospitalsTab = lazy(() => import('./components/HospitalsTab'));
-const EventsTab = lazy(() => import('./components/EventsTab'));
-const BlogsTab = lazy(() => import('./components/BlogsTab'));
-const NewsTab = lazy(() => import('./components/NewsTab'));
-const GalleryTab = lazy(() => import('./components/GalleryTab'));
-const MissionTab = lazy(() => import('./components/MissionTab'));
-const JoinUsTab = lazy(() => import('./components/JoinUsTab'));
-const DoctorsTab = lazy(() => import('./components/DoctorsTab'));
-const VolunteerAuthPage = lazy(() => import('./components/VolunteerAuthPage'));
-const AdminAuthPage = lazy(() => import('./components/AdminAuthPage'));
-const HospitalAuthPage = lazy(() => import('./components/HospitalAuthPage'));
-const PatientAuthPage = lazy(() => import('./components/PatientAuthPage'));
+// Helper to safely load lazy chunks and auto-retry/reload if a new version was deployed
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>
+) {
+  return lazy(async () => {
+    try {
+      return await factory();
+    } catch (error: any) {
+      const isChunkError =
+        error?.message?.includes('dynamically imported module') ||
+        error?.message?.includes('Loading chunk') ||
+        error?.name === 'ChunkLoadError';
 
-const VolunteerDashboard = lazy(() => import('./components/VolunteerDashboard'));
-const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
-const SuperAdminDashboard = lazy(() => import('./components/SuperAdminDashboard'));
-const HospitalDashboard = lazy(() => import('./components/HospitalDashboard'));
-const PatientDashboard = lazy(() => import('./components/PatientDashboard'));
+      const key = 'cab_last_chunk_reload';
+      const lastReload = sessionStorage.getItem(key);
+      const now = Date.now();
+
+      // Only auto-reload once within 10 seconds to prevent infinite loops
+      if (isChunkError && (!lastReload || now - parseInt(lastReload, 10) > 10000)) {
+        sessionStorage.setItem(key, String(now));
+        window.location.reload();
+      }
+      throw error;
+    }
+  });
+}
+
+// Lazy Loaded Route-Level Pages (Code Splitting & Performance)
+const HomeTab = lazyWithRetry(() => import('./components/HomeTab'));
+const AboutTab = lazyWithRetry(() => import('./components/AboutTab'));
+const HospitalsTab = lazyWithRetry(() => import('./components/HospitalsTab'));
+const EventsTab = lazyWithRetry(() => import('./components/EventsTab'));
+const BlogsTab = lazyWithRetry(() => import('./components/BlogsTab'));
+const NewsTab = lazyWithRetry(() => import('./components/NewsTab'));
+const GalleryTab = lazyWithRetry(() => import('./components/GalleryTab'));
+const MissionTab = lazyWithRetry(() => import('./components/MissionTab'));
+const JoinUsTab = lazyWithRetry(() => import('./components/JoinUsTab'));
+const DoctorsTab = lazyWithRetry(() => import('./components/DoctorsTab'));
+const VolunteerAuthPage = lazyWithRetry(() => import('./components/VolunteerAuthPage'));
+const AdminAuthPage = lazyWithRetry(() => import('./components/AdminAuthPage'));
+const HospitalAuthPage = lazyWithRetry(() => import('./components/HospitalAuthPage'));
+const PatientAuthPage = lazyWithRetry(() => import('./components/PatientAuthPage'));
+
+const VolunteerDashboard = lazyWithRetry(() => import('./components/VolunteerDashboard'));
+const AdminDashboard = lazyWithRetry(() => import('./components/AdminDashboard'));
+const SuperAdminDashboard = lazyWithRetry(() => import('./components/SuperAdminDashboard'));
+const HospitalDashboard = lazyWithRetry(() => import('./components/HospitalDashboard'));
+const PatientDashboard = lazyWithRetry(() => import('./components/PatientDashboard'));
 
 // Loading Fallback Spinner for Suspense
 function PageLoadingFallback() {
